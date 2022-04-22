@@ -1,0 +1,22 @@
+{
+    "name": "oleksandr/gitlab-deploy",
+    "description": "Prepare your project to deploy",
+    "type": "lib",
+    "require": {
+        "php": "7.4",
+        "laravel/framework": "8"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Oleksandr\\GitlabDeploy\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Oleksand-Moik",
+            "email": "sashamoik2016@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
