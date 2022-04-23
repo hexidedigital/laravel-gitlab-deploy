@@ -1,0 +1,126 @@
+
+********************************************************************
+*     1. Generate ssh keys - private key to gitlab (localhost)     *
+********************************************************************
+
+mkdir -p /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev
+ssh-keygen -t rsa -f /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa -N "" 
+cat /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa
+
+*************************************************************
+*     2. Copy ssh to server - public key to remote host     *
+*************************************************************
+
+can ask a password - enter server_pass
+ssh-copy-id -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa.pub template@template.host
+
+********************************************************
+*     3. Generate generate ssh-keys on remote host     *
+********************************************************
+
+ssh -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa template@template.host "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""
+ssh -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa template@template.host "cat ~/.ssh/id_rsa.pub"
+
+*******************************
+*     4. Gitlab variables     *
+*******************************
+
+BIN_PHP
+/usr/bin/php74 /usr/bin/composer
+
+BIN_COMPOSER
+/usr/bin/php74
+
+DEPLOY_BASE_DIR
+/home/template/web/template.host/public_html
+
+DEPLOY_SERVER
+template.host
+
+DEPLOY_USER
+template
+
+SSH_PUB_KEY
+rsa-ssh AAA....AAA user@host
+
+CI_ENABLED
+1
+
+SSH_PRIVATE_KEY
+
+SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys
+
+*******************************************************************
+*     5. Add gitlab to confirmed (known hosts) on remote host     *
+*******************************************************************
+
+ssh-keyscan -t ecdsa-sha2-nistp256 gitlab.hexide-digital.com,188.34.141.230
+ssh -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa template@template.host "cat ~/.ssh/known_hosts"
+ssh -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa template@template.host  'echo "" >> ~/.ssh/known_hosts'
+
+*********************************
+*     6. Run deploy prepare     *
+*********************************
+
+php /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/vendor/bin/dep deploy:prepare dev -v -o branch=dev
+
+*************************************************
+*     7. Setup .env.host and move to server     *
+*************************************************
+
+cp /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.env.example /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.env.host
+scp -i "/home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa" "/home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.env.host" "template@template.host":"/home/template/web/template.host/public_html/shared/.env"
+rm /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.env.host
+
+************************************
+*     8. Run deploy from local     *
+************************************
+
+php /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/vendor/bin/dep deploy dev -v -o branch=dev
+Rollback deploy file
+
+************************************
+*     9. Append custom aliases     *
+************************************
+
+ssh -i /home/oleksandr/Workspace/Hexide-digital/template-project-adminlte_v3/.ssh_dev/id_rsa template@template.host 'echo "_artisan()
+{
+    local arg=\"${COMP_LINE#php }\"
+
+    case \"$arg\" in
+        artisan*)
+            COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
+            COMMANDS=`php74 artisan --raw --no-ansi list | sed \"s/[[:space:]].*//g\"`
+            COMPREPLY=(`compgen -W \"$COMMANDS\" -- \"${COMP_WORDS[COMP_CWORD]}\"`)
+            ;;
+        *)
+            COMPREPLY=( $(compgen -o default -- \"${COMP_WORDS[COMP_CWORD]}\") )
+            ;;
+        esac
+
+    return 0
+}
+complete -F _artisan artisan
+complete -F _artisan php74
+
+alias artisan=\"php74 artisan\"
+alias pcomposer=\"php74 /usr/bin/composer\"" >> ~/.bashrc'
+
+*******************************
+*     10. IDEA - Phpstorm     *
+*******************************
+
+- change mount path
+/home/template/web/template.host/public_html
+
+- add site url
+template.host
+
+- add mapping
+/current
+
+- connect to databases (local and remote)
+   https://template.host
+   name_db
+   name_db
+   pass_db

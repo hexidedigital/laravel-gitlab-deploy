@@ -1,0 +1,30 @@
+version: 0.1
+
+git-lab:
+  token: 'XXXXXX'
+  domain: https://gitlab.hexide-digital.com
+  project-id: NAMESPACE/PROJECT_NAME
+
+access:
+  dev:
+    options:
+      git-url: git@gitlab.hexide-digital.com/NAMESPACE/PROJECT_NAME.git
+      base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
+      bin-php: '/usr/bin/php74 /usr/bin/composer'
+      bin-composer: '/usr/bin/php74'
+
+    server:
+      domain: https://template.host
+      host: template.host
+      login: template
+      password: XXXXXXXXXX
+
+    database:
+      database: proj_db
+      username: proj_db
+      password: XXXXXXXXXX
+
+    mail:
+      hostname: devs.hexide-digital.com
+      username: template@host
+      password: mail_pass
