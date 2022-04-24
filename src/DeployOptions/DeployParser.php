@@ -13,8 +13,7 @@ class DeployParser
     public string $stageName;
     public string $token;
     public string $domain;
-    /** @var string|int */
-    public $projectId;
+    public string $projectId;
 
     private Options $options;
     private Server $server;
@@ -43,25 +42,33 @@ class DeployParser
         $this->database = new Database(Arr::get($allOptions, 'database', []));
         $this->mail = new Mail(Arr::get($allOptions, 'mail', []));
 
-        if (
-            $this->options->isEmpty()
-            || $this->server->isEmpty()
-            || $this->database->isEmpty()
-        ) {
-            throw new GitlabDeployException('To process deploy prepare you must specify all values for `options`, `server` and `database` options for access');
+        $listOfEmptyOptions = $this->getEmptyKeys([
+            '`options`' => $this->options->isEmpty(),
+            '`server`' => $this->server->isEmpty(),
+            '`database`' => $this->database->isEmpty(),
+        ]);
+
+        if (!empty($listOfEmptyOptions)) {
+            throw new GitlabDeployException('To process deploy prepare you must specify all values. Empty options: ' . implode(', ', $listOfEmptyOptions));
         }
     }
 
     public function parseGitlabCredentials(array $gitlab)
     {
-        if (
-            empty($gitlab)
-            || !($this->token = Arr::get($gitlab, 'token', ''))
-            || !($this->domain = Arr::get($gitlab, 'domain', ''))
-            || !($this->projectId = Arr::get($gitlab, 'project-id', ''))
-        ) {
-            throw new GitlabDeployException('To process deploy prepare you must specify gitlab credentials - `token`, `domain` and `project-id` options for access');
+        $listOfEmptyOptions = $this->getEmptyKeys([
+            'gitlab' => empty($gitlab),
+            'token' => empty(Arr::get($gitlab, 'token', '')),
+            'domain' => empty(Arr::get($gitlab, 'domain', '')),
+            'projectId' => empty(Arr::get($gitlab, 'project-id', '')),
+        ]);
+
+        if (!empty($listOfEmptyOptions)) {
+            throw new GitlabDeployException('To process deploy prepare you must specify gitlab credentials - ' . implode(', ', $listOfEmptyOptions));
         }
+
+        $this->token = Arr::get($gitlab, 'token');
+        $this->domain = Arr::get($gitlab, 'domain');
+        $this->projectId = Arr::get($gitlab, 'project-id');
     }
 
     public function hasMail(): bool
@@ -87,5 +94,15 @@ class DeployParser
     public function getMail(): Mail
     {
         return $this->mail;
+    }
+
+    private function getEmptyKeys(array $array): array
+    {
+        return array_keys(
+            array_filter(
+                $array,
+                fn($value) => $value
+            )
+        );
     }
 }

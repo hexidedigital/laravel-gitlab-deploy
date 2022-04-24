@@ -13,7 +13,7 @@ $BIN_COMPOSER = getenv('BIN_COMPOSER');
 $DEPLOY_BASE_DIR = getenv('DEPLOY_BASE_DIR');
 $DEPLOY_SERVER = getenv('DEPLOY_SERVER');
 $DEPLOY_USER = getenv('DEPLOY_USER');
-$SSH_PORT = getenv('SSH_PORT') ?: '22';
+$SSH_PORT = getenv('SSH_PORT');
 /*CI_ENV*/
 
 set('rsync_src', __DIR__ . '/public');

@@ -10,6 +10,7 @@ class Server extends OptionsContainer
     public string $host;
     public string $login;
     public string $password;
+    public int $sshPort;
 
     public function makeFromSource(array $source)
     {
@@ -17,6 +18,7 @@ class Server extends OptionsContainer
         $this->host = data_get($source, 'host');
         $this->login = data_get($source, 'login');
         $this->password = data_get($source, 'password');
+        $this->sshPort = intval(data_get($source, 'ssh-port')) ?: 22;
     }
 
     public function toArray(): array
@@ -25,6 +27,7 @@ class Server extends OptionsContainer
             '{{USER}}' => $this->login,
             '{{HOST}}' => $this->host,
 
+            '{{SSH_PORT}}' => $this->sshPort,
             '{{DEPLOY_DOMAIN}}' => $this->domain,
             '{{DEPLOY_SERVER}}' => $this->host,
             '{{DEPLOY_USER}}' => $this->login,

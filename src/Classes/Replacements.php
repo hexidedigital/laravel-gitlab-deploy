@@ -9,11 +9,16 @@ class Replacements
     public static string $prefix = '{{';
     public static string $suffix = '}}';
 
-    public array $replaceMap = [];
+    private array $replaceMap = [];
 
     public function __construct(array $replaceMap)
     {
-        $this->replaceMap = $replaceMap;
+        $this->mergeReplaces($replaceMap);
+    }
+
+    public function mergeReplaces(array $replaces = [])
+    {
+        $this->replaceMap = array_merge($this->replaceMap, $replaces);
     }
 
     public function replace(string $subject, array $replaceMap = null)

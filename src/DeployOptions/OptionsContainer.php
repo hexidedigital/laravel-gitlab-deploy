@@ -26,6 +26,6 @@ abstract class OptionsContainer implements Arrayable
 
     protected function onyOfKeyIsEmpty(): bool
     {
-        return sizeof(array_filter($this->toArray())) > 0;
+        return sizeof(array_filter($this->toArray(), fn($val) => !$val)) > 0;
     }
 }

@@ -12,7 +12,7 @@ class Mail extends OptionsContainer
 
     public function makeFromSource(array $source)
     {
-        $this->name = data_get($source, 'database');
+        $this->name = data_get($source, 'hostname');
         $this->login = data_get($source, 'username');
         $this->password = data_get($source, 'password');
     }
