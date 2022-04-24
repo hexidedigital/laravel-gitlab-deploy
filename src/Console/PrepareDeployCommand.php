@@ -44,7 +44,7 @@ class PrepareDeployCommand extends Command
     protected static string $deployPhpFile = '{{PROJ_DIR}}/deploy.php';
     protected static string $sshDirPath = '{{PROJ_DIR}}/.ssh_{{CI_COMMIT_REF_NAME}}';
     // replaces after step 3
-    protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
+    protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
 
 
     // ---------------------
@@ -153,6 +153,8 @@ class PrepareDeployCommand extends Command
             [
                 '{{PROJ_DIR}}' => base_path(),
                 '{{CI_COMMIT_REF_NAME}}' => $accessParser->stageName,
+
+                '{{DEPLOY_BASE_DIR}}' => $this->replace($options->baseDir),
             ],
         ));
 
@@ -165,8 +167,6 @@ class PrepareDeployCommand extends Command
         $this->replacements->mergeReplaces([
             '{{IDENTITY_FILE}}' => static::$sshDirPath . '/id_rsa',
             '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath . '/id_rsa.pub',
-
-            '{{DEPLOY_BASE_DIR}}' => $this->replace($options->baseDir),
 
             '{{BASHRC_ALIASES}}' => $this->replace("_artisan()
 {
@@ -192,7 +192,7 @@ alias artisan=\"{{BIN_PHP}} artisan\"
 alias pcomposer=\"{{BIN_COMPOSER}}\" "),
 
 
-            '{{DEPLOY_PHP_ENV}}' => <<<PHP
+            '{{DEPLOY_PHP_ENV}}' => $this->replace(<<<PHP
 \$CI_REPOSITORY_URL = "{{CI_REPOSITORY_URL}}";
 \$CI_COMMIT_REF_NAME = "{{CI_COMMIT_REF_NAME}}";
 \$BIN_PHP = "{{BIN_PHP}}";
@@ -202,6 +202,7 @@ alias pcomposer=\"{{BIN_COMPOSER}}\" "),
 \$DEPLOY_USER = "{{DEPLOY_USER}}";
 \$SSH_PORT = "{{SSH_PORT}}";
 PHP
+            )
             ,
         ]);
 
@@ -388,8 +389,8 @@ PHP
     {
         $this->newSection('setup env file for remote server and move to server');
 
-        $envHostFile = '{{PROJ_DIR}}/.env.host';
-        $this->forceExecuteCommand('cp {{PROJ_DIR}}/.env.example' . $envHostFile);
+        $envHostFile = $this->replace('{{PROJ_DIR}}/.env.host');
+        $this->forceExecuteCommand('cp {{PROJ_DIR}}/.env.example ' . $envHostFile);
 
         $mail = $this->accessParser->hasMail()
             ? []
