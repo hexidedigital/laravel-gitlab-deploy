@@ -3,4 +3,3 @@
 !recipe/
 !dep-log.example.txt
 !deploy-prepare.example.yml
-!deploy.php
