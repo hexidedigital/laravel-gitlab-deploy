@@ -20,7 +20,7 @@ set('rsync_src', __DIR__ . '/public');
 set('rsync_dest', '{{release_path}}/public');
 
 // Project name
-set('application', 'HD project');
+set('application', 'AdminLTE');
 
 // Project repository
 set('repository', $CI_REPOSITORY_URL);
@@ -38,7 +38,7 @@ add('shared_dirs', []);
 add('writable_dirs', []);
 
 //github token
-set('github_oauth_token', '66ef4719f8d2c3894631d12cd9d71fab27300eae');
+set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
 set('composer_options', 'install --verbose --prefer-dist --no-progress --no-interaction --optimize-autoloader');
 
 set('rsync', [
@@ -64,7 +64,7 @@ host($DEPLOY_SERVER)
     ->set('deploy_path', $DEPLOY_BASE_DIR)
     ->stage($CI_COMMIT_REF_NAME)
     ->user($DEPLOY_USER)
-    ->port($SSH_PORT) // SSH_PORT
+    ->port($SSH_PORT)
     // ->identityFile('.ssh/id_rsa')
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
