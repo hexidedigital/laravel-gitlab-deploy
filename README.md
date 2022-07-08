@@ -40,8 +40,8 @@ Open _(after publishing)_ or create the file
 [`deploy/deploy-prepare.yml`](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/0.x/examples/deploy-prepare.example.yml)
 and fill all needed options:
 
-- **access token** for project repository ([tip](#gitlab-api-access-token))
-- project full name or project id ([tip](#project-full-name-or-id))
+- **access token** for project repository ([see tip](#gitlab-api-access-token))
+- project **full name** or project **id** ([see tip](#project-full-name-or-id))
 - Gitlab domain
 
 For every stage are available next options:
@@ -62,6 +62,8 @@ You can begin configuring your project deployment for specific stage (i.e. for `
 php artisan deploy:gitlab dev
 ```
 
+Important - see what todo [After command executing](#after-command-executing)
+
 > By default, stage are same git branch.
 
 #### Only-print option
@@ -78,7 +80,7 @@ For more convenient use of the Laravel **artisan** command, you can add command 
 ## After command executing
 
 If all tasks completely executed, to enable auto-deployment go to
-`Repository Settings` -> `CI/CD` -> `Variables` and change value for `CI_ENABLED` to `1`. After that, when you edit
+`Settings` -> `CI/CD` -> `Variables` and change value for `CI_ENABLED` to `1`. After that, when you edit
 branch with configured deployment, Gitlab will run CI/CD Pipelines automatically
 
 # Tips for Gitlab
@@ -88,13 +90,13 @@ branch with configured deployment, Gitlab will run CI/CD Pipelines automatically
 In order for variables and other deployment options to be created, you need to grant access to the repository settings.
 This package uses the **Gitlab API** method using **Access Tokens**.
 
-To get Access Token follow this path `Repository Settings` -> `Access Tokens`.
+To get Access Token follow this path `Settings` -> `Access Tokens`.
 
-Fill next option like bellow:
+Fill next options like bellow:
 
-- **Token name** - `deploy_dev`
-- recommend to set **Expiration date** - (1-2 days will be enough)
-- **Eole** - `mainterner` - for ability to change repository settings
+- **Token name** - i.e. `deploy_dev` or `deploy_prod`
+- **Expiration date** - recommended to set 1-2 days (this will be enough)
+- **Role** - `mainterner` - for ability to change repository settings
 - **Scopes** - only `api`
 
 Then click `Create project access token` to see the token. **Make sure you save it - you won't be able to access it
@@ -110,7 +112,7 @@ I.e. url looks like `https://gitlab.com/namespace/project_name`, so **full name*
 
 ### Project ID
 
-Project ID are placed under this path `Repository Settings` -> `General` -> `Naming, topics, avatar (alredy open)`.
+Project ID are placed under this path `Settings` -> `General` -> `Naming, topics, avatar (alredy open)`.
 
 But for using project ID you must wrap number to quotes like `"XXXXXXXXXX"` to mark value as string.
 
