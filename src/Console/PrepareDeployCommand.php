@@ -67,6 +67,8 @@ class PrepareDeployCommand extends Command
     {
         $this->createLogFile();
 
+        $finishedWithError = false;
+
         try {
             // prepare
             $this->parseAccess();
@@ -95,16 +97,30 @@ class PrepareDeployCommand extends Command
             $this->task_ideaSetup();
 
         } catch (GitlabDeployException $exception) {
-            $this->error($exception->getMessage());
-            fclose($this->logFileResource);
+            $finishedWithError = true;
+            $this->printError('Deploy command unexpected finished.', $exception);
 
+        } catch (\Exception $exception) {
+            $finishedWithError = true;
+            report($exception);
+            $this->printError('Error happened! See laravel log file.', $exception);
+
+        } finally {
+            fclose($this->logFileResource);
+            $this->newLine();
+        }
+
+        if ($finishedWithError) {
             return self::FAILURE;
         }
 
-        fclose($this->logFileResource);
-        $this->newLine();
-
         return self::SUCCESS;
+    }
+
+    private function printError(string $error, \Exception $exception): void
+    {
+        $this->appendEchoLine($error, 'error');
+        $this->appendEchoLine($exception->getMessage(), 'error');
     }
 
     private function createLogFile()
