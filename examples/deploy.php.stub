@@ -20,6 +20,7 @@ set('rsync_src', __DIR__ . '/public');
 set('rsync_dest', '{{release_path}}/public');
 
 // Project name
+// TODO: CHANGE PROJECT NAME
 set('application', 'AdminLTE');
 
 // Project repository
@@ -38,6 +39,7 @@ add('shared_dirs', []);
 add('writable_dirs', []);
 
 //github token
+// TODO: CHANGE OAUTH TOKEN
 set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
 set('composer_options', 'install --verbose --prefer-dist --no-progress --no-interaction --optimize-autoloader');
 

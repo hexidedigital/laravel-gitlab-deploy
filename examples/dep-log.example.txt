@@ -12,14 +12,14 @@ cat /path/to/project/.ssh_dev/id_rsa
 *************************************************************
 
 can ask a password - enter XXXXXXXXXX
-ssh-copy-id -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host"
+ssh-copy-id -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host"
 
 ********************************************************
 *     3. Generate generate ssh-keys on remote host     *
 ********************************************************
 
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host" "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host" "cat ~/.ssh/id_rsa.pub"
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "cat ~/.ssh/id_rsa.pub"
 Remote pub-key: rsa-ssh AAA....AAA user@host
 
 *******************************
@@ -33,13 +33,13 @@ BIN_COMPOSER
 /usr/bin/php74 /usr/bin/composer
 
 DEPLOY_BASE_DIR
-/home/template/web/template.host/public_html
+/home/template-user/web/template.host/public_html
 
 DEPLOY_SERVER
 template.host
 
 DEPLOY_USER
-template
+template-user
 
 SSH_PORT
 22
@@ -59,8 +59,8 @@ tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys
 *******************************************************************
 
 ssh-keyscan -t ecdsa-sha2-nistp256 gitlab.hexide-digital.com,188.34.141.230
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host" "cat ~/.ssh/known_hosts"
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host" 'echo "" >> ~/.ssh/known_hosts'
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "cat ~/.ssh/known_hosts"
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" 'echo "..." >> ~/.ssh/known_hosts'
 
 ************************************************
 *     6. Run deploy prepare from localhost     *
@@ -72,15 +72,37 @@ php /path/to/project/vendor/bin/dep deploy:prepare dev -v -o branch=dev
 *     7. Putting static env variables to deploy file     *
 **********************************************************
 
+$CI_REPOSITORY_URL = "git@gitlab.hexide-digital.com:namespace/template.git";
+$CI_COMMIT_REF_NAME = "dev";
+$BIN_PHP = "/usr/bin/php74";
+$BIN_COMPOSER = "/usr/bin/php74 /usr/bin/composer";
+$DEPLOY_BASE_DIR = "/home/template-user/web/template.host/public_html";
+$DEPLOY_SERVER = "template.host";
+$DEPLOY_USER = "template-user";
+$SSH_PORT = "22";
 
 ******************************************************************
 *     8. Setup env file for remote server and move to server     *
 ******************************************************************
 
-cp /path/to/project/.env.example/path/to/project/.env.host
-file_put_contents(/path/to/project/.env.host): failed to open stream: No such file or directory
-scp "/path/to/project/.env.host" -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "template@template.host":"/home/template/web/template.host/public_html/shared/.env"
-rm /path/to/project/.env.host
+Backup original env file and create for host
+cp /path/to/project/.env /path/to/project/.env.backup
+cp /path/to/project/.env.example /path/to/project/.env
+Filling env file for host
+array (
+  'APP_KEY=' => 'APP_KEY=base64:yECj71xn9e6CZzSJybo6pPHf1fbUH4t3eXwDG3tEehQ=',
+  'APP_URL=http://localhost:8000' => 'APP_URL=https://template.host',
+  'APP_URL=http://localhost' => 'APP_URL=https://template.host',
+  'DB_DATABASE=' => 'DB_DATABASE=template_db#',
+  'DB_USERNAME=' => 'DB_USERNAME=template_db#',
+  'DB_PASSWORD=' => 'DB_PASSWORD="XXXXXXXXXX"#',
+)
+Coping to remote
+can ask a password - enter XXXXXXXXXX
+scp "/path/to/project/.env" "template-user@template.host":"/home/template-user/web/template.host/public_html/shared/"
+Restore original env file
+cp /path/to/project/.env /path/to/project/.env.host
+cp /path/to/project/.env.backup /path/to/project/.env
 
 ************************************
 *     9. Run deploy from local     *
@@ -89,12 +111,52 @@ rm /path/to/project/.env.host
 php /path/to/project/vendor/bin/dep deploy dev -v -o branch=dev
 Rollback deploy file content
 
+*************************************
+*     10. Append custom aliases     *
+*************************************
+
+# PHP, Laravel development
+_artisan()
+{
+    local arg="${COMP_LINE#php }"
+
+    case "$arg" in
+        a*)
+            COMP_WORDBREAKS=${COMP_WORDBREAKS//:}
+            COMMANDS=`artisan --raw --no-ansi list | sed "s/[[:space:]].*//g"`
+            COMPREPLY=(`compgen -W "$COMMANDS" -- "${COMP_WORDS[COMP_CWORD]}"`)
+            ;;
+        *)
+            COMPREPLY=( $(compgen -o default -- "${COMP_WORDS[COMP_CWORD]}") )
+            ;;
+        esac
+
+    return 0
+}
+
+complete -F _artisan artisan
+complete -F _artisan a
+
+alias artisan="/usr/bin/php74 artisan"
+alias a="artisan"
+
+alias pcomopser="/usr/bin/php74 /usr/bin/composer"
+
+export BASE_DIR="/home/template-user/web/template.host/public_html"
+export CURRENT_DIR="$BASE_DIR/current"
+export SHARE_DIR="$BASE_DIR/share"
+
+alias cur="cd $CURRENT_DIR"
+alias share="cd $SHARE_DIR"
+
+
 *******************************
-*     10. IDEA - PhpStorm     *
+*     11. IDEA - PhpStorm     *
 *******************************
 
- - change mount path
-    /home/template/web/template.host/public_html
+
+    - change mount path
+    /home/template-user/web/template.host/public_html
 
     - add site url
     template.host
@@ -105,6 +167,6 @@ Rollback deploy file content
     - connect to databases (local and remote)
     port: 22
     domain: https://template.host
-    db_name: proj_db
-    db_user: proj_db
+    db_name: template_db
+    db_user: template_db
     password: XXXXXXXXXX
