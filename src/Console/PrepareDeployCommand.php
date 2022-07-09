@@ -331,7 +331,7 @@ PHP
             $this->accessParser->token,
             $this->accessParser->domain,
             $this->accessParser->projectId,
-            $this->option('scope') ?: $this->accessParser->stageName
+            $this->accessParser->stageName
         );
 
         $creator->setCurrentProjectVariables($this->gitlabVars);
@@ -616,7 +616,6 @@ PHP
             new InputOption('force', 'f', InputOption::VALUE_NONE, 'Confirm all choices and force all commands'),
             new InputOption('aliases', null, InputOption::VALUE_NONE, 'Append custom aliases for artisan and php to ~/.bashrc'),
             new InputOption('only-print', null, InputOption::VALUE_NONE, 'Only print commands, with-out executing commands'),
-            new InputOption('scope', null, InputOption::VALUE_REQUIRED, 'Set scope for gitlab variables'),
         ];
     }
 }
