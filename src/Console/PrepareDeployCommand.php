@@ -339,14 +339,14 @@ PHP
         list($fails, $messages) = $creator->execute();
 
         foreach ($messages as $message) {
-            $this->comment($message);
+            $this->appendEchoLine($message, 'comment');
         }
 
         $this->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
 
         if (!empty($fails)) {
             foreach ($fails as $fail) {
-                $this->error($fail);
+                $this->appendEchoLine($fail, 'error');
             }
         }
     }
@@ -384,8 +384,12 @@ PHP
     {
         $this->newSection('putting static env variables to deploy file');
 
+        $env = $this->replace('{{DEPLOY_PHP_ENV}}');
+
+        $this->appendEchoLine($env);
+
         $this->putContentToFile(static::$deployPhpFile, [
-            '/*CI_ENV*/' => $this->replace('{{DEPLOY_PHP_ENV}}'),
+            '/*CI_ENV*/' => $env,
             '->user($DEPLOY_USER)' => $this->replace('->user($DEPLOY_USER)' . PHP_EOL . "    ->identityFile('{{IDENTITY_FILE}}')"),
         ]);
     }
@@ -396,7 +400,7 @@ PHP
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy:prepare {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
             function ($type, $buffer) {
-                $this->line($type . ' > ' . trim($buffer));
+                $this->appendEchoLine($type . ' > ' . trim($buffer));
             }
         );
     }
@@ -445,7 +449,7 @@ PHP
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
             function ($type, $buffer) {
-                $this->line($type . ' > ' . trim($buffer));
+                $this->appendEchoLine($type . ' > ' . trim($buffer));
             }
         );
     }
@@ -580,7 +584,7 @@ PHP
         try {
             $content = file_get_contents($filename);
         } catch (ErrorException $exception) {
-            $this->warn('Failed to open file: ' . $filename);
+            $this->appendEchoLine('Failed to open file: ' . $filename, 'error');
             $content = null;
         }
 
