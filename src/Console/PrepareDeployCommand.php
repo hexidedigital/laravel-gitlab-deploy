@@ -243,6 +243,7 @@ PHP
         ];
     }
 
+    /** @throws GitlabDeployException */
     private function task_saveInitialContentOfDeployFile(): string
     {
         $initialContent = $this->getContent(static::$deployPhpFile);
@@ -308,7 +309,7 @@ PHP
         // print to file on case if error happens
         $rows = [];
         foreach (Arr::except($this->gitlabVars, 'SSH_PRIVATE_KEY') as $key => $val) {
-            $this->writeToFile($key . PHP_EOL . $val . PHP_EOL);
+            $this->writeToLogFile($key . PHP_EOL . $val . PHP_EOL);
 
             $rows[] = [$key, $val];
         }
@@ -320,13 +321,12 @@ PHP
 
         $this->appendEchoLine("tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys");
 
-        if ($this->option('only-print')) {
+        if ($this->isOnlyPrint() || !$this->confirmAction('Update gitlab variables?')) {
             return;
         }
 
         $this->appendEchoLine('Connecting to gitlab and creating variables...');
 
-        // if not only print, then put variables to gitlab
         $creator = new GitlabVariablesCreator(
             $this->accessParser->token,
             $this->accessParser->domain,
@@ -472,7 +472,8 @@ PHP
     {
         $this->newSection('IDEA - PhpStorm');
 
-        $this->appendEchoLine($this->replace(" - change mount path
+        $this->appendEchoLine($this->replace("
+    - change mount path
     <info>{{DEPLOY_BASE_DIR}}</info>
 
     - add site url
@@ -491,7 +492,7 @@ PHP
     }
 
 
-    // --------------- output --------------
+    // --------------- output and logging --------------
 
     private function newSection(string $name): void
     {
@@ -512,7 +513,7 @@ PHP
     {
         $content = $this->replace($content);
 
-        $this->writeToFile(strip_tags($content ?: ''));
+        $this->writeToLogFile(strip_tags($content ?: ''));
         $this->writeToConsole($content, $style);
     }
 
@@ -521,7 +522,7 @@ PHP
         $this->line($content ?: '', $style);
     }
 
-    private function writeToFile(?string $content): void
+    private function writeToLogFile(?string $content): void
     {
         fwrite($this->logFileResource, $content . PHP_EOL);
     }
@@ -530,7 +531,7 @@ PHP
 
     private function confirmAction(string $question): bool
     {
-        return $this->option('force') || $this->confirm($question, false);
+        return $this->isForce() || $this->confirm($question, false);
     }
 
     private function forceExecuteCommand(string $command)
@@ -543,13 +544,13 @@ PHP
         $this->runProcessCommand(false, $command, $callable);
     }
 
-    private function runProcessCommand(bool $force, string $command, callable $callable = null): void
+    private function runProcessCommand(bool $forceExecute, string $command, callable $callable = null): void
     {
         $command = $this->replace($command);
 
         $this->appendEchoLine($command, 'info');
 
-        if (!$force && $this->option('only-print')) {
+        if (!$forceExecute && $this->isOnlyPrint()) {
             return;
         }
 
@@ -584,6 +585,16 @@ PHP
         }
 
         return $content;
+    }
+
+    private function isOnlyPrint(): bool
+    {
+        return boolval($this->option('only-print'));
+    }
+
+    private function isForce(): bool
+    {
+        return boolval($this->option('force'));
     }
 
     // --------------- command info --------------
