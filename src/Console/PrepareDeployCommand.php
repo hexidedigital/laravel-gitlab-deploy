@@ -409,8 +409,14 @@ PHP
     {
         $this->newSection('setup env file for remote server and move to server');
 
-        $envHostFile = $this->replace('{{PROJ_DIR}}/.env.host');
-        $this->forceExecuteCommand('cp {{PROJ_DIR}}/.env.example ' . $envHostFile);
+        $envExample = $this->replace('{{PROJ_DIR}}/.env.example');
+        $envOriginal = $this->replace('{{PROJ_DIR}}/.env');
+        $envBackup = $this->replace('{{PROJ_DIR}}/.env.backup');
+        $envHost = $envOriginal;
+
+        $this->appendEchoLine('Backup original env file and create for host', 'comment');
+        $this->optionallyExecuteCommand("cp $envOriginal $envBackup");
+        $this->optionallyExecuteCommand("cp $envExample $envHost");
 
         $mail = $this->accessParser->hasMail()
             ? []
@@ -430,17 +436,30 @@ PHP
         $envReplaces = array_merge($mail, [
             'APP_KEY=' => 'APP_KEY=' . $appKey,
             'APP_URL=http://localhost:8000' => $this->replace('APP_URL={{DEPLOY_DOMAIN}}'),
+            'APP_URL=http://localhost' => $this->replace('APP_URL={{DEPLOY_DOMAIN}}'),
 
-            'DB_DATABASE=laravel_database' => $this->replace('DB_DATABASE={{DB_DATABASE}}'),
-            'DB_USERNAME=laravel_database' => $this->replace('DB_USERNAME={{DB_USERNAME}}'),
-            'DB_PASSWORD=laravel_password' => $this->replace('DB_PASSWORD={{DB_PASSWORD}}'),
+            'DB_DATABASE=' => $this->replace('DB_DATABASE={{DB_DATABASE}}') . "#",
+            'DB_USERNAME=' => $this->replace('DB_USERNAME={{DB_USERNAME}}') . "#",
+            'DB_PASSWORD=' => $this->replace('DB_PASSWORD="{{DB_PASSWORD}}"') . "#",
         ]);
 
-        $this->putContentToFile($envHostFile, $envReplaces);
+        $this->appendEchoLine('Filling env file for host', 'comment');
+        $this->appendEchoLine(var_export($envReplaces, true));
 
-        $this->optionallyExecuteCommand("scp \"$envHostFile\" " . static::$remoteSshCredentials . ":\"{{DEPLOY_BASE_DIR}}/shared/.env\"");
+        $this->putContentToFile($envHost, $envReplaces);
 
-        $this->forceExecuteCommand('rm ' . $envHostFile);
+        $this->appendEchoLine('Coping to remote', 'comment');
+
+        $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+        $this->optionallyExecuteCommand("scp \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
+            function ($type, $buffer) {
+                $this->appendEchoLine($type . ' > ' . trim($buffer));
+            }
+        );
+
+        $this->appendEchoLine('Restore original env file', 'comment');
+        $this->optionallyExecuteCommand("cp $envHost $envHost.host");
+        $this->optionallyExecuteCommand("cp $envBackup $envOriginal");
     }
 
     private function task_runFirstDeployCommand(): void
@@ -570,6 +589,10 @@ PHP
 
     private function putContentToFile(string $file, array $replace = null): void
     {
+        if ($this->isOnlyPrint()) {
+            return;
+        }
+
         try {
             $content = $this->replace($this->getContent($file), $replace);
 
