@@ -27,17 +27,17 @@ php artisan vendor:publish --tag="gitlab-deploy" --force
 ```
 
 Source of all publishable files are copied
-from [this folder](https://github.com/hexidedigital/laravel-gitlab-deploy/tree/0.x/examples)
+from [this folder](https://github.com/hexidedigital/laravel-gitlab-deploy/tree/master/examples)
 to paths described
 in
-the [service provider](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/0.x/src/GitlabDeployServiceProvider.php#L25-L31)
+the [service provider](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/master/src/GitlabDeployServiceProvider.php#L25-L31)
 
 # Usage
 
 ## Prepare
 
 Open _(after publishing)_ or create the file
-[`deploy/deploy-prepare.yml`](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/0.x/examples/deploy-prepare.example.yml)
+[`deploy/deploy-prepare.yml`](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/master/examples/deploy-prepare.example.yml)
 and fill all needed options:
 
 - **access token** for project repository ([see tip](#gitlab-api-access-token))
@@ -119,7 +119,7 @@ But for using project ID you must wrap number to quotes like `"XXXXXXXXXX"` to m
 # Can I hire you guys?
 
 Yes! Say hi: [hello@hexide-digital.com](mailto:hello@hexide-digital.com)
-We will be happy to work with you! Other [work we’ve done](https://hexide-digital.com/)
+We will be happy to work with you! Other [work we’ve done](https://hexide-digital.com)
 
 ## Follow us
 
