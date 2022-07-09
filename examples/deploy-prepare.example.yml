@@ -1,17 +1,22 @@
+# https://github.com/hexidedigital/laravel-gitlab-deploy#prepare
+
 version: 0.1
 
 git-lab:
-  token: 'XXXXXX'
   domain: https://gitlab.hexide-digital.com
-  project-id: NAMESPACE/PROJECT_NAME
+  # https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
+  token: "XXXXXXXXXX"
+  # https://github.com/hexidedigital/laravel-gitlab-deploy#project-full-name-or-id
+  project-id: "NAMESPACE/PROJECT_NAME"
 
 access:
+  # stage name
   dev:
     options:
-      git-url: git@gitlab.hexide-digital.com/NAMESPACE/PROJECT_NAME.git
+      git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
-      bin-composer: '/usr/bin/php74 /usr/bin/composer'
-      bin-php: '/usr/bin/php74'
+      bin-composer: /usr/bin/php74 /usr/bin/composer
+      bin-php: /usr/bin/php74
 
     server:
       ssh-port: 22
