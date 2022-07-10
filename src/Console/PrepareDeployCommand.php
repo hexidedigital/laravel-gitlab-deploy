@@ -184,30 +184,6 @@ class PrepareDeployCommand extends Command
             '{{IDENTITY_FILE}}' => static::$sshDirPath . '/id_rsa',
             '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath . '/id_rsa.pub',
 
-            '{{BASHRC_ALIASES}}' => $this->replace("_artisan()
-{
-local arg=\"\${COMP_LINE#php }\"
-
-case \"\$arg\" in
-artisan*)
-    COMP_WORDBREAKS=\${COMP_WORDBREAKS//:}
-    COMMANDS=`php74 artisan --raw --no-ansi list | sed \"s/[[:space:]].*//g\"`
-            COMPREPLY=(`compgen -W \"\$COMMANDS\" -- \"\${COMP_WORDS[COMP_CWORD]}\"`)
-            ;;
-        *)
-            COMPREPLY=( \$(compgen -o default -- \"\${COMP_WORDS[COMP_CWORD]}\") )
-            ;;
-        esac
-
-    return 0
-}
-complete -F _artisan artisan
-complete -F _artisan php74
-
-alias artisan=\"{{BIN_PHP}} artisan\"
-alias pcomposer=\"{{BIN_COMPOSER}}\" "),
-
-
             '{{DEPLOY_PHP_ENV}}' => $this->replace(<<<PHP
 \$CI_REPOSITORY_URL = "{{CI_REPOSITORY_URL}}";
 \$CI_COMMIT_REF_NAME = "{{CI_COMMIT_REF_NAME}}";
@@ -482,13 +458,52 @@ PHP
 
     private function task_insertCustomAliasesOnRemoteHost(): void
     {
-        if (!$this->option('aliases')) {
+        $this->newSection('append custom aliases');
+
+        $shouldPutAliases = $this->option('aliases');
+
+        $mustConfirm = !($shouldPutAliases
+            || $this->option('no-interaction')
+            || $this->isOnlyPrint()
+            || $this->isForce());
+
+        if ($mustConfirm) {
+            $shouldPutAliases = $this->confirm('Are you want to add aliases for laravel artisan command?', false);
+        }
+
+        $filePath = __DIR__ . '/../../examples/.bash_aliases';
+
+        if (!$shouldPutAliases && $this->isOnlyPrint()) {
+            $bashAliases = $this->replace(file_get_contents($filePath));
+
+            $this->writeToLogFile($bashAliases);
+
             return;
         }
 
-        $this->newSection('append custom aliases');
+        if (!$shouldPutAliases) {
+            return;
+        }
 
-        $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . ' \'echo "{{BASHRC_ALIASES}}" >> ~/.bashrc\'');
+        $aliasesPath = $this->replace("{{PROJ_DIR}}/deploy/.bash_aliases");
+
+        $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
+        $this->putContentToFile($aliasesPath);
+
+        $aliasesLoader = <<<SHELL
+if [ -f  ~/.bash_aliases ];
+    then . ~/.bash_aliases
+fi
+SHELL;
+
+        $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . " 'echo \"$aliasesLoader\" >> ~/.bashrc'");
+
+        $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+        $this->optionallyExecuteCommand("scp \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
+            function ($type, $buffer) {
+                $this->appendEchoLine($type . ' > ' . trim($buffer));
+            }
+        );
     }
 
     private function task_ideaSetup(): void
