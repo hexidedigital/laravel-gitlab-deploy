@@ -5,11 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.0...master)
+
+## [v0.4.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.3.0...v0.4.0) - 10-07-2022
+
+### Added
+
+- Added function to check force and only-print options
 
 ### Changed
 
 - Readme file - Describes the package, requirements and how to use the command
+- Changed function name from `writeToFile` to `writeToLogFile`
+- Style: updated comments, added throw missed doc-block
+- Changed methods to logging - all console output will be written to log file
+- Write to log generated bash aliases
+- Updated example files
+
+### Fixed
+
+- Fix - catch any exceptions and print error messages to console output and log file
+- Fixed task **copy env to remote server**
+- Fixed task **copy bash aliases to remote**
+
+### Removed
+
+- Removed useless command option `scope`
 
 ## [v0.3.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.2.0...v0.3.0) - 27-06-2022
 
