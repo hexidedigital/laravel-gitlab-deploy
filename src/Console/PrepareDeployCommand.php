@@ -426,21 +426,36 @@ PHP
 
         $this->appendEchoLine('Coping to remote', 'comment');
 
-        $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-        $this->optionallyExecuteCommand("scp \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
-            function ($type, $buffer) {
-                $this->appendEchoLine($type . ' > ' . trim($buffer));
-            }
-        );
+        if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
+            $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+            $this->optionallyExecuteCommand("scp \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
+                function ($type, $buffer) {
+                    $this->appendEchoLine($type . ' > ' . trim($buffer));
+                }
+            );
+        }
 
         $this->appendEchoLine('Restore original env file', 'comment');
         $this->optionallyExecuteCommand("cp $envHost $envHost.host");
         $this->optionallyExecuteCommand("cp $envBackup $envOriginal");
     }
 
+    /** @throws GitlabDeployException */
     private function task_runFirstDeployCommand(): void
     {
         $this->newSection('run deploy from local');
+
+        $fileNotExists =
+            !$this->isOnlyPrint() &&
+            !$this->confirmAction('Please, check if the file was copied correctly to remote host. It is right?', true);
+
+        if ($fileNotExists) {
+            // option only print disabled
+            // and file not copied
+            $this->appendEchoLine('The deployment command was skipped.', 'error');
+
+            return;
+        }
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
             function ($type, $buffer) {
@@ -567,9 +582,9 @@ SHELL;
 
     // --------------- content processing --------------
 
-    private function confirmAction(string $question): bool
+    private function confirmAction(string $question, bool $default = false): bool
     {
-        return $this->isForce() || $this->confirm($question, false);
+        return $this->isForce() || $this->confirm($question, $default);
     }
 
     private function forceExecuteCommand(string $command)
