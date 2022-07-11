@@ -24,15 +24,14 @@ class GitlabDeployServiceProvider extends ServiceProvider
     {
         $this->publishes([
             $this->packagePath('examples/deploy.php.stub') => base_path('deploy.php'),
-            $this->packagePath('examples/dep-log.example.txt') => base_path('deploy/dep-log.example.txt'),
-            $this->packagePath('examples/deploy-prepare.example.yml') => base_path('deploy/deploy-prepare.example.yml'),
+            $this->packagePath('examples/deploy-prepare.example.yml') => base_path('deploy/deploy-prepare.yml'),
             $this->packagePath('examples/.gitignore.stub') => base_path('deploy/.gitignore'),
             $this->packagePath('examples/rsync.php.stub') => base_path('deploy/recipe/rsync.php'),
-        ], 'gitlab-deploy-examples');
+        ], 'gitlab-deploy');
 
         $this->publishes([
             $this->packagePath('config/gitlab-deploy.php') => config_path('gitlab-deploy.php'),
-        ], 'gitlab-deploy-config');
+        ], 'config');
 
         $this->mergeConfigFrom($this->packagePath('config/gitlab-deploy.php'), 'gitlab-deploy');
 
