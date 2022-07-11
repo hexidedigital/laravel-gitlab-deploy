@@ -12,13 +12,36 @@ Remote server must use GNU/Linux.
 
 # Installation
 
+## Add dependency 
+
 You can install this package via composer using:
 
 ```shell
-composer required --dev hexide-digital/hexide-admin-panel:^0.3
+composer require --dev hexide-digital/gitlab-deploy:^0
 ```
 
+or manually add line to `composer.json`
+
+```json
+{
+    "require-dev": {
+        "hexide-digital/gitlab-deploy": "^0"
+    }
+}
+```
+
+then run:
+
+```shell
+composer install
+```
+
+## Publish files and examples
+
 The package will automatically register its service provider.
+
+Examples of files to be copied can be viewed in
+[this folder](https://github.com/hexidedigital/laravel-gitlab-deploy/tree/master/examples).
 
 After installing, you maybe want to publish files for deployment and sample files, right? Just do this:
 
@@ -26,25 +49,22 @@ After installing, you maybe want to publish files for deployment and sample file
 php artisan vendor:publish --tag="gitlab-deploy" --force
 ```
 
-Source of all publishable files are copied
-from [this folder](https://github.com/hexidedigital/laravel-gitlab-deploy/tree/master/examples)
-to paths described
-in
-the [service provider](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/master/src/GitlabDeployServiceProvider.php#L25-L31)
-
 # Usage
 
 ## Prepare
 
 Open _(after publishing)_ or create the file
 [`deploy/deploy-prepare.yml`](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/master/examples/deploy-prepare.example.yml)
-and fill all needed options:
+and fill all needed options.
+
+For most cases only need to be specified next options:
 
 - **access token** for project repository ([see tip](#gitlab-api-access-token))
 - project **full name** or project **id** ([see tip](#project-full-name-or-id))
-- Gitlab domain
+- access for the **server**
+- access for the **database**
 
-For every stage are available next options:
+But for every stage are available next options:
 
 - repository url
 - executor paths for `php` and `composer`
