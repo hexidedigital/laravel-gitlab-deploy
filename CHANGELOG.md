@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.1...master)
 
-## [v0.4.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.0...v0.4.1) - 11-07-2022
+## [v0.4.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.0...v0.4.1) - 2022-07-11
 
 ### Updated
 
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Installing the latest package version 
 
-## [v0.4.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.3.0...v0.4.0) - 10-07-2022
+## [v0.4.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.3.0...v0.4.0) - 2022-07-10
 
 ### Added
 
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed useless command option `scope`
 
-## [v0.3.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.2.0...v0.3.0) - 27-06-2022
+## [v0.3.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.2.0...v0.3.0) - 2022-06-27
 
 ### Added
 
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed visibility deploy recipes for git
 
-## [v0.2.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.1...v0.2.0) - 05-06-2022
+## [v0.2.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.1...v0.2.0) - 2022-06-05
 
 ### Added
 
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed flag for port and host in generating ssh connection
 - Fixed ordering and wrapping templates for replace
 
-## v0.1.0 - 23-04-2022
+## v0.1.0 - 2022-04-23
 
 ### Added
 
