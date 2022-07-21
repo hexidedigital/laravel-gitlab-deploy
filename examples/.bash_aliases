@@ -27,7 +27,7 @@ alias pcomopser="{{BIN_COMPOSER}}"
 
 export BASE_DIR="{{DEPLOY_BASE_DIR}}"
 export CURRENT_DIR="$BASE_DIR/current"
-export SHARE_DIR="$BASE_DIR/share"
+export SHARED_DIR="$BASE_DIR/shared"
 
 alias cur="cd $CURRENT_DIR"
-alias share="cd $SHARE_DIR"
+alias shared="cd $SHARED_DIR"
