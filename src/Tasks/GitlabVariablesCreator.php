@@ -91,9 +91,9 @@ class GitlabVariablesCreator
             try {
                 $this->createOrUpdateVariable($key, $value);
             } catch (\Exception $exception) {
-                $this->fails[] = 'Failed to create variable "' . $key . '".'
-                    . ' Exception message "' . $exception->getMessage() . '".'
-                    . ' Exception class "' . get_class($exception) . '"';
+                $this->fails[] = 'Failed to create variable [' . $key . '].'
+                    . ' Exception message [' . $exception->getMessage() . '].'
+                    . ' Exception class [' . get_class($exception) . ']';
             }
         }
     }
@@ -114,8 +114,8 @@ class GitlabVariablesCreator
             );
         } catch (\Exception $exception) {
             $this->fails[] = 'Failed to append deploy key.'
-                . ' Exception message "' . $exception->getMessage() . '".'
-                . ' Exception class "' . get_class($exception) . '"';
+                . ' Exception message [' . $exception->getMessage() . '].'
+                . ' Exception class [' . get_class($exception) . ']';
         }
     }
 
