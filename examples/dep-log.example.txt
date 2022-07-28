@@ -27,10 +27,10 @@ Remote pub-key: rsa-ssh AAA....AAA user@host
 *******************************
 
 BIN_PHP
-/usr/bin/php74
+/usr/bin/php7.4
 
 BIN_COMPOSER
-/usr/bin/php74 /usr/bin/composer
+/usr/bin/php7.4 /usr/bin/composer
 
 DEPLOY_BASE_DIR
 /home/template-user/web/template.host/public_html
@@ -74,8 +74,8 @@ php /path/to/project/vendor/bin/dep deploy:prepare dev -v -o branch=dev
 
 $CI_REPOSITORY_URL = "git@gitlab.hexide-digital.com:namespace/template.git";
 $CI_COMMIT_REF_NAME = "dev";
-$BIN_PHP = "/usr/bin/php74";
-$BIN_COMPOSER = "/usr/bin/php74 /usr/bin/composer";
+$BIN_PHP = "/usr/bin/php7.4";
+$BIN_COMPOSER = "/usr/bin/php7.4 /usr/bin/composer";
 $DEPLOY_BASE_DIR = "/home/template-user/web/template.host/public_html";
 $DEPLOY_SERVER = "template.host";
 $DEPLOY_USER = "template-user";
@@ -91,15 +91,14 @@ cp /path/to/project/.env.example /path/to/project/.env
 Filling env file for host
 array (
   'APP_KEY=' => 'APP_KEY=base64:yECj71xn9e6CZzSJybo6pPHf1fbUH4t3eXwDG3tEehQ=',
-  'APP_URL=http://localhost:8000' => 'APP_URL=https://template.host',
-  'APP_URL=http://localhost' => 'APP_URL=https://template.host',
-  'DB_DATABASE=' => 'DB_DATABASE=template_db#',
-  'DB_USERNAME=' => 'DB_USERNAME=template_db#',
+  'APP_URL=' => 'APP_URL="https://template.host"#',
+  'DB_DATABASE=' => 'DB_DATABASE="template_db"#',
+  'DB_USERNAME=' => 'DB_USERNAME="template_db"#',
   'DB_PASSWORD=' => 'DB_PASSWORD="XXXXXXXXXX"#',
 )
 Coping to remote
 can ask a password - enter XXXXXXXXXX
-scp "/path/to/project/.env" "template-user@template.host":"/home/template-user/web/template.host/public_html/shared/"
+scp -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "/path/to/project/.env" "template-user@template.host":"/home/template-user/web/template.host/public_html/shared/"
 Restore original env file
 cp /path/to/project/.env /path/to/project/.env.host
 cp /path/to/project/.env.backup /path/to/project/.env
@@ -137,22 +136,22 @@ _artisan()
 complete -F _artisan artisan
 complete -F _artisan a
 
-alias artisan="/usr/bin/php74 artisan"
+alias artisan="/usr/bin/php7.4 artisan"
 alias a="artisan"
 
-alias pcomopser="/usr/bin/php74 /usr/bin/composer"
+alias pcomopser="/usr/bin/php7.4 /usr/bin/composer"
 
 export BASE_DIR="/home/template-user/web/template.host/public_html"
 export CURRENT_DIR="$BASE_DIR/current"
-export SHARE_DIR="$BASE_DIR/share"
+export SHARED_DIR="$BASE_DIR/shared"
 
 alias cur="cd $CURRENT_DIR"
-alias share="cd $SHARE_DIR"
+alias shared="cd $SHARED_DIR"
 
 
-*******************************
-*     11. IDEA - PhpStorm     *
-*******************************
+****************************
+*     11. IDEA - Setup     *
+****************************
 
 
     - change mount path
