@@ -45,6 +45,7 @@ class PrepareDeployCommand extends Command
     protected static string $sshDirPath = '{{PROJ_DIR}}/.ssh_{{CI_COMMIT_REF_NAME}}';
     // replaces after step 3
     protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
+    protected static string $remoteScpOptions = '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}';
 
 
     // ---------------------
@@ -428,7 +429,7 @@ PHP
 
         if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
             $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-            $this->optionallyExecuteCommand("scp \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
+            $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
                 function ($type, $buffer) {
                     $this->appendEchoLine($type . ' > ' . trim($buffer));
                 }
@@ -514,7 +515,7 @@ SHELL;
         $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . " 'echo \"$aliasesLoader\" >> ~/.bashrc'");
 
         $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-        $this->optionallyExecuteCommand("scp \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
+        $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
             function ($type, $buffer) {
                 $this->appendEchoLine($type . ' > ' . trim($buffer));
             }
