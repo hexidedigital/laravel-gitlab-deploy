@@ -384,7 +384,7 @@ PHP
 
         $this->putContentToFile(static::$deployPhpFile, [
             '/*CI_ENV*/' => $env,
-            '->user($DEPLOY_USER)' => $this->replace('->user($DEPLOY_USER)' . PHP_EOL . "    ->identityFile('{{IDENTITY_FILE}}')"),
+            "~/.ssh/id_rsa" => $this->replace("{{IDENTITY_FILE}}"),
         ]);
     }
 
@@ -429,12 +429,11 @@ PHP
 
         $envReplaces = array_merge($mail, [
             'APP_KEY=' => 'APP_KEY=' . $appKey,
-            'APP_URL=http://localhost:8000' => $this->replace('APP_URL={{DEPLOY_DOMAIN}}'),
-            'APP_URL=http://localhost' => $this->replace('APP_URL={{DEPLOY_DOMAIN}}'),
+            'APP_URL=' => $this->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
 
-            'DB_DATABASE=' => $this->replace('DB_DATABASE={{DB_DATABASE}}') . "#",
-            'DB_USERNAME=' => $this->replace('DB_USERNAME={{DB_USERNAME}}') . "#",
-            'DB_PASSWORD=' => $this->replace('DB_PASSWORD="{{DB_PASSWORD}}"') . "#",
+            'DB_DATABASE=' => $this->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
+            'DB_USERNAME=' => $this->replace('DB_USERNAME="{{DB_USERNAME}}"#'),
+            'DB_PASSWORD=' => $this->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
         ]);
 
         $this->appendEchoLine('Filling env file for host', 'comment');
@@ -523,13 +522,14 @@ PHP
         $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
         $this->putContentToFile($aliasesPath);
 
-        $aliasesLoader = <<<SHELL
+        if ($this->accessParser->version < 0.2 && $this->confirmAction('Copy script to load aliases into ~/.bashrc file?',)) {
+            $aliasesLoader = <<<SHELL
 if [ -f  ~/.bash_aliases ];
     then . ~/.bash_aliases
 fi
 SHELL;
-
-        $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . " 'echo \"$aliasesLoader\" >> ~/.bashrc'");
+            $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . " 'echo \"$aliasesLoader\" >> ~/.bashrc'");
+        }
 
         $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
         $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
@@ -541,7 +541,7 @@ SHELL;
 
     private function task_ideaSetup(): void
     {
-        $this->newSection('IDEA - PhpStorm');
+        $this->newSection('IDEA Setup');
 
         $this->appendEchoLine($this->replace("
     - change mount path

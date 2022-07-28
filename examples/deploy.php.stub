@@ -62,16 +62,15 @@ set('rsync', [
 
 // Hosts
 host($DEPLOY_SERVER)
+    ->stage($CI_COMMIT_REF_NAME)
     ->set('branch', $CI_COMMIT_REF_NAME)
     ->set('deploy_path', $DEPLOY_BASE_DIR)
-    ->stage($CI_COMMIT_REF_NAME)
+    ->set('http_user', $DEPLOY_USER)
     ->user($DEPLOY_USER)
-    ->port($SSH_PORT)
-    // ->identityFile('.ssh/id_rsa')
+    ->port(intval($SSH_PORT))
+    ->identityFile('~/.ssh/id_rsa')
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
-    ->forwardAgent(true)
-    ->multiplexing(true)
     ->addSshOption('UserKnownHostsFile', '/dev/null')
     ->addSshOption('StrictHostKeyChecking', 'no');
 
@@ -86,12 +85,12 @@ after('deploy:failed', 'deploy:unlock');
 
 before('deploy:symlink', 'artisan:migrate');
 
-task('config:clear', function () use ($BIN_PHP) {
-    run('cd {{release_path}} && ' . $BIN_PHP . ' artisan config:clear');
+task('config:clear', function () {
+    run('cd {{release_path}} && {{bin/php}} artisan config:clear');
 });
 
-task('cache:clear', function () use ($BIN_PHP) {
-    run('cd {{release_path}} && ' . $BIN_PHP . ' artisan cache:clear');
+task('cache:clear', function () {
+    run('cd {{release_path}} && {{bin/php}} artisan cache:clear');
 });
 
 after('artisan:migrate', 'config:clear');

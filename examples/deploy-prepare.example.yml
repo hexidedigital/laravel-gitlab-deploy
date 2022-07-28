@@ -15,8 +15,8 @@ access:
     options:
       git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
-      bin-composer: /usr/bin/php74 /usr/bin/composer
-      bin-php: /usr/bin/php74
+      bin-composer: /usr/bin/php7.4 /usr/bin/composer
+      bin-php: /usr/bin/php7.4
 
     server:
       ssh-port: 22
