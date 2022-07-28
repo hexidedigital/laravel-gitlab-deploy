@@ -10,6 +10,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class DeployParser
 {
+    public float $version;
+
     public string $stageName;
     public string $token;
     public string $domain;
@@ -29,6 +31,7 @@ class DeployParser
 
         $this->parseStageOptions(Arr::get($deployYaml, 'access.' . $stage, []));
         $this->parseGitlabCredentials(Arr::get($deployYaml, 'git-lab', []));
+        $this->version = floatval(Arr::get($deployYaml, 'version', 0.1));
     }
 
     public function parseStageOptions(array $allOptions): void

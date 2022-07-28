@@ -1,6 +1,6 @@
 # https://github.com/hexidedigital/laravel-gitlab-deploy#prepare
 
-version: 0.1
+version: 0.2
 
 git-lab:
   domain: https://gitlab.hexide-digital.com
