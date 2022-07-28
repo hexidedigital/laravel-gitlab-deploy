@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.1...master)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.5.0...master)
+
+## [v0.5.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.2...v0.5.0) - 2022-07-29
+
+### Updated
+
+- Updated stub files for nev server environment
+
+### Fixed
+
+- Fixed copping `.env` and `.bash_aliases` files to remote
+
+## [v0.4.2](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.1...v0.4.2) - 2022-07-27
+
+### Updated
+
+- Changelog semantic - more correctly timestamps
 
 ## [v0.4.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.4.0...v0.4.1) - 2022-07-11
 
@@ -14,9 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated text in README file
 - Added a wait-point to check that the env file was transferred correctly
 
-### Fixed 
+### Fixed
 
-- Installing the latest package version 
+- Installing the latest package version
 
 ## [v0.4.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v0.3.0...v0.4.0) - 2022-07-10
 
