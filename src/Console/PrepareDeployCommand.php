@@ -63,6 +63,23 @@ class PrepareDeployCommand extends Command
     protected array $gitlabVars;
     protected string $deployInitialContent;
 
+    // --------------- command info --------------
+
+    protected function getArguments(): array
+    {
+        return [
+            new InputArgument('stage', InputArgument::REQUIRED, 'Deploy stage'),
+        ];
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            new InputOption('force', 'f', InputOption::VALUE_NONE, 'Confirm all choices and force all commands'),
+            new InputOption('aliases', null, InputOption::VALUE_NONE, 'Append custom aliases for artisan and php to ~/.bashrc'),
+            new InputOption('only-print', null, InputOption::VALUE_NONE, 'Only print commands, with-out executing commands'),
+        ];
+    }
 
     public function handle(): int
     {
@@ -653,23 +670,5 @@ SHELL;
     private function isForce(): bool
     {
         return boolval($this->option('force'));
-    }
-
-    // --------------- command info --------------
-
-    protected function getArguments(): array
-    {
-        return [
-            new InputArgument('stage', InputArgument::REQUIRED, 'Deploy stage'),
-        ];
-    }
-
-    protected function getOptions(): array
-    {
-        return [
-            new InputOption('force', 'f', InputOption::VALUE_NONE, 'Confirm all choices and force all commands'),
-            new InputOption('aliases', null, InputOption::VALUE_NONE, 'Append custom aliases for artisan and php to ~/.bashrc'),
-            new InputOption('only-print', null, InputOption::VALUE_NONE, 'Only print commands, with-out executing commands'),
-        ];
     }
 }
