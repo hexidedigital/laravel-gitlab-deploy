@@ -1,5 +1,7 @@
 # Laravel gitlab deploy
 
+![Hexide digital Laravel gitlab deploy](https://preview.dragon-code.pro/Hexide-digital/Laravel-gitlab-deploy.svg?background=0b0b69)
+
 This package was created to optimize and improve a company's CI/CD in a Gitlab environment.
 
 # Requirements
