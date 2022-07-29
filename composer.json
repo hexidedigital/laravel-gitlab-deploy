@@ -3,14 +3,17 @@
     "description": "Prepare your project to deploy",
     "type": "library",
     "require": {
-        "php": "^7.4",
-        "laravel/framework": "^8.0",
+        "php": "^8.0",
+        "laravel/framework": "^8.0|^9.0",
         "graham-campbell/gitlab": "^5.6",
         "guzzlehttp/guzzle": "^7.4",
         "http-interop/http-factory-guzzle": "^1.0"
     },
     "require-dev": {
-        "deployer/deployer": "^6.8"
+        "deployer/deployer": "^7.0"
+    },
+    "config": {
+        "deployer/deployer": "<7.0"
     },
     "license": "MIT",
     "autoload": {
