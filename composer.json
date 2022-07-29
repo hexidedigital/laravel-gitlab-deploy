@@ -9,6 +9,9 @@
         "guzzlehttp/guzzle": "^7.4",
         "http-interop/http-factory-guzzle": "^1.0"
     },
+    "require-dev": {
+        "deployer/deployer": "^6.8"
+    },
     "license": "MIT",
     "autoload": {
         "psr-4": {
