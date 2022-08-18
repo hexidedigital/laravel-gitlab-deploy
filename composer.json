@@ -12,7 +12,7 @@
     "require-dev": {
         "deployer/deployer": "^7.0"
     },
-    "config": {
+    "conflict": {
         "deployer/deployer": "<7.0"
     },
     "license": "MIT",
@@ -32,7 +32,7 @@
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-master": "0.x-dev"
+            "dev-master": "1.x-dev"
         },
         "laravel": {
             "providers": [
