@@ -104,7 +104,7 @@ class PrepareDeployCommand extends Command
             $this->task_createProjectVariablesOnGitlab();
             $this->task_addGitlabToKnownHostsOnRemoteHost();
 
-            $this->task_runDeployPrepareCommand();
+            // $this->task_runDeployPrepareCommand();
 
             $this->task_putNewVariablesToDeployFile();
             $this->task_prepareAndCopyDotEnvFileForRemote();
@@ -474,7 +474,7 @@ PHP
             return;
         }
 
-        $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
+        $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
                 $this->appendEchoLine($type . ' > ' . trim($buffer));
             }
