@@ -1,28 +1,36 @@
+# How to work with the file, read here
 # https://github.com/hexidedigital/laravel-gitlab-deploy#prepare
 
 version: 0.2
 
-git-lab:
-  domain: https://gitlab.hexide-digital.com
-  # https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
-  token: "XXXXXXXXXX"
-  # https://github.com/hexidedigital/laravel-gitlab-deploy#project-full-name-or-id
-  project-id: "NAMESPACE/PROJECT_NAME"
 
+# Repository configurations
+git-lab:
+  # Read where to get this token - https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
+  token: "XXXXXXXXXX"
+
+  # Read about the possible options https://github.com/hexidedigital/laravel-gitlab-deploy#project-full-name-or-id
+  project-id: "NAMESPACE/PROJECT_NAME"
+  # project-id: "000000"
+
+  domain: https://gitlab.hexide-digital.com
+
+
+# Server configurations
 access:
-  # stage name
+  # Stage name to prepare command
   dev:
     options:
       git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
-      bin-composer: /usr/bin/php7.4 /usr/bin/composer
-      bin-php: /usr/bin/php7.4
+      bin-composer: /usr/bin/php8.1 /usr/bin/composer
+      bin-php: /usr/bin/php8.1
 
     server:
       ssh-port: 22
-      domain: https://template.host
-      host: template.host
-      login: template
+      domain: https://example.com
+      host: example.com
+      login: example-user
       password: XXXXXXXXXX
 
     database:
@@ -30,7 +38,7 @@ access:
       username: proj_db
       password: XXXXXXXXXX
 
-    mail:
-      hostname: devs.hexide-digital.com
-      username: template@host
-      password: mail_pass
+    # mail:
+    #   hostname: devs.hexide-digital.com
+    #   username: template@host
+    #   password: mail_pass

@@ -12,14 +12,14 @@ cat /path/to/project/.ssh_dev/id_rsa
 *************************************************************
 
 can ask a password - enter XXXXXXXXXX
-ssh-copy-id -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host"
+ssh-copy-id -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "example-user@example.com"
 
 ********************************************************
 *     3. Generate generate ssh-keys on remote host     *
 ********************************************************
 
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "cat ~/.ssh/id_rsa.pub"
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "example-user@example.com" "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "example-user@example.com" "cat ~/.ssh/id_rsa.pub"
 Remote pub-key: rsa-ssh AAA....AAA user@host
 
 *******************************
@@ -27,19 +27,19 @@ Remote pub-key: rsa-ssh AAA....AAA user@host
 *******************************
 
 BIN_PHP
-/usr/bin/php7.4
+/usr/bin/php8.1
 
 BIN_COMPOSER
-/usr/bin/php7.4 /usr/bin/composer
+/usr/bin/php8.1 /usr/bin/composer
 
 DEPLOY_BASE_DIR
-/home/template-user/web/template.host/public_html
+/home/example-user/web/example.com/public_html
 
 DEPLOY_SERVER
-template.host
+example.com
 
 DEPLOY_USER
-template-user
+example-user
 
 SSH_PORT
 22
@@ -59,8 +59,8 @@ tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys
 *******************************************************************
 
 ssh-keyscan -t ecdsa-sha2-nistp256 gitlab.hexide-digital.com,188.34.141.230
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" "cat ~/.ssh/known_hosts"
-ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "template-user@template.host" 'echo "..." >> ~/.ssh/known_hosts'
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "example-user@example.com" "cat ~/.ssh/known_hosts"
+ssh -i "/path/to/project/.ssh_dev/id_rsa" -p 22 "example-user@example.com" 'echo "..." >> ~/.ssh/known_hosts'
 
 ************************************************
 *     6. Run deploy prepare from localhost     *
@@ -74,11 +74,11 @@ php /path/to/project/vendor/bin/dep deploy:prepare dev -v -o branch=dev
 
 $CI_REPOSITORY_URL = "git@gitlab.hexide-digital.com:namespace/template.git";
 $CI_COMMIT_REF_NAME = "dev";
-$BIN_PHP = "/usr/bin/php7.4";
-$BIN_COMPOSER = "/usr/bin/php7.4 /usr/bin/composer";
-$DEPLOY_BASE_DIR = "/home/template-user/web/template.host/public_html";
-$DEPLOY_SERVER = "template.host";
-$DEPLOY_USER = "template-user";
+$BIN_PHP = "/usr/bin/php8.1";
+$BIN_COMPOSER = "/usr/bin/php8.1 /usr/bin/composer";
+$DEPLOY_BASE_DIR = "/home/example-user/web/example.com/public_html";
+$DEPLOY_SERVER = "example.com";
+$DEPLOY_USER = "example-user";
 $SSH_PORT = "22";
 
 ******************************************************************
@@ -91,14 +91,14 @@ cp /path/to/project/.env.example /path/to/project/.env
 Filling env file for host
 array (
   'APP_KEY=' => 'APP_KEY=base64:yECj71xn9e6CZzSJybo6pPHf1fbUH4t3eXwDG3tEehQ=',
-  'APP_URL=' => 'APP_URL="https://template.host"#',
-  'DB_DATABASE=' => 'DB_DATABASE="template_db"#',
-  'DB_USERNAME=' => 'DB_USERNAME="template_db"#',
+  'APP_URL=' => 'APP_URL="https://example.com"#',
+  'DB_DATABASE=' => 'DB_DATABASE="example_db_name"#',
+  'DB_USERNAME=' => 'DB_USERNAME="example_db_name"#',
   'DB_PASSWORD=' => 'DB_PASSWORD="XXXXXXXXXX"#',
 )
 Coping to remote
 can ask a password - enter XXXXXXXXXX
-scp -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "/path/to/project/.env" "template-user@template.host":"/home/template-user/web/template.host/public_html/shared/"
+scp -i "/path/to/project/.ssh_dev/id_rsa" -P 22 "/path/to/project/.env" "example-user@example.com":"/home/example-user/web/example.com/public_html/shared/"
 Restore original env file
 cp /path/to/project/.env /path/to/project/.env.host
 cp /path/to/project/.env.backup /path/to/project/.env
@@ -136,12 +136,12 @@ _artisan()
 complete -F _artisan artisan
 complete -F _artisan a
 
-alias artisan="/usr/bin/php7.4 artisan"
+alias artisan="/usr/bin/php8.1 artisan"
 alias a="artisan"
 
-alias pcomopser="/usr/bin/php7.4 /usr/bin/composer"
+alias pcomopser="/usr/bin/php8.1 /usr/bin/composer"
 
-export BASE_DIR="/home/template-user/web/template.host/public_html"
+export BASE_DIR="/home/example-user/web/example.com/public_html"
 export CURRENT_DIR="$BASE_DIR/current"
 export SHARED_DIR="$BASE_DIR/shared"
 
@@ -155,17 +155,17 @@ alias shared="cd $SHARED_DIR"
 
 
     - change mount path
-    /home/template-user/web/template.host/public_html
+    /home/example-user/web/example.com/public_html
 
     - add site url
-    template.host
+    example.com
 
     - add mapping
     /current
 
     - connect to databases (local and remote)
     port: 22
-    domain: https://template.host
-    db_name: template_db
-    db_user: template_db
+    domain: https://example.com
+    db_name: example_db_name
+    db_user: example_db_name
     password: XXXXXXXXXX

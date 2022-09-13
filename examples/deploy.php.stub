@@ -1,9 +1,19 @@
 <?php
 
+/**
+ * Keep this version number to manage file versions in projects
+ *
+ * @version 1.1
+ */
+
 namespace Deployer;
 
 require 'recipe/laravel.php';
-require 'deploy/recipe/rsync.php';
+require 'contrib/rsync.php';
+
+/* ----------------------------------
+ * Gitlab CI/CD variables
+ */
 
 // prepare variables from environment CI_ENV
 $CI_REPOSITORY_URL = getenv('CI_REPOSITORY_URL');
@@ -16,12 +26,15 @@ $DEPLOY_USER = getenv('DEPLOY_USER');
 $SSH_PORT = getenv('SSH_PORT');
 /*CI_ENV*/
 
-set('rsync_src', __DIR__ . '/public');
-set('rsync_dest', '{{release_path}}/public');
 
-// Project name
-// TODO: CHANGE PROJECT NAME
+/* ----------------------------------
+ * Configs
+ */
+
+// Todo: Proejct name
 set('application', 'AdminLTE');
+// TODO: CHANGE OAUTH TOKEN
+set('github_oauth_token', '66ef4719f8d2c3894631d12cd9d71fab27300eae');
 
 // Project repository
 set('repository', $CI_REPOSITORY_URL);
@@ -31,26 +44,21 @@ set('git_tty', false);
 set('allow_anonymous_stats', false);
 set('keep_releases', 1);
 
-// Shared files/dirs between deploys
-add('shared_files', []);
-add('shared_dirs', []);
-
-// Writable dirs by web server
-add('writable_dirs', []);
-
 //github token
-// TODO: CHANGE OAUTH TOKEN
-set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
-set('composer_options', 'install --verbose --prefer-dist --no-progress --no-interaction --optimize-autoloader');
+set('composer_options', '--verbose --prefer-dist --no-progress --no-interaction --optimize-autoloader');
+
+
+/* ----------------------------------
+ * rsync
+ */
+
+set('rsync_src', __DIR__ . '/public');
+set('rsync_dest', '{{release_path}}/public');
 
 set('rsync', [
     'exclude' => [],
     'exclude-file' => false,
-    'include' => [
-//        'public/css',
-//        '*/',
-//        'js/**'
-    ],
+    'include' => [],
     'include-file' => false,
     'filter' => [],
     'filter-file' => false,
@@ -60,59 +68,78 @@ set('rsync', [
     'timeout' => 60,
 ]);
 
-// Hosts
+
+/* ----------------------------------
+ * Hosts
+ */
+
 host($DEPLOY_SERVER)
-    ->stage($CI_COMMIT_REF_NAME)
+    //->setIdentityFile(__DIR__ . '/.ssh_dev/id_rsa')
+    ->setHostname($DEPLOY_SERVER)
+    ->setLabels(['stage' => $CI_COMMIT_REF_NAME])
+    ->setPort(intval($SSH_PORT))
+    ->set('remote_user', $DEPLOY_USER)
     ->set('branch', $CI_COMMIT_REF_NAME)
     ->set('deploy_path', $DEPLOY_BASE_DIR)
     ->set('http_user', $DEPLOY_USER)
-    ->user($DEPLOY_USER)
-    ->port(intval($SSH_PORT))
-    ->identityFile('~/.ssh/id_rsa')
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
-    ->addSshOption('UserKnownHostsFile', '/dev/null')
-    ->addSshOption('StrictHostKeyChecking', 'no');
+    ->setSshArguments([
+        '-o UserKnownHostsFile=/dev/null',
+        '-o StrictHostKeyChecking=no',
+    ]);
 
-// Tasks
 
-task('build', function () {
-    run('cd {{release_path}} && build');
-});
+/* ----------------------------------
+ * Mail deploy tasks
+ */
 
-// [Optional] if deploy fails automatically unlock.
+// Hooks
+
 after('deploy:failed', 'deploy:unlock');
 
-before('deploy:symlink', 'artisan:migrate');
 
-task('config:clear', function () {
-    run('cd {{release_path}} && {{bin/php}} artisan config:clear');
-});
+// Additional tasks
 
-task('cache:clear', function () {
-    run('cd {{release_path}} && {{bin/php}} artisan cache:clear');
-});
+before('deploy:shared', 'rsync');
 
-after('artisan:migrate', 'config:clear');
-after('config:clear', 'cache:clear');
+// Uncomment after first migration
+// before('artisan:migrate', 'artisan:migrate:status');
 
+// if project uses Telescope, recommended prune old entries
+// after('artisan:migrate', 'artisan:telescope:prune');
+
+
+// Maintenance mode
+
+after('deploy:vendors', 'artisan:down');
+
+after('deploy:failed', 'artisan:up');
+after('deploy:unlock', 'artisan:up');
+
+/*
+ * Note:
+ * `deploy` task copied from `recipe/laravel.php`
+ * changes - removed tasks for caching
+ */
+desc('Deploys your project');
 task('deploy', [
-    'deploy:info',
     'deploy:prepare',
-    'deploy:lock',
-    'deploy:release',
-    'deploy:update_code',
-    'rsync',
-    'deploy:shared',
+
     'deploy:vendors',
-    'deploy:writable',
     'artisan:storage:link',
-    'artisan:view:cache',
-    'artisan:config:cache',
-    // artisan:migrate
-    // config:clear
-    // cache:clear
-    'deploy:symlink',
-    'deploy:unlock',
-    'cleanup',
+
+    // remove all cached files or run
+    'artisan:optimize:clear',
+    // or call individually only needed
+    /* 'artisan:cache:clear',    */
+    /* 'artisan:config:clear',   */
+    /* 'artisan:event:clear',    */
+    /* 'artisan:optimize:clear', */
+    /* 'artisan:route:clear',    */
+    /* 'artisan:view:clear',     */
+
+    'artisan:migrate',
+
+    'deploy:publish',
 ]);

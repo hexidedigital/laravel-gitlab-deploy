@@ -26,7 +26,6 @@ class GitlabDeployServiceProvider extends ServiceProvider
             $this->packagePath('examples/deploy.php.stub') => base_path('deploy.php'),
             $this->packagePath('examples/deploy-prepare.example.yml') => base_path('deploy/deploy-prepare.yml'),
             $this->packagePath('examples/.gitignore.stub') => base_path('deploy/.gitignore'),
-            $this->packagePath('examples/rsync.php.stub') => base_path('deploy/recipe/rsync.php'),
         ], 'gitlab-deploy');
 
         $this->publishes([
