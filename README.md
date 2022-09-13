@@ -6,7 +6,7 @@ This package was created to optimize and improve a company's CI/CD in a Gitlab e
 
 # Requirements
 
-This package requires **PHP 7.4**  and **Laravel 8.0**.
+This package requires **PHP 8.1** and **Laravel 9.0**.
 
 Available SSH agents on local machine and remote server.
 
@@ -19,7 +19,7 @@ Remote server must use GNU/Linux.
 You can install this package via composer using:
 
 ```shell
-composer require --dev hexide-digital/gitlab-deploy:0.x-dev
+composer require --dev hexide-digital/gitlab-deploy:^1.0
 ```
 
 or manually add line to `composer.json`
@@ -27,7 +27,7 @@ or manually add line to `composer.json`
 ```json
 {
     "require-dev": {
-        "hexide-digital/gitlab-deploy": "0.x-dev"
+        "hexide-digital/gitlab-deploy": "^1.0"
     }
 }
 ```
