@@ -3,14 +3,17 @@
     "description": "Prepare your project to deploy",
     "type": "library",
     "require": {
-        "php": "^8.0",
-        "laravel/framework": "^9.0",
+        "php": "^8.1",
         "graham-campbell/gitlab": "^5.6",
         "guzzlehttp/guzzle": "^7.4",
-        "http-interop/http-factory-guzzle": "^1.0"
-    },
-    "require-dev": {
-        "deployer/deployer": "^7.0"
+        "http-interop/http-factory-guzzle": "^1.0",
+        "symfony/yaml": "^6.1",
+        "symfony/console": "^6.0",
+        "symfony/process": "^6.0",
+        "deployer/deployer": "^7.0",
+        "illuminate/support": "^9.0",
+        "illuminate/console": "^9.0",
+        "illuminate/contracts": "^9.0"
     },
     "license": "MIT",
     "autoload": {
