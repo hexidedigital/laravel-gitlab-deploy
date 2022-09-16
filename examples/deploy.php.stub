@@ -103,8 +103,12 @@ after('deploy:failed', 'deploy:unlock');
 
 before('deploy:shared', 'rsync');
 
-// Uncomment after first migration
-// before('artisan:migrate', 'artisan:migrate:status');
+before('artisan:migrate', function () {
+    $releaseNumber = intval(get('release_name'));
+    if ($releaseNumber > 3) {
+        invoke('artisan:migrate:status');
+    }
+});
 
 // if project uses Telescope, recommended prune old entries
 // after('artisan:migrate', 'artisan:telescope:prune');
@@ -114,7 +118,6 @@ before('deploy:shared', 'rsync');
 
 after('deploy:vendors', 'artisan:down');
 
-after('deploy:failed', 'artisan:up');
 after('deploy:unlock', 'artisan:up');
 
 /*
