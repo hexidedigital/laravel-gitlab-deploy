@@ -74,7 +74,6 @@ set('rsync', [
  */
 
 host($DEPLOY_SERVER)
-    //->setIdentityFile(__DIR__ . '/.ssh_dev/id_rsa')
     ->setHostname($DEPLOY_SERVER)
     ->setLabels(['stage' => $CI_COMMIT_REF_NAME])
     ->setPort(intval($SSH_PORT))
@@ -84,6 +83,7 @@ host($DEPLOY_SERVER)
     ->set('http_user', $DEPLOY_USER)
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
+    ->setIdentityFile("~/.ssh/id_rsa")
     ->setSshArguments([
         '-o UserKnownHostsFile=/dev/null',
         '-o StrictHostKeyChecking=no',
