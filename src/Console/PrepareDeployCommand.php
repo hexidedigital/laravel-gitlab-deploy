@@ -445,7 +445,9 @@ PHP
 
         if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
             $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-            $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"{{DEPLOY_BASE_DIR}}/shared/\"",
+            $sharedDir = "{{DEPLOY_BASE_DIR}}/shared";
+            $this->optionallyExecuteCommand("ssh " . static::$remoteSshCredentials . " 'test -d $sharedDir || mkdir $sharedDir'");
+            $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
                 function ($type, $buffer) {
                     $this->appendEchoLine($type . ' > ' . trim($buffer));
                 }
