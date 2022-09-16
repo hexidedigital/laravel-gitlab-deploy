@@ -302,18 +302,24 @@ PHP
 
         // print to file on case if error happens
         $rows = [];
-        foreach (Arr::except($this->gitlabVars, 'SSH_PRIVATE_KEY') as $key => $val) {
+        $printAlone = [
+            'SSH_PRIVATE_KEY',
+            'SSH_PUB_KEY',
+        ];
+        foreach (Arr::except($this->gitlabVars, $printAlone) as $key => $val) {
             $this->writeToLogFile($key . PHP_EOL . $val . PHP_EOL);
 
             $rows[] = [$key, $val];
         }
 
-        $this->appendEchoLine('SSH_PRIVATE_KEY');
-        $this->appendEchoLine(Arr::get($this->gitlabVars, 'SSH_PRIVATE_KEY', ''));
+        foreach ($printAlone as $key) {
+            $this->appendEchoLine($key, 'comment');
+            $this->appendEchoLine(Arr::get($this->gitlabVars, $key, ''));
+        }
 
         $this->table(['key', 'value'], $rows);
 
-        $this->appendEchoLine("tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys");
+        $this->appendEchoLine("tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys", 'comment');
 
         if ($this->isOnlyPrint() || !$this->confirmAction('Update gitlab variables?')) {
             return;
@@ -485,7 +491,7 @@ PHP
 
     private function task_rollbackDeployFileContent(): void
     {
-        $this->appendEchoLine('Rollback deploy file content');
+        $this->appendEchoLine('Rollback deploy file content', 'comment');
 
         file_put_contents(static::$deployPhpFile, $this->deployInitialContent);
     }
@@ -546,16 +552,18 @@ SHELL;
         $this->newSection('IDEA Setup');
 
         $this->appendEchoLine($this->replace("
-    - change mount path
-    <info>{{DEPLOY_BASE_DIR}}</info>
+    <info>- change mount path</info>
+    {{DEPLOY_BASE_DIR}}
 
-    - add site url
-    <info>{{DEPLOY_SERVER}}</info>
+    <info>- add site url</info>
+    {{DEPLOY_SERVER}}
 
-    - add mapping
-    <info>/current</info>
+    <info>- add mapping</info>
+    /current
+    or
+    {{DEPLOY_BASE_DIR}}/current
 
-    - connect to databases (local and remote)
+    <info>- connect to databases (local and remote)</info>
     port: {{SSH_PORT}}
     domain: {{DEPLOY_DOMAIN}}
     db_name: {{DB_DATABASE}}
@@ -627,7 +635,7 @@ SHELL;
             return;
         }
 
-        $this->line('running command...');
+        $this->line('running command...' . PHP_EOL);
         $process = Process::fromShellCommandline($command);
         $process->run($callable);
     }
