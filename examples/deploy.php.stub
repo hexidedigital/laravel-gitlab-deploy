@@ -31,10 +31,10 @@ $SSH_PORT = getenv('SSH_PORT');
  * Configs
  */
 
-// Todo: Proejct name
+// TODO: Project name
 set('application', 'AdminLTE');
 // TODO: CHANGE OAUTH TOKEN
-set('github_oauth_token', '66ef4719f8d2c3894631d12cd9d71fab27300eae');
+set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
 
 // Project repository
 set('repository', $CI_REPOSITORY_URL);
@@ -83,7 +83,7 @@ host($DEPLOY_SERVER)
     ->set('http_user', $DEPLOY_USER)
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
-    ->setIdentityFile("~/.ssh/id_rsa")
+    ->setIdentityFile('~/.ssh/id_rsa')
     ->setSshArguments([
         '-o UserKnownHostsFile=/dev/null',
         '-o StrictHostKeyChecking=no',
@@ -91,7 +91,7 @@ host($DEPLOY_SERVER)
 
 
 /* ----------------------------------
- * Mail deploy tasks
+ * Main deploy tasks
  */
 
 // Hooks

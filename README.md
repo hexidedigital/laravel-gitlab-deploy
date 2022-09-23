@@ -6,7 +6,7 @@ This package was created to optimize and improve a company's CI/CD in a Gitlab e
 
 # Requirements
 
-This package requires **PHP 8.1** and **Laravel 9.0**.
+This package requires **PHP 8.1** and **Laravel 9.0** or higher.
 
 Available SSH agents on local machine and remote server.
 
