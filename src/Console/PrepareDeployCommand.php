@@ -419,15 +419,15 @@ PHP
         $this->optionallyExecuteCommand("cp $envExample $envHost");
 
         $mail = $this->accessParser->hasMail()
-            ? []
-            : [
+            ? [
                 "MAIL_HOST=mailhog" => $this->replace("MAIL_HOST={{MAIL_HOSTNAME}}"),
                 "MAIL_PORT=1025" => "MAIL_PORT=587",
                 "MAIL_USERNAME=null" => $this->replace("MAIL_USERNAME={{MAIL_USER}}"),
                 "MAIL_PASSWORD=null" => $this->replace("MAIL_PASSWORD={{MAIL_PASSWORD}}"),
                 "MAIL_ENCRYPTION=null" => "MAIL_ENCRYPTION=tls",
                 "MAIL_FROM_ADDRESS=null" => $this->replace("MAIL_FROM_ADDRESS={{MAIL_USER}}"),
-            ];
+            ]
+            : [];
 
         $output = new BufferedOutput();
         Artisan::call('key:generate', ['--show' => true], $output);
