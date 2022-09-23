@@ -17,7 +17,7 @@ abstract class OptionsContainer implements Arrayable
         $this->makeFromSource($source);
     }
 
-    abstract public function makeFromSource(array $source);
+    abstract public function makeFromSource(array $source): void;
 
     public function isEmpty(): bool
     {

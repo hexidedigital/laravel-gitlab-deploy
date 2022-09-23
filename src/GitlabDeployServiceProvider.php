@@ -23,13 +23,13 @@ class GitlabDeployServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            $this->packagePath('examples/deploy.php.stub') => base_path('deploy.php'),
-            $this->packagePath('examples/deploy-prepare.example.yml') => base_path('deploy/deploy-prepare.yml'),
-            $this->packagePath('examples/.gitignore.stub') => base_path('deploy/.gitignore'),
+            $this->packagePath('examples/deploy.php.stub') => $this->app->basePath('deploy.php'),
+            $this->packagePath('examples/deploy-prepare.example.yml') => $this->app->basePath('deploy/deploy-prepare.yml'),
+            $this->packagePath('examples/.gitignore.stub') => $this->app->basePath('deploy/.gitignore'),
         ], 'gitlab-deploy');
 
         $this->publishes([
-            $this->packagePath('config/gitlab-deploy.php') => config_path('gitlab-deploy.php'),
+            $this->packagePath('config/gitlab-deploy.php') => $this->app->configPath('gitlab-deploy.php'),
         ], 'config');
 
         $this->mergeConfigFrom($this->packagePath('config/gitlab-deploy.php'), 'gitlab-deploy');

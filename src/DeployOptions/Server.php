@@ -12,7 +12,7 @@ class Server extends OptionsContainer
     public string $password;
     public int $sshPort;
 
-    public function makeFromSource(array $source)
+    public function makeFromSource(array $source): void
     {
         $this->domain = data_get($source, 'domain');
         $this->host = data_get($source, 'host');

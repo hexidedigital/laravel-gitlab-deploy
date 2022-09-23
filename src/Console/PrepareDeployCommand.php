@@ -143,14 +143,14 @@ class PrepareDeployCommand extends Command
 
     private function createLogFile()
     {
-        $this->logFileResource = fopen(base_path(static::$logFileName . date(static::$logTimeFormat) . '.log'), 'w');
+        $this->logFileResource = fopen($this->laravel->basePath(static::$logFileName . date(static::$logTimeFormat) . '.log'), 'w');
     }
 
     /** @throws GitlabDeployException */
     private function parseAccess()
     {
         $access = new DeployParser();
-        $access->parseFile(base_path(static::$deployYamlFile), $this->argument('stage'));
+        $access->parseFile($this->laravel->basePath(static::$deployYamlFile), $this->argument('stage'));
 
         $this->accessParser = $access;
     }
@@ -185,7 +185,7 @@ class PrepareDeployCommand extends Command
             $accessParser->getDatabase()->toArray(),
             $accessParser->getMail()->toArray(),
             [
-                '{{PROJ_DIR}}' => base_path(),
+                '{{PROJ_DIR}}' => $this->laravel->basePath(),
                 '{{CI_COMMIT_REF_NAME}}' => $accessParser->stageName,
 
                 '{{DEPLOY_BASE_DIR}}' => $this->replace($options->baseDir),
@@ -336,7 +336,7 @@ PHP
 
         $creator->setCurrentProjectVariables($this->gitlabVars);
 
-        list($fails, $messages) = $creator->execute();
+        [$fails, $messages] = $creator->execute();
 
         foreach ($messages as $message) {
             $this->appendEchoLine($message, 'comment');
@@ -465,7 +465,6 @@ PHP
         $this->optionallyExecuteCommand("cp $envBackup $envOriginal");
     }
 
-    /** @throws GitlabDeployException */
     private function task_runFirstDeployCommand(): void
     {
         $this->newSection('run deploy from local');
@@ -560,8 +559,6 @@ SHELL;
 
     <info>- add mapping</info>
     /current
-    or
-    {{DEPLOY_BASE_DIR}}/current
 
     <info>- connect to databases (local and remote)</info>
     port: {{SSH_PORT}}

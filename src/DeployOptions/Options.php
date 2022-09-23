@@ -11,7 +11,7 @@ class Options extends OptionsContainer
     public string $binPhp;
     public string $binComposer;
 
-    public function makeFromSource(array $source)
+    public function makeFromSource(array $source): void
     {
         $this->gitUrl = data_get($source, 'git-url');
         $this->baseDir = data_get($source, 'base-dir-pattern');

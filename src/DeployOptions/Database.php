@@ -10,7 +10,7 @@ class Database extends OptionsContainer
     public string $login;
     public string $password;
 
-    public function makeFromSource(array $source)
+    public function makeFromSource(array $source): void
     {
         $this->name = data_get($source, 'database');
         $this->login = data_get($source, 'username');

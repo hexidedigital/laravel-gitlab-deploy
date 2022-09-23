@@ -16,12 +16,12 @@ class Replacements
         $this->mergeReplaces($replaceMap);
     }
 
-    public function mergeReplaces(array $replaces = [])
+    public function mergeReplaces(array $replaces = []): void
     {
         $this->replaceMap = array_merge($this->replaceMap, $replaces);
     }
 
-    public function replace(string $subject, array $replaceMap = null)
+    public function replace(string $subject, array $replaceMap = null): array|string
     {
         $replaceMap = is_null($replaceMap) ? $this->replaceMap : $replaceMap;
 
