@@ -60,6 +60,7 @@ class PrepareDeployCommand extends Command
     protected $logFileResource;
     protected Replacements $replacements;
     protected DeployParser $accessParser;
+    protected GitlabVariablesCreator $gitlabVariablesCreator;
     protected array $gitlabVars;
     protected string $deployInitialContent;
 
@@ -81,8 +82,10 @@ class PrepareDeployCommand extends Command
         ];
     }
 
-    public function handle(): int
+    public function handle(GitlabVariablesCreator $gitlabVariablesCreator): int
     {
+        $this->gitlabVariablesCreator = $gitlabVariablesCreator;
+
         $this->createLogFile();
 
         $finishedWithError = false;
@@ -327,20 +330,20 @@ PHP
 
         $this->appendEchoLine('Connecting to gitlab and creating variables...');
 
-        $creator = new GitlabVariablesCreator(
-            $this->accessParser->token,
-            $this->accessParser->domain,
-            $this->accessParser->projectId,
-            $this->accessParser->stageName
-        );
+        $creator = $this->gitlabVariablesCreator
+            ->setToken($this->accessParser->token)
+            ->setUrl($this->accessParser->domain)
+            ->setProjectId($this->accessParser->projectId)
+            ->setEnvScope($this->accessParser->stageName)
+            ->setCurrentProjectVariables($this->gitlabVars);
 
-        $creator->setCurrentProjectVariables($this->gitlabVars);
+        $creator->execute();
 
-        [$fails, $messages] = $creator->execute();
-
-        foreach ($messages as $message) {
+        foreach ($creator->getMessages() as $message) {
             $this->appendEchoLine($message, 'comment');
         }
+
+        $fails = $creator->getFails();
 
         $this->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
 

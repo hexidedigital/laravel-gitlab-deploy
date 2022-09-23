@@ -11,12 +11,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class GitlabVariablesCreator
+final class GitlabVariablesCreator
 {
     private const SEPARATOR = '%';
 
-    /** @var GitLabManager|Gitlab\Client */
-    private $client;
+    private Gitlab\Client|GitLabManager $client;
 
     private string $projectId;
     private string $token;
@@ -30,25 +29,49 @@ class GitlabVariablesCreator
     private array $messages = [];
 
     public function __construct(
-        string $token,
-        string $url,
-        string $projectId,
-        string $scope
+        GitLabManager $client,
     )
     {
-        $this->token = $token;
-        $this->url = $url;
-        $this->projectId = $projectId;
-        $this->envScope = $scope;
+        $this->client = $client;
     }
 
-    public function setCurrentProjectVariables(array $variableMap)
+    public function setProjectId(string $projectId): GitlabVariablesCreator
+    {
+        $this->projectId = $projectId;
+
+        return $this;
+    }
+
+    public function setToken(string $token): GitlabVariablesCreator
+    {
+        $this->token = $token;
+
+        return $this;
+    }
+
+    public function setUrl(string $url): GitlabVariablesCreator
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    public function setEnvScope(string $envScope): GitlabVariablesCreator
+    {
+        $this->envScope = $envScope;
+
+        return $this;
+    }
+
+    public function setCurrentProjectVariables(array $variableMap): GitlabVariablesCreator
     {
         $this->variablesMap = $variableMap;
+
+        return $this;
     }
 
     /** @throws GitlabDeployException */
-    public function execute(): ?array
+    public function execute(): void
     {
         $this->prepareClient();
 
@@ -58,19 +81,21 @@ class GitlabVariablesCreator
 
         $this->processVariables();
         $this->setDeployKeys();
+    }
 
-        return [
-            $this->fails,
-            $this->messages,
-        ];
+    public function getFails(): array
+    {
+        return $this->fails;
+    }
+
+    public function getMessages(): array
+    {
+        return $this->messages;
     }
 
     /** @throws GitlabDeployException */
-    protected function prepareClient()
+    private function prepareClient(): void
     {
-        /** @var Gitlab\Client $client */
-        $client = app(GitLabManager::class);
-
         if (empty($this->token)) {
             throw new GitlabDeployException('Provide api token for gitlab');
         }
@@ -79,69 +104,73 @@ class GitlabVariablesCreator
             throw new GitlabDeployException('Provide domain url for gitlab');
         }
 
-        $client->setUrl($this->url);
-        $client->authenticate($this->token, Gitlab\Client::AUTH_HTTP_TOKEN);
-
-        $this->client = $client;
+        $this->client->setUrl($this->url);
+        $this->client->authenticate($this->token, Gitlab\Client::AUTH_HTTP_TOKEN);
     }
 
-    protected function processVariables(): void
+    private function processVariables(): void
     {
         foreach (Arr::except($this->variablesMap, ['SSH_PUB_KEY']) as $key => $value) {
             try {
                 $this->createOrUpdateVariable($key, $value);
             } catch (\Exception $exception) {
-                $this->fails[] = 'Failed to create variable [' . $key . '].'
-                    . ' Exception message [' . $exception->getMessage() . '].'
-                    . ' Exception class [' . get_class($exception) . ']';
+                $this->fails[] = 'Failed to create variable ['.$key.'].'
+                    .' Exception message ['.$exception->getMessage().'].'
+                    .' Exception class ['.get_class($exception).']';
             }
         }
     }
 
-    protected function setDeployKeys(): void
+    private function setDeployKeys(): void
     {
-        $pubKey = Arr::get($this->variablesMap, 'SSH_PUB_KEY');
-
-        // get `user@host` from "ssh-rsa AAA...AB3 user@host"
-        $title = Str::of($pubKey)->explode(' ')->last();
+        $publicKey = Arr::get($this->variablesMap, 'SSH_PUB_KEY');
 
         try {
             $this->client->projects()->addDeployKey(
                 $this->projectId,
-                $title,
-                $pubKey,
+                $this->getServerNameFromPublicKey($publicKey),
+                $publicKey,
                 false
             );
         } catch (\Exception $exception) {
             $this->fails[] = 'Failed to append deploy key.'
-                . ' Exception message [' . $exception->getMessage() . '].'
-                . ' Exception class [' . get_class($exception) . ']';
+                .' Exception message ['.$exception->getMessage().'].'
+                .' Exception class ['.get_class($exception).']';
         }
     }
 
-    public function createOrUpdateVariable(string $key, ?string $value)
+    private function getServerNameFromPublicKey(string $publicKey): string
+    {
+        // get `user@host` from "ssh-rsa AAA...AB3 user@host"
+
+        return Str::of($publicKey)->explode(' ')->last();
+    }
+
+    private function createOrUpdateVariable(string $key, ?string $value): void
     {
         $value = !is_null($value) ? $value : '';
 
         if ($this->isVariablePresent($key)) {
-            return $this->updateVariable($key, $value);
+            $this->updateVariable($key, $value);
+
+            return;
         }
 
-        return $this->createVariable($key, $value);
+        $this->createVariable($key, $value);
     }
 
-    private function createVariable(string $key, string $value)
+    private function createVariable(string $key, string $value): void
     {
-        return $this->projects->addVariable(
+        $this->projects->addVariable(
             $this->projectId, $key, $value, false, $this->envScope, [
                 'filter' => ['environment_scope' => $this->envScope],
             ]
         );
     }
 
-    private function updateVariable(string $key, string $value)
+    private function updateVariable(string $key, string $value): void
     {
-        return $this->projects->updateVariable(
+        $this->projects->updateVariable(
             $this->projectId, $key, $value, false, $this->envScope, [
                 'filter' => ['environment_scope' => $this->envScope],
             ]
@@ -165,6 +194,6 @@ class GitlabVariablesCreator
     {
         $envScope = $envScope ?: $this->envScope;
 
-        return $key . self::SEPARATOR . $envScope;
+        return $key.self::SEPARATOR.$envScope;
     }
 }
