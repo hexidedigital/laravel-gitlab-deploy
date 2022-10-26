@@ -550,17 +550,22 @@ SHELL;
 
     private function task_ideaSetup(): void
     {
-        $this->newSection('IDEA Setup');
+        $this->newSection('IDEA Setup and helpers');
 
         $this->appendEchoLine($this->replace("
-    <info>- change mount path</info>
+    <info>- mount path</info>
     {{DEPLOY_BASE_DIR}}
 
-    <info>- add site url</info>
+    <info>- site url</info>
     {{DEPLOY_SERVER}}
 
-    <info>- add mapping</info>
+    <info>- add mapping for deployment</info>
     /current
+
+    <info>- configure crontab / schedule</info>
+    crontab -e
+
+    * * * * * cd {{DEPLOY_BASE_DIR}}/current && {{BIN_PHP}} artisan schedule:run >> /dev/null 2>&1
 
     <info>- connect to databases (local and remote)</info>
     port: {{SSH_PORT}}
