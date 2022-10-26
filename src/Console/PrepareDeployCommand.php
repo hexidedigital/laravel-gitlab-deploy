@@ -33,8 +33,8 @@ class PrepareDeployCommand extends Command
     protected static string $logTimeFormat = 'Y-m-d-H-i-s';
     // in future can be moved to config file
     protected static string $gitlabServer = 'gitlab.hexide-digital.com,188.34.141.230';
-    protected static string $logFileName = 'deploy/dep-log.';
-    protected static string $deployYamlFile = 'deploy/deploy-prepare.yml';
+    protected static string $logFileName = '.deploy/dep-log.';
+    protected static string $deployYamlFile = '.deploy/deploy-prepare.yml';
 
 
     // ---------------------
@@ -42,7 +42,7 @@ class PrepareDeployCommand extends Command
     // ---------------------
     // replaces after step 2
     protected static string $deployPhpFile = '{{PROJ_DIR}}/deploy.php';
-    protected static string $sshDirPath = '{{PROJ_DIR}}/.ssh_{{CI_COMMIT_REF_NAME}}';
+    protected static string $sshDirPath = '{{PROJ_DIR}}/.ssh/{{CI_COMMIT_REF_NAME}}';
     // replaces after step 3
     protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
     protected static string $remoteScpOptions = '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}';
@@ -123,7 +123,6 @@ class PrepareDeployCommand extends Command
 
         } catch (\Exception $exception) {
             $finishedWithError = true;
-            report($exception);
             $this->printError('Error happened! See laravel log file.', $exception);
 
         } finally {
