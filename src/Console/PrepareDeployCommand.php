@@ -62,7 +62,6 @@ class PrepareDeployCommand extends Command
     protected BasicLogger $logger;
     protected Replacements $replacements;
     protected ParseConfiguration $accessParser;
-    protected GitlabVariablesCreator $gitlabVariablesCreator;
     protected VariableBag $gitlabVariablesBag;
     protected string $deployInitialContent;
 
@@ -84,10 +83,8 @@ class PrepareDeployCommand extends Command
         ];
     }
 
-    public function handle(GitlabVariablesCreator $gitlabVariablesCreator): int
+    public function handle(): int
     {
-        $this->gitlabVariablesCreator = $gitlabVariablesCreator;
-
         $this->createLogFile();
 
         $finishedWithError = false;
@@ -159,7 +156,7 @@ class PrepareDeployCommand extends Command
         $access = $this->laravel->make(ParsesConfiguration::class);
 
         $access->parseFile(
-            $this->laravel->basePath(static::$deployYamlFile),
+            base_path(static::$deployYamlFile),
             $this->getStageName()
         );
 
@@ -330,7 +327,7 @@ PHP
         // print to file on case if error happens
         $rows = [];
         foreach ($this->gitlabVariablesBag->except($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
-            $this->writeToLogFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
+            $this->logger->writeToFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];
         }
@@ -356,7 +353,7 @@ PHP
             url: $this->accessParser->domain,
         );
 
-        $creator = $this->gitlabVariablesCreator
+        $creator = app(GitlabVariablesCreator::class)
             ->setProject($gitlabProject)
             ->setVariableBag($this->gitlabVariablesBag);
 
