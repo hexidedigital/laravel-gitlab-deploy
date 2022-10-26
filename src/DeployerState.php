@@ -6,8 +6,11 @@ namespace HexideDigital\GitlabDeploy;
 
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
+use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
 use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
 
 final class DeployerState
@@ -16,6 +19,56 @@ final class DeployerState
     private Configurations $configurations;
     private Stage $stage;
     private VariableBag $gitlabVariablesBag;
+
+    /**
+     * @throws GitlabDeployException
+     */
+    public function prepare(string $getStageName): void
+    {
+        $this->parseConfigurations($getStageName);
+        $this->setupReplacements();
+        $this->setupGitlabVariables();
+    }
+
+    /**
+     * @throws GitlabDeployException
+     */
+    public function parseConfigurations(string $stageName): void
+    {
+        $parser = app(ParseConfiguration::class);
+
+        $parser->parseFile(config('gitlab-deploy.config-file'));
+
+        $this->setConfigurations($parser->configurations);
+        $this->setStage($parser->configurations->stageBag->get($stageName));
+    }
+
+    public function setupGitlabVariables(): void
+    {
+        $builder = new VariableBagBuilder($this->replacements, $this->stage->name);
+
+        $this->gitlabVariablesBag = $builder->build()->getVariableBag();
+    }
+
+    public function setupReplacements(): void
+    {
+        $builder = new ReplacementsBuilder($this->getStage());
+
+        $replacements = $builder->build()->getReplacements();
+
+        $filePath = $replacements->replace(
+            \str(config('gitlab-deploy.ssh.folder'))
+                ->finish('/')
+                ->append(config('gitlab-deploy.ssh.key_name'))
+        );
+
+        $replacements->mergeReplaces([
+            '{{IDENTITY_FILE}}' => $filePath,
+            '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
+        ]);
+
+        $this->setReplacements($replacements);
+    }
 
     public function getReplacements(): Replacements
     {
@@ -55,13 +108,5 @@ final class DeployerState
     public function setGitlabVariablesBag(VariableBag $gitlabVariablesBag): void
     {
         $this->gitlabVariablesBag = $gitlabVariablesBag;
-    }
-
-
-    public function setupGitlabVariables(): void
-    {
-        $builder = new VariableBagBuilder($this->replacements, $this->stage->name);
-
-        $this->gitlabVariablesBag = $builder->build()->getVariableBag();
     }
 }

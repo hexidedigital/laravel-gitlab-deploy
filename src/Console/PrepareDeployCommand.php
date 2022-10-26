@@ -6,17 +6,12 @@ namespace HexideDigital\GitlabDeploy\Console;
 
 use ErrorException;
 use HexideDigital\GitlabDeploy\DeployerState;
-use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
-use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Gitlab\Tasks\GitlabVariablesCreator;
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
-use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
-use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
-use HexideDigital\GitlabDeploy\Helpers\Replacements;
-use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
-use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
+use HexideDigital\GitlabDeploy\Helpers\DeployerFileContent;
+use HexideDigital\GitlabDeploy\Tasks\GenerateSshKeysOnLocalhost;
 use HexideDigital\GitlabDeploy\Tasks\HelpfulSuggestion;
 use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
@@ -58,7 +53,6 @@ class PrepareDeployCommand extends Command
 
     protected readonly BasicLogger $logger;
 
-    protected readonly string $deployInitialContent;
 
     // --------------- command info --------------
 
@@ -105,16 +99,11 @@ class PrepareDeployCommand extends Command
         try {
             // prepare
             $this->state = new DeployerState();
-
-            $this->parseConfigurations($this->state);
-            $this->setupReplacements($this->state);
-
-            $this->state->setupGitlabVariables();
-
-            $this->deployInitialContent = $this->task_saveInitialContentOfDeployFile();
+            $this->state->prepare($this->getStageName());
 
             // begin of process
-            $this->task_generateSshKeysOnLocalhost();
+            $this->executeTask(GenerateSshKeysOnLocalhost::class);
+
             $this->task_copySshKeysOnRemoteHost();
             $this->task_generateSshKeysOnRemoteHost();
 
@@ -123,13 +112,18 @@ class PrepareDeployCommand extends Command
 
             // $this->task_runDeployPrepareCommand();
 
+            $deployerContent = $this->saveInitialContentOfDeployFile();
+
             $this->task_putNewVariablesToDeployFile();
             $this->task_prepareAndCopyDotEnvFileForRemote();
             $this->task_runFirstDeployCommand();
-            $this->task_rollbackDeployFileContent();
+
+            $this->rollbackDeployFileContent($deployerContent);
 
             $this->task_insertCustomAliasesOnRemoteHost();
-            $this->task_ideaSetup();
+
+            $this->executeTask(HelpfulSuggestion::class);
+
         } catch (GitlabDeployException $exception) {
             $finishedWithError = true;
             $this->printError('Deploy command unexpected finished.', $exception);
@@ -160,82 +154,7 @@ class PrepareDeployCommand extends Command
         $this->logger->openFile();
     }
 
-    /**
-     * @throws GitlabDeployException
-     */
-    private function parseConfigurations(DeployerState $state): void
-    {
-        $parser = app(ParseConfiguration::class);
-
-        $parser->parseFile(config('gitlab-deploy.config-file'));
-
-        $state->setConfigurations($parser->configurations);
-        $state->setStage($parser->configurations->stageBag->get($this->getStageName()));
-    }
-
-    private function setupReplacements(DeployerState $state): void
-    {
-        $builder = new ReplacementsBuilder($state->getStage());
-
-        $replacements = $builder->build()->getReplacements();
-
-        $filePath = $replacements->replace(
-            \str(config('gitlab-deploy.ssh.folder'))
-                ->finish('/')
-                ->append(config('gitlab-deploy.ssh.key_name'))
-        );
-
-        $replacements->mergeReplaces([
-            '{{IDENTITY_FILE}}' => $filePath,
-            '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
-        ]);
-
-        $this->state->setReplacements($replacements);
-    }
-
-    /**
-     * @throws GitlabDeployException
-     */
-    private function task_saveInitialContentOfDeployFile(): string
-    {
-        $initialContent = $this->getContent(config('gitlab-deploy.deployer-php'));
-
-        if (empty($initialContent)) {
-            throw new GitlabDeployException('Deploy file is empty or not exists.');
-        }
-
-        return $initialContent;
-    }
-
-    private function task_generateSshKeysOnLocalhost(): void
-    {
-        $this->newSection('generate ssh keys - private key to gitlab (localhost)');
-
-        $this->forceExecuteCommand('mkdir -p '. $this->replace(config('gitlab-deploy.ssh.folder')));
-
-        if (!$this->isSshFilesExits() || $this->confirmAction('Should generate and override existed key?')) {
-            $option = $this->isSshFilesExits() ? '-y' : '';
-            $this->optionallyExecuteCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
-        }
-
-        $this->writeLogLine('cat {{IDENTITY_FILE}}', 'info');
-
-        $content = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
-
-        $variable = new Variable(
-            key: 'SSH_PRIVATE_KEY',
-            scope: $this->state->getStage()->name,
-            value: $content
-        );
-
-        $this->state->getGitlabVariablesBag()->add($variable->key, $variable);
-    }
-
-    private function isSshFilesExits(): bool
-    {
-        return file_exists($this->replace('{{IDENTITY_FILE}}'))
-            || file_exists($this->replace('{{IDENTITY_FILE_PUB}}'));
-    }
+    // --------------- Tasks --------------
 
     private function task_copySshKeysOnRemoteHost(): void
     {
@@ -357,6 +276,18 @@ class PrepareDeployCommand extends Command
         }
     }
 
+    /**
+     * @throws GitlabDeployException
+     */
+    private function saveInitialContentOfDeployFile(): DeployerFileContent
+    {
+        $deployerContent = new DeployerFileContent($this->filesystem, config('gitlab-deploy.deployer-php'));
+
+        $deployerContent->backup();
+
+        return $deployerContent;
+    }
+
     private function task_putNewVariablesToDeployFile(): void
     {
         $this->newSection('putting static env variables to deploy file');
@@ -470,11 +401,11 @@ class PrepareDeployCommand extends Command
         );
     }
 
-    private function task_rollbackDeployFileContent(): void
+    private function rollbackDeployFileContent(DeployerFileContent $content): void
     {
         $this->writeLogLine('Rollback deploy file content', 'comment');
 
-        $this->filesystem->put(config('gitlab-deploy.deployer-php'), $this->deployInitialContent);
+        $content->restore();
     }
 
     private function task_insertCustomAliasesOnRemoteHost(): void
@@ -526,11 +457,6 @@ SHELL;
                 $this->writeLogLine($type.' > '.trim($buffer));
             }
         );
-    }
-
-    private function task_ideaSetup(): void
-    {
-        $this->executeTask(HelpfulSuggestion::class);
     }
 
     /**
