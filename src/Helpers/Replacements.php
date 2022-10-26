@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Classes;
+namespace HexideDigital\GitlabDeploy\Helpers;
 
-class Replacements
+final class Replacements
 {
     public static string $prefix = '{{';
     public static string $suffix = '}}';

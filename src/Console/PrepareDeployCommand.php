@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Console;
 
 use ErrorException;
-use HexideDigital\GitlabDeploy\Classes\Replacements;
+use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\DeployOptions\DeployParser;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Tasks\GitlabVariablesCreator;
