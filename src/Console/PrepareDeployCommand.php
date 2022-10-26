@@ -8,19 +8,25 @@ use ErrorException;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
+use HexideDigital\GitlabDeploy\Gitlab\Tasks\GitlabVariablesCreator;
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
-use HexideDigital\GitlabDeploy\Tasks\GitlabVariablesCreator;
+use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
+use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
+use HexideDigital\GitlabDeploy\Tasks\HelpfulSugession;
+use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 class PrepareDeployCommand extends Command
 {
@@ -58,13 +64,15 @@ class PrepareDeployCommand extends Command
     // ---------------------
     // runtime defined properties
     // ---------------------
-    protected BasicLogger $logger;
-    protected Replacements $replacements;
-    protected Configurations $configurations;
-    protected Stage $stage;
-    protected VariableBag $gitlabVariablesBag;
+    protected readonly Filesystem $filesystem;
 
-    protected string $deployInitialContent;
+    protected readonly BasicLogger $logger;
+    protected readonly Replacements $replacements;
+    protected readonly Configurations $configurations;
+    protected readonly Stage $stage;
+    protected readonly VariableBag $gitlabVariablesBag;
+
+    protected readonly string $deployInitialContent;
 
     // --------------- command info --------------
 
@@ -94,6 +102,14 @@ class PrepareDeployCommand extends Command
         ];
     }
 
+    public function __construct(
+        Filesystem $filesystem,
+    ) {
+        parent::__construct();
+
+        $this->filesystem = $filesystem;
+    }
+
     public function handle(): int
     {
         $this->createLogFile();
@@ -103,7 +119,6 @@ class PrepareDeployCommand extends Command
         try {
             // prepare
             $this->parseConfigurations();
-
             $this->setupReplacements();
             $this->setupGitlabVariables();
 
@@ -129,7 +144,7 @@ class PrepareDeployCommand extends Command
         } catch (GitlabDeployException $exception) {
             $finishedWithError = true;
             $this->printError('Deploy command unexpected finished.', $exception);
-        } catch (\Exception $exception) {
+        } catch (Throwable $exception) {
             $finishedWithError = true;
             $this->printError('Error happened! See laravel log file.', $exception);
         } finally {
@@ -144,7 +159,7 @@ class PrepareDeployCommand extends Command
         return self::SUCCESS;
     }
 
-    private function printError(string $error, \Exception $exception): void
+    private function printError(string $error, Throwable $exception): void
     {
         $this->writeLogLine($error, 'error');
         $this->writeLogLine($exception->getMessage(), 'error');
@@ -171,98 +186,28 @@ class PrepareDeployCommand extends Command
 
     private function setupReplacements(): void
     {
-        /*-----------------------
-         * step 1
-         *
-         * server - USER HOST SSH_PORT DEPLOY_DOMAIN DEPLOY_SERVER DEPLOY_USER DEPLOY_PASS
-         */
-        $this->replacements = new Replacements(
-            $this->stage->server->toArray()
+        $builder = new ReplacementsBuilder(
+            $this->stage,
         );
 
-        /*-----------------------
-         * step 2
-         *
-         * options - CI_REPOSITORY_URL DEPLOY_BASE_DIR BIN_PHP BIN_COMPOSER
-         * database - DB_DATABASE DB_USERNAME DB_PASSWORD
-         * mail - MAIL_HOSTNAME MAIL_USER MAIL_PASSWORD
-         *
-         * other - PROJ_DIR CI_COMMIT_REF_NAME
-         */
-        $this->replacements->mergeReplaces(
-            array_merge(
-                $this->stage->options->toArray(),
-                $this->stage->database->toArray(),
-                $this->stage->hasMailOptions() ? $this->stage->mail->toArray() : [],
-                [
-                    '{{PROJ_DIR}}' => base_path(),
-                    '{{CI_COMMIT_REF_NAME}}' => $this->getStageName(),
+        $this->replacements = $builder->build()->getReplacements();
 
-                    '{{DEPLOY_BASE_DIR}}' => $this->replace($this->stage->options->baseDir),
-                ],
-            )
-        );
+        static::$sshDirPath = $this->replacements->replace(static::$sshDirPath);
 
-        static::$deployPhpFile = $this->replace(static::$deployPhpFile);
-        static::$sshDirPath = $this->replace(static::$sshDirPath);
-
-        /*-----------------------
-         * step 3
-         */
         $this->replacements->mergeReplaces([
             '{{IDENTITY_FILE}}' => static::$sshDirPath.'/id_rsa',
             '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath.'/id_rsa.pub',
-
-            '{{DEPLOY_PHP_ENV}}' => $this->replace(
-                <<<PHP
-\$CI_REPOSITORY_URL = "{{CI_REPOSITORY_URL}}";
-\$CI_COMMIT_REF_NAME = "{{CI_COMMIT_REF_NAME}}";
-\$BIN_PHP = "{{BIN_PHP}}";
-\$BIN_COMPOSER = "{{BIN_COMPOSER}}";
-\$DEPLOY_BASE_DIR = "{{DEPLOY_BASE_DIR}}";
-\$DEPLOY_SERVER = "{{DEPLOY_SERVER}}";
-\$DEPLOY_USER = "{{DEPLOY_USER}}";
-\$SSH_PORT = "{{SSH_PORT}}";
-PHP
-            )
-            ,
         ]);
 
-        static::$remoteSshCredentials = $this->replace(static::$remoteSshCredentials);
+        static::$deployPhpFile = $this->replacements->replace(static::$deployPhpFile);
+        static::$remoteSshCredentials = $this->replacements->replace(static::$remoteSshCredentials);
     }
 
     private function setupGitlabVariables(): void
     {
-        $bag = new VariableBag();
+        $builder = new VariableBagBuilder($this->replacements, $this->stage->name);
 
-        $variables = [
-            'BIN_PHP' => $this->replace('{{BIN_PHP}}'),
-            'BIN_COMPOSER' => $this->replace('{{BIN_COMPOSER}}'),
-
-            'DEPLOY_BASE_DIR' => $this->replace('{{DEPLOY_BASE_DIR}}'),
-            'DEPLOY_SERVER' => $this->replace('{{DEPLOY_SERVER}}'),
-            'DEPLOY_USER' => $this->replace('{{DEPLOY_USER}}'),
-            'SSH_PORT' => $this->replace('{{SSH_PORT}}'),
-
-            'SSH_PRIVATE_KEY' => '-----BEGIN OPENSSH PRIVATE ',
-            'SSH_PUB_KEY' => 'rsa-ssh AAA....AAA user@host',
-
-            'CI_ENABLED' => '0',
-        ];
-
-        $scope = $this->getStageName();
-
-        foreach ($variables as $key => $value) {
-            $variable = new Variable(
-                key: $key,
-                scope: $scope,
-                value: $value
-            );
-
-            $bag->add($variable->key, $variable);
-        }
-
-        $this->gitlabVariablesBag = $bag;
+        $this->gitlabVariablesBag = $builder->build()->getVariableBag();
     }
 
     /**
@@ -318,11 +263,23 @@ PHP
             $this->optionallyExecuteCommand($sshRemote.' "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
         }
 
-        $this->optionallyExecuteCommand($sshRemote.' "cat ~/.ssh/id_rsa.pub"', function ($type, $buffer) {
-            $this->gitlabVariablesBag['SSH_PUB_KEY'] = $buffer;
-        });
+        $pubKeyContent = '';
+        $this->optionallyExecuteCommand(
+            $sshRemote.' "cat ~/.ssh/id_rsa.pub"',
+            function ($type, $buffer) use (&$pubKeyContent) {
+                $pubKeyContent = $buffer;
+            }
+        );
 
-        $this->writeLogLine('Remote pub-key: '.$this->gitlabVariablesBag['SSH_PUB_KEY'], 'info');
+        $pubKeyVariable = new Variable(
+            key: 'SSH_PUB_KEY',
+            scope: $this->stage->name,
+            value: $pubKeyContent
+        );
+
+        $this->gitlabVariablesBag->add($pubKeyVariable->key, $pubKeyVariable);
+
+        $this->writeLogLine('Remote pub-key: '.$pubKeyVariable->value, 'info');
     }
 
     private function task_createProjectVariablesOnGitlab(): void
@@ -524,7 +481,7 @@ PHP
     {
         $this->writeLogLine('Rollback deploy file content', 'comment');
 
-        file_put_contents(static::$deployPhpFile, $this->deployInitialContent);
+        $this->filesystem->put(static::$deployPhpFile, $this->deployInitialContent);
     }
 
     private function task_insertCustomAliasesOnRemoteHost(): void
@@ -585,33 +542,30 @@ SHELL;
 
     private function task_ideaSetup(): void
     {
-        $this->newSection('IDEA Setup and helpers');
+        $this->executeTask(HelpfulSugession::class);
+    }
 
-        $this->writeLogLine(
-            $this->replace(
-                "
-    <info>- mount path</info>
-    {{DEPLOY_BASE_DIR}}
+    /**
+     * @param class-string<Task> $taskClass
+     * @return void
+     */
+    private function executeTask(string $taskClass): void
+    {
+        $task = $this->prepareTask(app($taskClass));
 
-    <info>- site url</info>
-    {{DEPLOY_SERVER}}
+        $this->newSection($task->getTaskName());
 
-    <info>- add mapping for deployment</info>
-    /current
+        $task->execute();
+    }
 
-    <info>- configure crontab / schedule</info>
-    crontab -e
+    private function prepareTask(Task $task): Task
+    {
+        $task->setConfigurations($this->configurations);
+        $task->setReplacements($this->replacements);
+        $task->setStage($this->stage);
+        $task->setLogger($this->logger);
 
-    * * * * * cd {{DEPLOY_BASE_DIR}}/current && {{BIN_PHP}} artisan schedule:run >> /dev/null 2>&1
-
-    <info>- connect to databases (local and remote)</info>
-    port: {{SSH_PORT}}
-    domain: {{DEPLOY_DOMAIN}}
-    db_name: {{DB_DATABASE}}
-    db_user: {{DB_USERNAME}}
-    password: {{DB_PASSWORD}}"
-            )
-        );
+        return $task;
     }
 
 
@@ -674,16 +628,16 @@ SHELL;
         return $this->replacements->replace($subject ?: '', $replaceMap);
     }
 
-    private function putContentToFile(string $file, array $replace = null): void
+    private function putContentToFile(string $path, array $replace = null): void
     {
         if ($this->isOnlyPrint()) {
             return;
         }
 
         try {
-            $content = $this->replace($this->getContent($file), $replace);
+            $contents = $this->replace($this->getContent($path), $replace);
 
-            file_put_contents($file, $content);
+            $this->filesystem->put($path, $contents);
         } catch (ErrorException $exception) {
             $this->writeLogLine($exception->getMessage(), 'error');
         }
@@ -692,13 +646,13 @@ SHELL;
     private function getContent(string $filename): ?string
     {
         try {
-            $content = file_get_contents($filename);
+            $contents = $this->filesystem->get($filename);
         } catch (ErrorException $exception) {
             $this->writeLogLine('Failed to open file: '.$filename, 'error');
-            $content = null;
+            $contents = null;
         }
 
-        return $content;
+        return $contents;
     }
 
     private function isOnlyPrint(): bool

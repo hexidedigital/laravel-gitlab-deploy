@@ -11,14 +11,16 @@ final class Replacements
 
     private array $replaceMap = [];
 
-    public function __construct(array $replaceMap)
+    public function __construct(array $replaceMap = [])
     {
         $this->mergeReplaces($replaceMap);
     }
 
     public function mergeReplaces(array $replaces = []): void
     {
-        $this->replaceMap = array_merge($this->replaceMap, $replaces);
+        foreach ($replaces as $key => $replace) {
+            $this->replaceMap[$key] = $this->replace($replace);
+        }
     }
 
     public function replace(string $subject, array $replaceMap = null): array|string

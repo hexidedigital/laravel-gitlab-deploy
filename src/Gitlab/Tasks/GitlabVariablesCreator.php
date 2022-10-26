@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Tasks;
+namespace HexideDigital\GitlabDeploy\Gitlab\Tasks;
 
 use Gitlab;
 use GrahamCampbell\GitLab\GitLabManager;
