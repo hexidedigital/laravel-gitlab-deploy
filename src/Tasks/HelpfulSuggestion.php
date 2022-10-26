@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
-final class HelpfulSugession extends BaseTask implements Task
+final class HelpfulSuggestion extends BaseTask implements Task
 {
     protected string $name = 'IDEA Setup and helpers';
 

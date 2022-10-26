@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Console;
 
 use ErrorException;
+use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
@@ -16,7 +17,7 @@ use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
 use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
-use HexideDigital\GitlabDeploy\Tasks\HelpfulSugession;
+use HexideDigital\GitlabDeploy\Tasks\HelpfulSuggestion;
 use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -53,12 +54,9 @@ class PrepareDeployCommand extends Command
     // runtime defined properties
     // ---------------------
     protected readonly Filesystem $filesystem;
+    protected readonly DeployerState $state;
 
     protected readonly BasicLogger $logger;
-    protected readonly Replacements $replacements;
-    protected readonly Configurations $configurations;
-    protected readonly Stage $stage;
-    protected readonly VariableBag $gitlabVariablesBag;
 
     protected readonly string $deployInitialContent;
 
@@ -106,9 +104,12 @@ class PrepareDeployCommand extends Command
 
         try {
             // prepare
-            $this->parseConfigurations();
-            $this->setupReplacements();
-            $this->setupGitlabVariables();
+            $this->state = new DeployerState();
+
+            $this->parseConfigurations($this->state);
+            $this->setupReplacements($this->state);
+
+            $this->state->setupGitlabVariables();
 
             $this->deployInitialContent = $this->task_saveInitialContentOfDeployFile();
 
@@ -162,43 +163,34 @@ class PrepareDeployCommand extends Command
     /**
      * @throws GitlabDeployException
      */
-    private function parseConfigurations(): void
+    private function parseConfigurations(DeployerState $state): void
     {
         $parser = app(ParseConfiguration::class);
 
         $parser->parseFile(config('gitlab-deploy.config-file'));
 
-        $this->configurations = $parser->configurations;
-        $this->stage = $parser->configurations->stageBag->get($this->getStageName());
+        $state->setConfigurations($parser->configurations);
+        $state->setStage($parser->configurations->stageBag->get($this->getStageName()));
     }
 
-    private function setupReplacements(): void
+    private function setupReplacements(DeployerState $state): void
     {
-        $builder = new ReplacementsBuilder(
-            $this->stage,
-        );
+        $builder = new ReplacementsBuilder($state->getStage());
 
-        $this->replacements = $builder->build()->getReplacements();
+        $replacements = $builder->build()->getReplacements();
 
-        $filePath = $this->replacements->replace(
+        $filePath = $replacements->replace(
             \str(config('gitlab-deploy.ssh.folder'))
                 ->finish('/')
                 ->append(config('gitlab-deploy.ssh.key_name'))
         );
 
-        $this->replacements->mergeReplaces([
+        $replacements->mergeReplaces([
             '{{IDENTITY_FILE}}' => $filePath,
             '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
         ]);
 
-        static::$remoteSshCredentials = $this->replacements->replace(static::$remoteSshCredentials);
-    }
-
-    private function setupGitlabVariables(): void
-    {
-        $builder = new VariableBagBuilder($this->replacements, $this->stage->name);
-
-        $this->gitlabVariablesBag = $builder->build()->getVariableBag();
+        $this->state->setReplacements($replacements);
     }
 
     /**
@@ -230,13 +222,13 @@ class PrepareDeployCommand extends Command
 
         $content = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
 
-        $pubKeyVariable = new Variable(
+        $variable = new Variable(
             key: 'SSH_PRIVATE_KEY',
-            scope: $this->stage->name,
+            scope: $this->state->getStage()->name,
             value: $content
         );
 
-        $this->gitlabVariablesBag->add($pubKeyVariable->key, $pubKeyVariable);
+        $this->state->getGitlabVariablesBag()->add($variable->key, $variable);
     }
 
     private function isSshFilesExits(): bool
@@ -273,11 +265,11 @@ class PrepareDeployCommand extends Command
 
         $pubKeyVariable = new Variable(
             key: 'SSH_PUB_KEY',
-            scope: $this->stage->name,
+            scope: $this->state->getStage()->name,
             value: $pubKeyContent
         );
 
-        $this->gitlabVariablesBag->add($pubKeyVariable->key, $pubKeyVariable);
+        $this->state->getGitlabVariablesBag()->add($pubKeyVariable->key, $pubKeyVariable);
 
         $this->writeLogLine('Remote pub-key: '.$pubKeyVariable->value, 'info');
     }
@@ -288,13 +280,14 @@ class PrepareDeployCommand extends Command
 
         // print to file on case if error happens
         $rows = [];
-        foreach ($this->gitlabVariablesBag->except($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
+        $variableBag = $this->state->getGitlabVariablesBag();
+        foreach ($variableBag->except($variableBag->printAloneKeys()) as $variable) {
             $this->logger->writeToFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];
         }
 
-        foreach ($this->gitlabVariablesBag->only($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
+        foreach ($variableBag->only($variableBag->printAloneKeys()) as $variable) {
             $this->writeLogLine($variable->key, 'comment');
             $this->writeLogLine($variable->value);
         }
@@ -313,8 +306,8 @@ class PrepareDeployCommand extends Command
         $this->writeLogLine('Connecting to gitlab and creating variables...');
 
         $creator = app(GitlabVariablesCreator::class)
-            ->setProject($this->configurations->project)
-            ->setVariableBag($this->gitlabVariablesBag);
+            ->setProject($this->state->getConfigurations()->project)
+            ->setVariableBag($variableBag);
 
         $creator->execute();
 
@@ -403,14 +396,14 @@ class PrepareDeployCommand extends Command
         $this->optionallyExecuteCommand("cp $envOriginal $envBackup");
         $this->optionallyExecuteCommand("cp $envExample $envHost");
 
-        $mail = $this->stage->hasMailOptions()
+        $mail = $this->state->getStage()->hasMailOptions()
             ? [
-                "MAIL_HOST=mailhog" => $this->replace("MAIL_HOST={{MAIL_HOSTNAME}}"),
-                "MAIL_PORT=1025" => "MAIL_PORT=587",
-                "MAIL_USERNAME=null" => $this->replace("MAIL_USERNAME={{MAIL_USER}}"),
-                "MAIL_PASSWORD=null" => $this->replace("MAIL_PASSWORD={{MAIL_PASSWORD}}"),
-                "MAIL_ENCRYPTION=null" => "MAIL_ENCRYPTION=tls",
-                "MAIL_FROM_ADDRESS=null" => $this->replace("MAIL_FROM_ADDRESS={{MAIL_USER}}"),
+                'MAIL_HOST=mailhog' => $this->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
+                'MAIL_PORT=1025' => 'MAIL_PORT=587',
+                'MAIL_USERNAME=null' => $this->replace('MAIL_USERNAME={{MAIL_USER}}'),
+                'MAIL_PASSWORD=null' => $this->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
+                'MAIL_ENCRYPTION=null' => 'MAIL_ENCRYPTION=tls',
+                'MAIL_FROM_ADDRESS=null' => $this->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
             ]
             : [];
 
@@ -436,7 +429,7 @@ class PrepareDeployCommand extends Command
 
         if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
             $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-            $sharedDir = "{{DEPLOY_BASE_DIR}}/shared";
+            $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
             $this->optionallyExecuteCommand(
                 "ssh ".static::$remoteSshCredentials." 'test -d $sharedDir || mkdir $sharedDir'"
             );
@@ -513,23 +506,18 @@ class PrepareDeployCommand extends Command
             return;
         }
 
-        $aliasesPath = $this->replace("{{PROJ_DIR}}/.deploy/.bash_aliases");
-
-        $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
-        $this->putContentToFile($aliasesPath);
-
-        if ($this->configurations->version < 0.2 && $this->confirmAction(
-                'Copy script to load aliases into ~/.bashrc file?',
-            )) {
-            $aliasesLoader = <<<SHELL
+        $aliasesPath = $this->replace(storage_path('deployer/.bash_aliases-{{STAGE}}'));
+        $aliasesLoader = <<<SHELL
 if [ -f  ~/.bash_aliases ];
     then . ~/.bash_aliases
 fi
 SHELL;
-            $this->optionallyExecuteCommand(
-                'ssh '.static::$remoteSshCredentials." 'echo \"$aliasesLoader\" >> ~/.bashrc'"
-            );
-        }
+
+        $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
+        $this->putContentToFile($aliasesPath);
+
+        $this->writeLogLine('Optionally, copy next script to load aliases into ~/.bashrc file.', 'comment');
+        $this->writeLogLine($aliasesLoader);
 
         $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
         $this->optionallyExecuteCommand(
@@ -542,7 +530,7 @@ SHELL;
 
     private function task_ideaSetup(): void
     {
-        $this->executeTask(HelpfulSugession::class);
+        $this->executeTask(HelpfulSuggestion::class);
     }
 
     /**
@@ -560,9 +548,7 @@ SHELL;
 
     private function prepareTask(Task $task): Task
     {
-        $task->setConfigurations($this->configurations);
-        $task->setReplacements($this->replacements);
-        $task->setStage($this->stage);
+        $task->setState($this->state);
         $task->setLogger($this->logger);
 
         return $task;
@@ -625,7 +611,7 @@ SHELL;
 
     private function replace(?string $subject, array $replaceMap = null): string
     {
-        return $this->replacements->replace($subject ?: '', $replaceMap);
+        return $this->state->getReplacements()->replace($subject ?: '', $replaceMap);
     }
 
     private function putContentToFile(string $path, array $replace = null): void

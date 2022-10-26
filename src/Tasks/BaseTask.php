@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
+use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
@@ -15,20 +16,14 @@ abstract class BaseTask implements Task
     protected readonly Replacements $replacements;
     protected readonly Stage $stage;
     protected readonly BasicLogger $logger;
+    protected readonly DeployerState $state;
 
-    public function setConfigurations(Configurations $configurations): void
+    public function setState(DeployerState $state): void
     {
-        $this->configurations = $configurations;
-    }
-
-    public function setReplacements(Replacements $replacements): void
-    {
-        $this->replacements = $replacements;
-    }
-
-    public function setStage(Stage $stage): void
-    {
-        $this->stage = $stage;
+        $this->state = $state;
+        $this->replacements = $state->getReplacements();
+        $this->configurations = $state->getConfigurations();
+        $this->stage = $state->getStage();
     }
 
     public function setLogger(BasicLogger $logger): void
