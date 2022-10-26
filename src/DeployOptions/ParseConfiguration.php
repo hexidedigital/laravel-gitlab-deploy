@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\DeployOptions;
 
+use HexideDigital\GitlabDeploy\Contracts\ParsesConfiguration;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use Illuminate\Support\Arr;
 use Symfony\Component\Yaml\Yaml;
 
-class DeployParser
+final class ParseConfiguration implements ParsesConfiguration
 {
-    public float $version;
+    public readonly float $version;
 
-    public string $stageName;
-    public string $token;
-    public string $domain;
-    public string $projectId;
+    private string $stageName;
+    public readonly string $token;
+    public readonly string $domain;
+    public readonly string $projectId;
 
     private Options $options;
     private Server $server;
@@ -32,6 +33,11 @@ class DeployParser
         $this->parseStageOptions(Arr::get($deployYaml, 'access.' . $stage, []));
         $this->parseGitlabCredentials(Arr::get($deployYaml, 'git-lab', []));
         $this->version = floatval(Arr::get($deployYaml, 'version', 0.1));
+    }
+
+    public function getStageName(): string
+    {
+        return $this->stageName;
     }
 
     public function parseStageOptions(array $allOptions): void
@@ -108,4 +114,5 @@ class DeployParser
             )
         );
     }
+
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\DeployOptions;
 
-class Database extends OptionsContainer
+final class Database extends OptionsContainer
 {
-    public string $name;
-    public string $login;
-    public string $password;
+    public readonly string $name;
+    public readonly string $login;
+    public readonly string $password;
 
     public function makeFromSource(array $source): void
     {

@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Console;
 
 use ErrorException;
-use HexideDigital\GitlabDeploy\Helpers\Replacements;
-use HexideDigital\GitlabDeploy\DeployOptions\DeployParser;
+use HexideDigital\GitlabDeploy\Contracts\ParsesConfiguration;
+use HexideDigital\GitlabDeploy\DeployOptions\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
+use HexideDigital\GitlabDeploy\Gitlab\GitlabProject;
+use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\Tasks\GitlabVariablesCreator;
 use Illuminate\Console\Command;
-use Illuminate\Support\Arr;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
@@ -59,9 +63,9 @@ class PrepareDeployCommand extends Command
     /** @var resource */
     protected $logFileResource;
     protected Replacements $replacements;
-    protected DeployParser $accessParser;
+    protected ParseConfiguration $accessParser;
     protected GitlabVariablesCreator $gitlabVariablesCreator;
-    protected array $gitlabVars;
+    protected VariableBag $gitlabVariablesBag;
     protected string $deployInitialContent;
 
     // --------------- command info --------------
@@ -145,14 +149,20 @@ class PrepareDeployCommand extends Command
 
     private function createLogFile()
     {
-        $this->logFileResource = fopen($this->laravel->basePath(static::$logFileName . date(static::$logTimeFormat) . '.log'), 'w');
+        $this->logFileResource = fopen($this->laravel->basePath(static::$logFileName.date(static::$logTimeFormat).'.log'), 'w');
     }
 
-    /** @throws GitlabDeployException */
-    private function parseAccess()
+    /**
+     * @throws BindingResolutionException
+     */
+    private function parseAccess(): void
     {
-        $access = new DeployParser();
-        $access->parseFile($this->laravel->basePath(static::$deployYamlFile), $this->argument('stage'));
+        $access = $this->laravel->make(ParsesConfiguration::class);
+
+        $access->parseFile(
+            $this->laravel->basePath(static::$deployYamlFile),
+            $this->getStageName()
+        );
 
         $this->accessParser = $access;
     }
@@ -188,7 +198,7 @@ class PrepareDeployCommand extends Command
             $accessParser->getMail()->toArray(),
             [
                 '{{PROJ_DIR}}' => $this->laravel->basePath(),
-                '{{CI_COMMIT_REF_NAME}}' => $accessParser->stageName,
+                '{{CI_COMMIT_REF_NAME}}' => $accessParser->getStageName(),
 
                 '{{DEPLOY_BASE_DIR}}' => $this->replace($options->baseDir),
             ],
@@ -201,8 +211,8 @@ class PrepareDeployCommand extends Command
          * step 3
          */
         $this->replacements->mergeReplaces([
-            '{{IDENTITY_FILE}}' => static::$sshDirPath . '/id_rsa',
-            '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath . '/id_rsa.pub',
+            '{{IDENTITY_FILE}}' => static::$sshDirPath.'/id_rsa',
+            '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath.'/id_rsa.pub',
 
             '{{DEPLOY_PHP_ENV}}' => $this->replace(<<<PHP
 \$CI_REPOSITORY_URL = "{{CI_REPOSITORY_URL}}";
@@ -223,7 +233,9 @@ PHP
 
     private function setupGitlabVariables(): void
     {
-        $this->gitlabVars = [
+        $bag = new VariableBag();
+
+        $variables = [
             'BIN_PHP' => $this->replace('{{BIN_PHP}}'),
             'BIN_COMPOSER' => $this->replace('{{BIN_COMPOSER}}'),
 
@@ -237,6 +249,20 @@ PHP
 
             'CI_ENABLED' => '0',
         ];
+
+        $scope = $this->accessParser->getStageName();
+
+        foreach ($variables as $key => $value) {
+            $variable = new Variable(
+                key: $key,
+                scope: $scope,
+                value: $value
+            );
+
+            $bag->add($variable->key, $variable);
+        }
+
+        $this->gitlabVariablesBag = $bag;
     }
 
     /** @throws GitlabDeployException */
@@ -255,15 +281,15 @@ PHP
     {
         $this->newSection('generate ssh keys - private key to gitlab (localhost)');
 
-        $this->forceExecuteCommand('mkdir -p ' . static::$sshDirPath);
+        $this->forceExecuteCommand('mkdir -p '.static::$sshDirPath);
 
         if (!$this->isSshFilesExits() || $this->confirmAction('Should generate and override existed key?')) {
             $option = $this->isSshFilesExits() ? '-y' : '';
-            $this->optionallyExecuteCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" ' . $option);
+            $this->optionallyExecuteCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
         }
 
         $this->appendEchoLine('cat {{IDENTITY_FILE}}', 'info');
-        $this->gitlabVars['SSH_PRIVATE_KEY'] = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
+        $this->gitlabVariablesBag['SSH_PRIVATE_KEY'] = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
     }
 
     private function isSshFilesExits(): bool
@@ -277,24 +303,24 @@ PHP
         $this->newSection('copy ssh to server - public key to remote host');
         $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
 
-        $this->optionallyExecuteCommand('ssh-copy-id ' . static::$remoteSshCredentials);
+        $this->optionallyExecuteCommand('ssh-copy-id '.static::$remoteSshCredentials);
     }
 
     private function task_generateSshKeysOnRemoteHost(): void
     {
         $this->newSection('Generate generate ssh-keys on remote host');
 
-        $sshRemote = 'ssh ' . static::$remoteSshCredentials;
+        $sshRemote = 'ssh '.static::$remoteSshCredentials;
 
         if ($this->confirmAction('Generate ssh keys on remote host')) {
-            $this->optionallyExecuteCommand($sshRemote . ' "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
+            $this->optionallyExecuteCommand($sshRemote.' "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
         }
 
-        $this->optionallyExecuteCommand($sshRemote . ' "cat ~/.ssh/id_rsa.pub"', function ($type, $buffer) {
-            $this->gitlabVars['SSH_PUB_KEY'] = $buffer;
+        $this->optionallyExecuteCommand($sshRemote.' "cat ~/.ssh/id_rsa.pub"', function ($type, $buffer) {
+            $this->gitlabVariablesBag['SSH_PUB_KEY'] = $buffer;
         });
 
-        $this->appendEchoLine('Remote pub-key: ' . $this->gitlabVars['SSH_PUB_KEY'], 'info');
+        $this->appendEchoLine('Remote pub-key: '.$this->gitlabVariablesBag['SSH_PUB_KEY'], 'info');
     }
 
     /** @throws GitlabDeployException */
@@ -304,19 +330,15 @@ PHP
 
         // print to file on case if error happens
         $rows = [];
-        $printAlone = [
-            'SSH_PRIVATE_KEY',
-            'SSH_PUB_KEY',
-        ];
-        foreach (Arr::except($this->gitlabVars, $printAlone) as $key => $val) {
-            $this->writeToLogFile($key . PHP_EOL . $val . PHP_EOL);
+        foreach ($this->gitlabVariablesBag->except($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
+            $this->writeToLogFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
 
-            $rows[] = [$key, $val];
+            $rows[] = [$variable->key, $variable->value];
         }
 
-        foreach ($printAlone as $key) {
-            $this->appendEchoLine($key, 'comment');
-            $this->appendEchoLine(Arr::get($this->gitlabVars, $key, ''));
+        foreach ($this->gitlabVariablesBag->only($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
+            $this->appendEchoLine($variable->key, 'comment');
+            $this->appendEchoLine($variable->value);
         }
 
         $this->table(['key', 'value'], $rows);
@@ -329,12 +351,15 @@ PHP
 
         $this->appendEchoLine('Connecting to gitlab and creating variables...');
 
+        $gitlabProject = new GitlabProject(
+            id: $this->accessParser->projectId,
+            token: $this->accessParser->token,
+            url: $this->accessParser->domain,
+        );
+
         $creator = $this->gitlabVariablesCreator
-            ->setToken($this->accessParser->token)
-            ->setUrl($this->accessParser->domain)
-            ->setProjectId($this->accessParser->projectId)
-            ->setEnvScope($this->accessParser->stageName)
-            ->setCurrentProjectVariables($this->gitlabVars);
+            ->setProject($gitlabProject)
+            ->setVariableBag($this->gitlabVariablesBag);
 
         $creator->execute();
 
@@ -342,9 +367,9 @@ PHP
             $this->appendEchoLine($message, 'comment');
         }
 
-        $fails = $creator->getFails();
+        $fails = $creator->getFailMassages();
 
-        $this->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
+        $this->appendEchoLine('Gitlab variables created with "'.sizeof($fails).'" fail messages');
 
         if (!empty($fails)) {
             foreach ($fails as $fail) {
@@ -362,21 +387,21 @@ PHP
         }
 
         $knownHost = '';
-        $this->optionallyExecuteCommand('ssh-keyscan -t ecdsa-sha2-nistp256 ' . static::$gitlabServer,
+        $this->optionallyExecuteCommand('ssh-keyscan -t ecdsa-sha2-nistp256 '.static::$gitlabServer,
             function ($type, $buffer) use (&$knownHost) {
                 $knownHost = trim($buffer);
             }
         );
 
-        $sshRemote = 'ssh ' . static::$remoteSshCredentials;
+        $sshRemote = 'ssh '.static::$remoteSshCredentials;
 
         $remoteKnownHosts = '';
-        $this->optionallyExecuteCommand($sshRemote . ' "cat ~/.ssh/known_hosts"', function ($type, $buffer) use (&$remoteKnownHosts) {
+        $this->optionallyExecuteCommand($sshRemote.' "cat ~/.ssh/known_hosts"', function ($type, $buffer) use (&$remoteKnownHosts) {
             $remoteKnownHosts = $buffer;
         });
 
         if (!Str::contains($remoteKnownHosts, $knownHost)) {
-            $this->optionallyExecuteCommand($sshRemote . " 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
+            $this->optionallyExecuteCommand($sshRemote." 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
         } else {
             $this->appendEchoLine('Remote server already know gitlab host.');
         }
@@ -402,7 +427,7 @@ PHP
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy:prepare {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
             function ($type, $buffer) {
-                $this->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->appendEchoLine($type.' > '.trim($buffer));
             }
         );
     }
@@ -436,7 +461,7 @@ PHP
         $appKey = trim($output->fetch());
 
         $envReplaces = array_merge($mail, [
-            'APP_KEY=' => 'APP_KEY=' . $appKey,
+            'APP_KEY=' => 'APP_KEY='.$appKey,
             'APP_URL=' => $this->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
 
             'DB_DATABASE=' => $this->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
@@ -454,10 +479,10 @@ PHP
         if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
             $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
             $sharedDir = "{{DEPLOY_BASE_DIR}}/shared";
-            $this->optionallyExecuteCommand("ssh " . static::$remoteSshCredentials . " 'test -d $sharedDir || mkdir $sharedDir'");
-            $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
+            $this->optionallyExecuteCommand("ssh ".static::$remoteSshCredentials." 'test -d $sharedDir || mkdir $sharedDir'");
+            $this->optionallyExecuteCommand("scp ".self::$remoteScpOptions." \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
                 function ($type, $buffer) {
-                    $this->appendEchoLine($type . ' > ' . trim($buffer));
+                    $this->appendEchoLine($type.' > '.trim($buffer));
                 }
             );
         }
@@ -485,7 +510,7 @@ PHP
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
-                $this->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->appendEchoLine($type.' > '.trim($buffer));
             }
         );
     }
@@ -512,7 +537,7 @@ PHP
             $shouldPutAliases = $this->confirm('Are you want to add aliases for laravel artisan command?', false);
         }
 
-        $filePath = __DIR__ . '/../../examples/.bash_aliases';
+        $filePath = __DIR__.'/../../examples/.bash_aliases';
 
         if (!$shouldPutAliases && $this->isOnlyPrint()) {
             $bashAliases = $this->replace(file_get_contents($filePath));
@@ -537,13 +562,13 @@ if [ -f  ~/.bash_aliases ];
     then . ~/.bash_aliases
 fi
 SHELL;
-            $this->optionallyExecuteCommand('ssh ' . static::$remoteSshCredentials . " 'echo \"$aliasesLoader\" >> ~/.bashrc'");
+            $this->optionallyExecuteCommand('ssh '.static::$remoteSshCredentials." 'echo \"$aliasesLoader\" >> ~/.bashrc'");
         }
 
         $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-        $this->optionallyExecuteCommand("scp " . self::$remoteScpOptions . " \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
+        $this->optionallyExecuteCommand("scp ".self::$remoteScpOptions." \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
             function ($type, $buffer) {
-                $this->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->appendEchoLine($type.' > '.trim($buffer));
             }
         );
     }
@@ -581,14 +606,14 @@ SHELL;
 
     private function newSection(string $name): void
     {
-        $string = strip_tags($this->step++ . '. ' . Str::ucfirst($name));
+        $string = strip_tags($this->step++.'. '.Str::ucfirst($name));
 
         $length = Str::length($string) + 12;
 
         $this->appendEchoLine('');
 
         $this->appendEchoLine(str_repeat('*', $length));
-        $this->appendEchoLine('*     ' . $string . '     *');
+        $this->appendEchoLine('*     '.$string.'     *');
         $this->appendEchoLine(str_repeat('*', $length));
 
         $this->appendEchoLine('');
@@ -609,7 +634,7 @@ SHELL;
 
     private function writeToLogFile(?string $content): void
     {
-        fwrite($this->logFileResource, $content . PHP_EOL);
+        fwrite($this->logFileResource, $content.PHP_EOL);
     }
 
     // --------------- content processing --------------
@@ -639,7 +664,7 @@ SHELL;
             return;
         }
 
-        $this->line('running command...' . PHP_EOL);
+        $this->line('running command...'.PHP_EOL);
         $process = Process::fromShellCommandline($command);
         $process->run($callable);
     }
@@ -669,7 +694,7 @@ SHELL;
         try {
             $content = file_get_contents($filename);
         } catch (ErrorException $exception) {
-            $this->appendEchoLine('Failed to open file: ' . $filename, 'error');
+            $this->appendEchoLine('Failed to open file: '.$filename, 'error');
             $content = null;
         }
 
@@ -684,5 +709,10 @@ SHELL;
     private function isForce(): bool
     {
         return boolval($this->option('force'));
+    }
+
+    private function getStageName(): string
+    {
+        return $this->argument('stage');
     }
 }

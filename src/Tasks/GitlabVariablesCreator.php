@@ -6,8 +6,9 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 
 use Gitlab;
 use GrahamCampbell\GitLab\GitLabManager;
-use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use Illuminate\Support\Arr;
+use HexideDigital\GitlabDeploy\Gitlab\GitlabProject;
+use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -15,77 +16,53 @@ final class GitlabVariablesCreator
 {
     private const SEPARATOR = '%';
 
-    private Gitlab\Client|GitLabManager $client;
+    private Gitlab\Client|GitLabManager $gitLabManager;
 
-    private string $projectId;
-    private string $token;
-    private string $url;
-    private string $envScope;
-    private array $variablesMap;
-    private Collection $currentProjectVariables;
-    private Gitlab\Api\Projects $projects;
+    private GitlabProject $project;
 
-    private array $fails = [];
+    private VariableBag $variableBag;
+    private Collection $projectVariables;
+    private Gitlab\Api\Projects $projectsApi;
+
+    private array $failMassages = [];
     private array $messages = [];
 
     public function __construct(
-        GitLabManager $client,
+        GitLabManager $gitLabManager,
     )
     {
-        $this->client = $client;
+        $this->gitLabManager = $gitLabManager;
     }
 
-    public function setProjectId(string $projectId): GitlabVariablesCreator
+    public function setProject(GitlabProject $project): GitlabVariablesCreator
     {
-        $this->projectId = $projectId;
+        $this->project = $project;
 
         return $this;
     }
 
-    public function setToken(string $token): GitlabVariablesCreator
+    public function setVariableBag(VariableBag $variableBag): GitlabVariablesCreator
     {
-        $this->token = $token;
+        $this->variableBag = $variableBag;
 
         return $this;
     }
 
-    public function setUrl(string $url): GitlabVariablesCreator
-    {
-        $this->url = $url;
-
-        return $this;
-    }
-
-    public function setEnvScope(string $envScope): GitlabVariablesCreator
-    {
-        $this->envScope = $envScope;
-
-        return $this;
-    }
-
-    public function setCurrentProjectVariables(array $variableMap): GitlabVariablesCreator
-    {
-        $this->variablesMap = $variableMap;
-
-        return $this;
-    }
-
-    /** @throws GitlabDeployException */
     public function execute(): void
     {
         $this->prepareClient();
 
-        $this->projects = $this->client->projects();
+        $this->projectsApi = $this->gitLabManager->projects();
 
-        $this->currentProjectVariables = $this->getProjectVariables();
+        $this->projectVariables = $this->getProjectVariables();
 
         $this->processVariables();
         $this->setDeployKeys();
     }
 
-    public function getFails(): array
+    public function getFailMassages(): array
     {
-        return $this->fails;
+        return $this->failMassages;
     }
 
     public function getMessages(): array
@@ -93,28 +70,19 @@ final class GitlabVariablesCreator
         return $this->messages;
     }
 
-    /** @throws GitlabDeployException */
     private function prepareClient(): void
     {
-        if (empty($this->token)) {
-            throw new GitlabDeployException('Provide api token for gitlab');
-        }
-
-        if (empty($this->url)) {
-            throw new GitlabDeployException('Provide domain url for gitlab');
-        }
-
-        $this->client->setUrl($this->url);
-        $this->client->authenticate($this->token, Gitlab\Client::AUTH_HTTP_TOKEN);
+        $this->gitLabManager->setUrl($this->project->token);
+        $this->gitLabManager->authenticate($this->project->token, Gitlab\Client::AUTH_HTTP_TOKEN);
     }
 
     private function processVariables(): void
     {
-        foreach (Arr::except($this->variablesMap, ['SSH_PUB_KEY']) as $key => $value) {
+        foreach ($this->variableBag->except(['SSH_PUB_KEY']) as $variable) {
             try {
-                $this->createOrUpdateVariable($key, $value);
+                $this->createOrUpdateVariable($variable);
             } catch (\Exception $exception) {
-                $this->fails[] = 'Failed to create variable ['.$key.'].'
+                $this->failMassages[] = 'Failed to create variable ['.$variable->key.'].'
                     .' Exception message ['.$exception->getMessage().'].'
                     .' Exception class ['.get_class($exception).']';
             }
@@ -123,17 +91,17 @@ final class GitlabVariablesCreator
 
     private function setDeployKeys(): void
     {
-        $publicKey = Arr::get($this->variablesMap, 'SSH_PUB_KEY');
-
         try {
-            $this->client->projects()->addDeployKey(
-                $this->projectId,
-                $this->getServerNameFromPublicKey($publicKey),
-                $publicKey,
-                false
+            $publicKeyVariable = $this->variableBag->get('SSH_PUB_KEY');
+
+            $this->gitLabManager->projects()->addDeployKey(
+                project_id: $this->project->id,
+                title: $this->getServerNameFromPublicKey($publicKeyVariable->key),
+                key: $publicKeyVariable->key,
+                canPush: false
             );
         } catch (\Exception $exception) {
-            $this->fails[] = 'Failed to append deploy key.'
+            $this->failMassages[] = 'Failed to append deploy key.'
                 .' Exception message ['.$exception->getMessage().'].'
                 .' Exception class ['.get_class($exception).']';
         }
@@ -146,54 +114,56 @@ final class GitlabVariablesCreator
         return Str::of($publicKey)->explode(' ')->last();
     }
 
-    private function createOrUpdateVariable(string $key, ?string $value): void
+    private function createOrUpdateVariable(Variable $variable): void
     {
-        $value = !is_null($value) ? $value : '';
-
-        if ($this->isVariablePresent($key)) {
-            $this->updateVariable($key, $value);
+        if ($this->isVariablePresent($variable)) {
+            $this->updateVariable($variable);
 
             return;
         }
 
-        $this->createVariable($key, $value);
+        $this->createVariable($variable);
     }
 
-    private function createVariable(string $key, string $value): void
+    private function createVariable(Variable $variable): void
     {
-        $this->projects->addVariable(
-            $this->projectId, $key, $value, false, $this->envScope, [
-                'filter' => ['environment_scope' => $this->envScope],
-            ]
+        $this->projectsApi->addVariable(
+            $this->project->id,
+            $variable->key,
+            $variable->value,
+            false,
+            $variable->scope,
+            ['filter' => ['environment_scope' => $variable->scope]]
         );
     }
 
-    private function updateVariable(string $key, string $value): void
+    private function updateVariable(Variable $variable): void
     {
-        $this->projects->updateVariable(
-            $this->projectId, $key, $value, false, $this->envScope, [
-                'filter' => ['environment_scope' => $this->envScope],
-            ]
+        $this->projectsApi->updateVariable(
+            $this->project->id,
+            $variable->key,
+            $variable->value,
+            false,
+            $variable->scope,
+            ['filter' => ['environment_scope' => $variable->scope]]
         );
     }
 
-    private function isVariablePresent(string $key): bool
+    private function isVariablePresent(Variable $variable): bool
     {
-        return $this->currentProjectVariables->has($this->makeKey($key));
+        return $this->projectVariables->has($this->makeKey($variable->key, $variable->scope));
     }
 
     private function getProjectVariables(): Collection
     {
-        return collect($this->projects->variables($this->projectId))
-            ->mapWithKeys(fn(array $variable) => [
+        return collect($this->projectsApi->variables($this->project->id))
+            ->mapWithKeys(fn (array $variable) => [
                 $this->makeKey($variable['key'], $variable['environment_scope']) => $variable,
             ]);
     }
 
-    private function makeKey(string $key, string $envScope = null): string
+    private function makeKey(string $key, string $envScope): string
     {
-        $envScope = $envScope ?: $this->envScope;
-
         return $key.self::SEPARATOR.$envScope;
     }
 }

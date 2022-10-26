@@ -6,10 +6,10 @@ namespace HexideDigital\GitlabDeploy\DeployOptions;
 
 class Options extends OptionsContainer
 {
-    public string $gitUrl;
-    public string $baseDir;
-    public string $binPhp;
-    public string $binComposer;
+    public readonly string $gitUrl;
+    public readonly string $baseDir;
+    public readonly string $binPhp;
+    public readonly string $binComposer;
 
     public function makeFromSource(array $source): void
     {
