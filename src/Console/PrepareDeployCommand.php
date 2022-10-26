@@ -11,6 +11,7 @@ use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Gitlab\GitlabProject;
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\Tasks\GitlabVariablesCreator;
 use Illuminate\Console\Command;
@@ -34,10 +35,8 @@ class PrepareDeployCommand extends Command
     // ---------------------
     // same static or constants, no editable
     // ---------------------
-    protected static string $logTimeFormat = 'Y-m-d-H-i-s';
     // in future can be moved to config file
     protected static string $gitlabServer = 'gitlab.hexide-digital.com,188.34.141.230';
-    protected static string $logFileName = '.deploy/dep-log.';
     protected static string $deployYamlFile = '.deploy/deploy-prepare.yml';
 
 
@@ -60,8 +59,7 @@ class PrepareDeployCommand extends Command
     // ---------------------
     // runtime defined properties
     // ---------------------
-    /** @var resource */
-    protected $logFileResource;
+    protected BasicLogger $logger;
     protected Replacements $replacements;
     protected ParseConfiguration $accessParser;
     protected GitlabVariablesCreator $gitlabVariablesCreator;
@@ -130,7 +128,7 @@ class PrepareDeployCommand extends Command
             $this->printError('Error happened! See laravel log file.', $exception);
 
         } finally {
-            fclose($this->logFileResource);
+            $this->logger->closeFile();
             $this->newLine();
         }
 
@@ -143,13 +141,14 @@ class PrepareDeployCommand extends Command
 
     private function printError(string $error, \Exception $exception): void
     {
-        $this->appendEchoLine($error, 'error');
-        $this->appendEchoLine($exception->getMessage(), 'error');
+        $this->writeLogLine($error, 'error');
+        $this->writeLogLine($exception->getMessage(), 'error');
     }
 
     private function createLogFile()
     {
-        $this->logFileResource = fopen($this->laravel->basePath(static::$logFileName.date(static::$logTimeFormat).'.log'), 'w');
+        $this->logger = new BasicLogger();
+        $this->logger->openFile();
     }
 
     /**
@@ -288,7 +287,7 @@ PHP
             $this->optionallyExecuteCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
         }
 
-        $this->appendEchoLine('cat {{IDENTITY_FILE}}', 'info');
+        $this->writeLogLine('cat {{IDENTITY_FILE}}', 'info');
         $this->gitlabVariablesBag['SSH_PRIVATE_KEY'] = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
     }
 
@@ -301,7 +300,7 @@ PHP
     private function task_copySshKeysOnRemoteHost(): void
     {
         $this->newSection('copy ssh to server - public key to remote host');
-        $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+        $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
 
         $this->optionallyExecuteCommand('ssh-copy-id '.static::$remoteSshCredentials);
     }
@@ -320,7 +319,7 @@ PHP
             $this->gitlabVariablesBag['SSH_PUB_KEY'] = $buffer;
         });
 
-        $this->appendEchoLine('Remote pub-key: '.$this->gitlabVariablesBag['SSH_PUB_KEY'], 'info');
+        $this->writeLogLine('Remote pub-key: '.$this->gitlabVariablesBag['SSH_PUB_KEY'], 'info');
     }
 
     /** @throws GitlabDeployException */
@@ -337,19 +336,19 @@ PHP
         }
 
         foreach ($this->gitlabVariablesBag->only($this->gitlabVariablesBag->printAloneKeys()) as $variable) {
-            $this->appendEchoLine($variable->key, 'comment');
-            $this->appendEchoLine($variable->value);
+            $this->writeLogLine($variable->key, 'comment');
+            $this->writeLogLine($variable->value);
         }
 
         $this->table(['key', 'value'], $rows);
 
-        $this->appendEchoLine("tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys", 'comment');
+        $this->writeLogLine("tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys", 'comment');
 
         if ($this->isOnlyPrint() || !$this->confirmAction('Update gitlab variables?')) {
             return;
         }
 
-        $this->appendEchoLine('Connecting to gitlab and creating variables...');
+        $this->writeLogLine('Connecting to gitlab and creating variables...');
 
         $gitlabProject = new GitlabProject(
             id: $this->accessParser->projectId,
@@ -364,16 +363,16 @@ PHP
         $creator->execute();
 
         foreach ($creator->getMessages() as $message) {
-            $this->appendEchoLine($message, 'comment');
+            $this->writeLogLine($message, 'comment');
         }
 
         $fails = $creator->getFailMassages();
 
-        $this->appendEchoLine('Gitlab variables created with "'.sizeof($fails).'" fail messages');
+        $this->writeLogLine('Gitlab variables created with "'.sizeof($fails).'" fail messages');
 
         if (!empty($fails)) {
             foreach ($fails as $fail) {
-                $this->appendEchoLine($fail, 'error');
+                $this->writeLogLine($fail, 'error');
             }
         }
     }
@@ -403,7 +402,7 @@ PHP
         if (!Str::contains($remoteKnownHosts, $knownHost)) {
             $this->optionallyExecuteCommand($sshRemote." 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
         } else {
-            $this->appendEchoLine('Remote server already know gitlab host.');
+            $this->writeLogLine('Remote server already know gitlab host.');
         }
     }
 
@@ -413,7 +412,7 @@ PHP
 
         $env = $this->replace('{{DEPLOY_PHP_ENV}}');
 
-        $this->appendEchoLine($env);
+        $this->writeLogLine($env);
 
         $this->putContentToFile(static::$deployPhpFile, [
             '/*CI_ENV*/' => $env,
@@ -427,7 +426,7 @@ PHP
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy:prepare {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
             function ($type, $buffer) {
-                $this->appendEchoLine($type.' > '.trim($buffer));
+                $this->writeLogLine($type.' > '.trim($buffer));
             }
         );
     }
@@ -441,7 +440,7 @@ PHP
         $envBackup = $this->replace('{{PROJ_DIR}}/.env.backup');
         $envHost = $envOriginal;
 
-        $this->appendEchoLine('Backup original env file and create for host', 'comment');
+        $this->writeLogLine('Backup original env file and create for host', 'comment');
         $this->optionallyExecuteCommand("cp $envOriginal $envBackup");
         $this->optionallyExecuteCommand("cp $envExample $envHost");
 
@@ -469,25 +468,25 @@ PHP
             'DB_PASSWORD=' => $this->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
         ]);
 
-        $this->appendEchoLine('Filling env file for host', 'comment');
-        $this->appendEchoLine(var_export($envReplaces, true));
+        $this->writeLogLine('Filling env file for host', 'comment');
+        $this->writeLogLine(var_export($envReplaces, true));
 
         $this->putContentToFile($envHost, $envReplaces);
 
-        $this->appendEchoLine('Coping to remote', 'comment');
+        $this->writeLogLine('Coping to remote', 'comment');
 
         if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
-            $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+            $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
             $sharedDir = "{{DEPLOY_BASE_DIR}}/shared";
             $this->optionallyExecuteCommand("ssh ".static::$remoteSshCredentials." 'test -d $sharedDir || mkdir $sharedDir'");
             $this->optionallyExecuteCommand("scp ".self::$remoteScpOptions." \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
                 function ($type, $buffer) {
-                    $this->appendEchoLine($type.' > '.trim($buffer));
+                    $this->writeLogLine($type.' > '.trim($buffer));
                 }
             );
         }
 
-        $this->appendEchoLine('Restore original env file', 'comment');
+        $this->writeLogLine('Restore original env file', 'comment');
         $this->optionallyExecuteCommand("cp $envHost $envHost.host");
         $this->optionallyExecuteCommand("cp $envBackup $envOriginal");
     }
@@ -503,21 +502,21 @@ PHP
         if ($fileNotExists) {
             // option only print disabled
             // and file not copied
-            $this->appendEchoLine('The deployment command was skipped.', 'error');
+            $this->writeLogLine('The deployment command was skipped.', 'error');
 
             return;
         }
 
         $this->optionallyExecuteCommand('php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
-                $this->appendEchoLine($type.' > '.trim($buffer));
+                $this->writeLogLine($type.' > '.trim($buffer));
             }
         );
     }
 
     private function task_rollbackDeployFileContent(): void
     {
-        $this->appendEchoLine('Rollback deploy file content', 'comment');
+        $this->writeLogLine('Rollback deploy file content', 'comment');
 
         file_put_contents(static::$deployPhpFile, $this->deployInitialContent);
     }
@@ -565,10 +564,10 @@ SHELL;
             $this->optionallyExecuteCommand('ssh '.static::$remoteSshCredentials." 'echo \"$aliasesLoader\" >> ~/.bashrc'");
         }
 
-        $this->appendEchoLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+        $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
         $this->optionallyExecuteCommand("scp ".self::$remoteScpOptions." \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
             function ($type, $buffer) {
-                $this->appendEchoLine($type.' > '.trim($buffer));
+                $this->writeLogLine($type.' > '.trim($buffer));
             }
         );
     }
@@ -577,7 +576,7 @@ SHELL;
     {
         $this->newSection('IDEA Setup and helpers');
 
-        $this->appendEchoLine($this->replace("
+        $this->writeLogLine($this->replace("
     <info>- mount path</info>
     {{DEPLOY_BASE_DIR}}
 
@@ -610,31 +609,18 @@ SHELL;
 
         $length = Str::length($string) + 12;
 
-        $this->appendEchoLine('');
+        $this->writeLogLine('');
 
-        $this->appendEchoLine(str_repeat('*', $length));
-        $this->appendEchoLine('*     '.$string.'     *');
-        $this->appendEchoLine(str_repeat('*', $length));
+        $this->writeLogLine(str_repeat('*', $length));
+        $this->writeLogLine('*     '.$string.'     *');
+        $this->writeLogLine(str_repeat('*', $length));
 
-        $this->appendEchoLine('');
+        $this->writeLogLine('');
     }
 
-    private function appendEchoLine(?string $content, string $style = null): void
+    private function writeLogLine(?string $content, string $style = null): void
     {
-        $content = $this->replace($content);
-
-        $this->writeToLogFile(strip_tags($content ?: ''));
-        $this->writeToConsole($content, $style);
-    }
-
-    private function writeToConsole(?string $content, string $style = null): void
-    {
-        $this->line($content ?: '', $style);
-    }
-
-    private function writeToLogFile(?string $content): void
-    {
-        fwrite($this->logFileResource, $content.PHP_EOL);
+        $this->logger->appendEchoLine($this->replace($content), $style);
     }
 
     // --------------- content processing --------------
@@ -658,7 +644,7 @@ SHELL;
     {
         $command = $this->replace($command);
 
-        $this->appendEchoLine($command, 'info');
+        $this->writeLogLine($command, 'info');
 
         if (!$forceExecute && $this->isOnlyPrint()) {
             return;
@@ -685,7 +671,7 @@ SHELL;
 
             file_put_contents($file, $content);
         } catch (ErrorException $exception) {
-            $this->appendEchoLine($exception->getMessage(), 'error');
+            $this->writeLogLine($exception->getMessage(), 'error');
         }
     }
 
@@ -694,7 +680,7 @@ SHELL;
         try {
             $content = file_get_contents($filename);
         } catch (ErrorException $exception) {
-            $this->appendEchoLine('Failed to open file: '.$filename, 'error');
+            $this->writeLogLine('Failed to open file: '.$filename, 'error');
             $content = null;
         }
 
