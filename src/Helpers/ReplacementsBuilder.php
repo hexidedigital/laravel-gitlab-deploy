@@ -48,6 +48,7 @@ final class ReplacementsBuilder
                 [
                     '{{PROJ_DIR}}' => base_path(),
                     '{{CI_COMMIT_REF_NAME}}' => $this->stage->name,
+                    '{{STAGE}}' => $this->stage->name,
 
                     '{{DEPLOY_BASE_DIR}}' => $this->replacements->replace($this->stage->options->baseDir),
                 ],

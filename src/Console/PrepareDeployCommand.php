@@ -36,21 +36,9 @@ class PrepareDeployCommand extends Command
     protected $name = 'deploy:gitlab';
     protected $description = 'Command to prepare your deploy';
 
-
-    // ---------------------
-    // same static or constants, no editable
-    // ---------------------
-    // in future can be moved to config file
-    protected static string $gitlabServer = 'gitlab.hexide-digital.com,188.34.141.230';
-    protected static string $deployYamlFile = '.deploy/deploy-prepare.yml';
-
-
     // ---------------------
     // static patterns for replaces
     // ---------------------
-    // replaces after step 2
-    protected static string $deployPhpFile = '{{PROJ_DIR}}/deploy.php';
-    protected static string $sshDirPath = '{{PROJ_DIR}}/.ssh/{{CI_COMMIT_REF_NAME}}';
     // replaces after step 3
     protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
     protected static string $remoteScpOptions = '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}';
@@ -178,7 +166,7 @@ class PrepareDeployCommand extends Command
     {
         $parser = app(ParseConfiguration::class);
 
-        $parser->parseFile(base_path(static::$deployYamlFile));
+        $parser->parseFile(config('gitlab-deploy.config-file'));
 
         $this->configurations = $parser->configurations;
         $this->stage = $parser->configurations->stageBag->get($this->getStageName());
@@ -192,14 +180,17 @@ class PrepareDeployCommand extends Command
 
         $this->replacements = $builder->build()->getReplacements();
 
-        static::$sshDirPath = $this->replacements->replace(static::$sshDirPath);
+        $filePath = $this->replacements->replace(
+            \str(config('gitlab-deploy.ssh.folder'))
+                ->finish('/')
+                ->append(config('gitlab-deploy.ssh.key_name'))
+        );
 
         $this->replacements->mergeReplaces([
-            '{{IDENTITY_FILE}}' => static::$sshDirPath.'/id_rsa',
-            '{{IDENTITY_FILE_PUB}}' => static::$sshDirPath.'/id_rsa.pub',
+            '{{IDENTITY_FILE}}' => $filePath,
+            '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
         ]);
 
-        static::$deployPhpFile = $this->replacements->replace(static::$deployPhpFile);
         static::$remoteSshCredentials = $this->replacements->replace(static::$remoteSshCredentials);
     }
 
@@ -215,7 +206,7 @@ class PrepareDeployCommand extends Command
      */
     private function task_saveInitialContentOfDeployFile(): string
     {
-        $initialContent = $this->getContent(static::$deployPhpFile);
+        $initialContent = $this->getContent(config('gitlab-deploy.deployer-php'));
 
         if (empty($initialContent)) {
             throw new GitlabDeployException('Deploy file is empty or not exists.');
@@ -228,7 +219,7 @@ class PrepareDeployCommand extends Command
     {
         $this->newSection('generate ssh keys - private key to gitlab (localhost)');
 
-        $this->forceExecuteCommand('mkdir -p '.static::$sshDirPath);
+        $this->forceExecuteCommand('mkdir -p '. $this->replace(config('gitlab-deploy.ssh.folder')));
 
         if (!$this->isSshFilesExits() || $this->confirmAction('Should generate and override existed key?')) {
             $option = $this->isSshFilesExits() ? '-y' : '';
@@ -236,7 +227,16 @@ class PrepareDeployCommand extends Command
         }
 
         $this->writeLogLine('cat {{IDENTITY_FILE}}', 'info');
-        $this->gitlabVariablesBag['SSH_PRIVATE_KEY'] = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
+
+        $content = $this->getContent($this->replace('{{IDENTITY_FILE}}'));
+
+        $pubKeyVariable = new Variable(
+            key: 'SSH_PRIVATE_KEY',
+            scope: $this->stage->name,
+            value: $content
+        );
+
+        $this->gitlabVariablesBag->add($pubKeyVariable->key, $pubKeyVariable);
     }
 
     private function isSshFilesExits(): bool
@@ -341,7 +341,7 @@ class PrepareDeployCommand extends Command
 
         $knownHost = '';
         $this->optionallyExecuteCommand(
-            'ssh-keyscan -t ecdsa-sha2-nistp256 '.static::$gitlabServer,
+            'ssh-keyscan -t ecdsa-sha2-nistp256 '.config('gitlab-deploy.gitlab-server'),
             function ($type, $buffer) use (&$knownHost) {
                 $knownHost = trim($buffer);
             }
@@ -372,7 +372,7 @@ class PrepareDeployCommand extends Command
 
         $this->writeLogLine($env);
 
-        $this->putContentToFile(static::$deployPhpFile, [
+        $this->putContentToFile(config('gitlab-deploy.deployer-php'), [
             '/*CI_ENV*/' => $env,
             "~/.ssh/id_rsa" => $this->replace("{{IDENTITY_FILE}}"),
         ]);
@@ -481,7 +481,7 @@ class PrepareDeployCommand extends Command
     {
         $this->writeLogLine('Rollback deploy file content', 'comment');
 
-        $this->filesystem->put(static::$deployPhpFile, $this->deployInitialContent);
+        $this->filesystem->put(config('gitlab-deploy.deployer-php'), $this->deployInitialContent);
     }
 
     private function task_insertCustomAliasesOnRemoteHost(): void
