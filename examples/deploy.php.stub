@@ -3,7 +3,7 @@
 /**
  * Keep this version number to manage file versions in projects
  *
- * @version 1.1
+ * @version 1.2
  */
 
 namespace Deployer;
@@ -16,6 +16,8 @@ require 'contrib/rsync.php';
  */
 
 // prepare variables from environment CI_ENV
+$IDENTITY_FILE = '~/.ssh/id_rsa';
+
 $CI_REPOSITORY_URL = getenv('CI_REPOSITORY_URL');
 $CI_COMMIT_REF_NAME = getenv('CI_COMMIT_REF_NAME');
 $BIN_PHP = getenv('BIN_PHP');
@@ -33,10 +35,11 @@ $SSH_PORT = getenv('SSH_PORT');
 
 // TODO: Project name
 set('application', 'AdminLTE');
+// github token
 // TODO: CHANGE OAUTH TOKEN
 set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
 
-// Project repository
+// Project git repository url
 set('repository', $CI_REPOSITORY_URL);
 
 // [Optional] Allocate tty for git clone. Default value is false.
@@ -44,7 +47,6 @@ set('git_tty', false);
 set('allow_anonymous_stats', false);
 set('keep_releases', 1);
 
-//github token
 set('composer_options', '--verbose --prefer-dist --no-progress --no-interaction --optimize-autoloader');
 
 
@@ -83,7 +85,7 @@ host($DEPLOY_SERVER)
     ->set('http_user', $DEPLOY_USER)
     ->set('bin/php', $BIN_PHP)
     ->set('bin/composer', $BIN_COMPOSER)
-    ->setIdentityFile('~/.ssh/id_rsa')
+    ->setIdentityFile($IDENTITY_FILE)
     ->setSshArguments([
         '-o UserKnownHostsFile=/dev/null',
         '-o StrictHostKeyChecking=no',
@@ -105,6 +107,7 @@ before('deploy:shared', 'rsync');
 
 before('artisan:migrate', function () {
     $releaseNumber = intval(get('release_name'));
+   // 3 attempts to successfully deploy and migrate
     if ($releaseNumber > 3) {
         invoke('artisan:migrate:status');
     }
@@ -122,8 +125,8 @@ after('deploy:unlock', 'artisan:up');
 
 /*
  * Note:
- * `deploy` task copied from `recipe/laravel.php`
- * changes - removed tasks for caching
+ * `deploy` task copied from `recipe/laravel.php` file
+ * and removed tasks for caching
  */
 desc('Deploys your project');
 task('deploy', [
