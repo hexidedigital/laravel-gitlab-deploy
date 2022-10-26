@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\DeployOptions;
+namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
 use Illuminate\Contracts\Support\Arrayable;
 
-abstract class OptionsContainer implements Arrayable
+abstract class BaseOption implements Arrayable
 {
     protected array $source;
 
@@ -14,10 +14,10 @@ abstract class OptionsContainer implements Arrayable
     {
         $this->source = $source;
 
-        $this->makeFromSource($source);
+        $this->make($source);
     }
 
-    abstract public function makeFromSource(array $source): void;
+    abstract public function make(array $source): void;
 
     public function isEmpty(): bool
     {

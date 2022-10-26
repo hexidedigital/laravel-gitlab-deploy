@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\DeployOptions;
+namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-final class Database extends OptionsContainer
+final class Database extends BaseOption
 {
     public readonly string $name;
     public readonly string $login;
     public readonly string $password;
 
-    public function makeFromSource(array $source): void
+    public function make(array $source): void
     {
         $this->name = data_get($source, 'database');
         $this->login = data_get($source, 'username');

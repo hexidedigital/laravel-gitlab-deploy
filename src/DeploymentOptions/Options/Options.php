@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\DeployOptions;
+namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Options extends OptionsContainer
+class Options extends BaseOption
 {
     public readonly string $gitUrl;
     public readonly string $baseDir;
     public readonly string $binPhp;
     public readonly string $binComposer;
 
-    public function makeFromSource(array $source): void
+    public function make(array $source): void
     {
         $this->gitUrl = data_get($source, 'git-url');
         $this->baseDir = data_get($source, 'base-dir-pattern');

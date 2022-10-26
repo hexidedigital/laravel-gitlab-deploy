@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\DeployOptions;
+namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Mail extends OptionsContainer
+class Mail extends BaseOption
 {
-    public ?string $name;
-    public ?string $login;
-    public ?string $password;
+    public readonly string $name;
+    public readonly string $login;
+    public readonly string $password;
 
-    public function makeFromSource(array $source): void
+    public function make(array $source): void
     {
         $this->name = data_get($source, 'hostname');
         $this->login = data_get($source, 'username');

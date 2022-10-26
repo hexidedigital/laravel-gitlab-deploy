@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\DeployOptions;
+namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Server extends OptionsContainer
+class Server extends BaseOption
 {
     public string $domain;
     public string $host;
@@ -12,7 +12,7 @@ class Server extends OptionsContainer
     public string $password;
     public int $sshPort;
 
-    public function makeFromSource(array $source): void
+    public function make(array $source): void
     {
         $this->domain = data_get($source, 'domain');
         $this->host = data_get($source, 'host');

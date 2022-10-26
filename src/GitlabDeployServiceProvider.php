@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy;
 
 use HexideDigital\GitlabDeploy\Console\PrepareDeployCommand;
-use HexideDigital\GitlabDeploy\Contracts\ParsesConfiguration;
-use HexideDigital\GitlabDeploy\DeployOptions\ParseConfiguration;
 use Illuminate\Support\ServiceProvider;
 
 class GitlabDeployServiceProvider extends ServiceProvider
@@ -16,7 +14,6 @@ class GitlabDeployServiceProvider extends ServiceProvider
     ];
 
     public array $bindings = [
-        ParsesConfiguration::class => ParseConfiguration::class,
     ];
 
     public function register()
@@ -30,7 +27,9 @@ class GitlabDeployServiceProvider extends ServiceProvider
     {
         $this->publishes([
             $this->packagePath('examples/deploy.php.stub') => $this->app->basePath('.deploy.php'),
-            $this->packagePath('examples/deploy-prepare.example.yml') => $this->app->basePath('.deploy/deploy-prepare.yml'),
+            $this->packagePath('examples/deploy-prepare.example.yml') => $this->app->basePath(
+                '.deploy/deploy-prepare.yml'
+            ),
             $this->packagePath('examples/.gitignore.stub') => $this->app->basePath('.deploy/.gitignore'),
         ], 'gitlab-deploy');
 
