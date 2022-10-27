@@ -4,24 +4,27 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Console;
 
-use ErrorException;
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use HexideDigital\GitlabDeploy\Gitlab\Tasks\GitlabVariablesCreator;
-use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use HexideDigital\GitlabDeploy\Executors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\DeployerFileContent;
+use HexideDigital\GitlabDeploy\Tasks\AddGitlabToKnownHostsOnRemoteHost;
+use HexideDigital\GitlabDeploy\Tasks\CopySshKeysOnRemoteHost;
+use HexideDigital\GitlabDeploy\Tasks\CreateProjectVariablesOnGitlab;
 use HexideDigital\GitlabDeploy\Tasks\GenerateSshKeysOnLocalhost;
+use HexideDigital\GitlabDeploy\Tasks\GenerateSshKeysOnRemoteHost;
 use HexideDigital\GitlabDeploy\Tasks\HelpfulSuggestion;
+use HexideDigital\GitlabDeploy\Tasks\InsertCustomAliasesOnRemoteHost;
+use HexideDigital\GitlabDeploy\Tasks\PrepareAndCopyDotEnvFileForRemote;
+use HexideDigital\GitlabDeploy\Tasks\PutNewVariablesToDeployFile;
+use HexideDigital\GitlabDeploy\Tasks\RunFirstDeployCommand;
 use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 class PrepareDeployCommand extends Command
@@ -31,13 +34,6 @@ class PrepareDeployCommand extends Command
     // ---------------------
     protected $name = 'deploy:gitlab';
     protected $description = 'Command to prepare your deploy';
-
-    // ---------------------
-    // static patterns for replaces
-    // ---------------------
-    // replaces after step 3
-    protected static string $remoteSshCredentials = '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"';
-    protected static string $remoteScpOptions = '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}';
 
 
     // ---------------------
@@ -52,6 +48,7 @@ class PrepareDeployCommand extends Command
     protected readonly DeployerState $state;
 
     protected readonly BasicLogger $logger;
+    protected readonly Executor $executor;
 
 
     // --------------- command info --------------
@@ -66,7 +63,6 @@ class PrepareDeployCommand extends Command
     protected function getOptions(): array
     {
         return [
-            new InputOption('force', 'f', InputOption::VALUE_NONE, 'Confirm all choices and force all commands'),
             new InputOption(
                 'aliases',
                 null,
@@ -84,7 +80,8 @@ class PrepareDeployCommand extends Command
 
     public function __construct(
         Filesystem $filesystem,
-    ) {
+    )
+    {
         parent::__construct();
 
         $this->filesystem = $filesystem;
@@ -102,27 +99,43 @@ class PrepareDeployCommand extends Command
             $this->state->prepare($this->getStageName());
 
             // begin of process
-            $this->executeTask(GenerateSshKeysOnLocalhost::class);
+            $this->executor = new Executor(
+                $this->logger,
+                $this->state->getReplacements(),
+                $this->isOnlyPrint(),
+            );
 
-            $this->task_copySshKeysOnRemoteHost();
-            $this->task_generateSshKeysOnRemoteHost();
+            $prepareTasks = [
+                GenerateSshKeysOnLocalhost::class,
+                CopySshKeysOnRemoteHost::class,
+                GenerateSshKeysOnRemoteHost::class,
+                CreateProjectVariablesOnGitlab::class,
+                AddGitlabToKnownHostsOnRemoteHost::class,
+            ];
 
-            $this->task_createProjectVariablesOnGitlab();
-            $this->task_addGitlabToKnownHostsOnRemoteHost();
+            foreach ($prepareTasks as $task) {
+                $this->executeTask($task);
+            }
 
-            // $this->task_runDeployPrepareCommand();
+            $deployerTasks = [
+                PutNewVariablesToDeployFile::class,
+                PrepareAndCopyDotEnvFileForRemote::class,
+                RunFirstDeployCommand::class,
+            ];
 
             $deployerContent = $this->saveInitialContentOfDeployFile();
-
-            $this->task_putNewVariablesToDeployFile();
-            $this->task_prepareAndCopyDotEnvFileForRemote();
-            $this->task_runFirstDeployCommand();
-
+            foreach ($deployerTasks as $task) {
+                $this->executeTask($task);
+            }
             $this->rollbackDeployFileContent($deployerContent);
 
-            $this->task_insertCustomAliasesOnRemoteHost();
-
-            $this->executeTask(HelpfulSuggestion::class);
+            $finishTasks = [
+                InsertCustomAliasesOnRemoteHost::class,
+                HelpfulSuggestion::class,
+            ];
+            foreach ($finishTasks as $task) {
+                $this->executeTask($task);
+            }
 
         } catch (GitlabDeployException $exception) {
             $finishedWithError = true;
@@ -144,136 +157,14 @@ class PrepareDeployCommand extends Command
 
     private function printError(string $error, Throwable $exception): void
     {
-        $this->writeLogLine($error, 'error');
-        $this->writeLogLine($exception->getMessage(), 'error');
+        $this->logger->appendEchoLine($error, 'error');
+        $this->logger->appendEchoLine($exception->getMessage(), 'error');
     }
 
     private function createLogFile()
     {
         $this->logger = new BasicLogger();
         $this->logger->openFile();
-    }
-
-    // --------------- Tasks --------------
-
-    private function task_copySshKeysOnRemoteHost(): void
-    {
-        $this->newSection('copy ssh to server - public key to remote host');
-        $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-
-        $this->optionallyExecuteCommand('ssh-copy-id '.static::$remoteSshCredentials);
-    }
-
-    private function task_generateSshKeysOnRemoteHost(): void
-    {
-        $this->newSection('Generate generate ssh-keys on remote host');
-
-        $sshRemote = 'ssh '.static::$remoteSshCredentials;
-
-        if ($this->confirmAction('Generate ssh keys on remote host')) {
-            $this->optionallyExecuteCommand($sshRemote.' "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
-        }
-
-        $pubKeyContent = '';
-        $this->optionallyExecuteCommand(
-            $sshRemote.' "cat ~/.ssh/id_rsa.pub"',
-            function ($type, $buffer) use (&$pubKeyContent) {
-                $pubKeyContent = $buffer;
-            }
-        );
-
-        $pubKeyVariable = new Variable(
-            key: 'SSH_PUB_KEY',
-            scope: $this->state->getStage()->name,
-            value: $pubKeyContent
-        );
-
-        $this->state->getGitlabVariablesBag()->add($pubKeyVariable->key, $pubKeyVariable);
-
-        $this->writeLogLine('Remote pub-key: '.$pubKeyVariable->value, 'info');
-    }
-
-    private function task_createProjectVariablesOnGitlab(): void
-    {
-        $this->newSection('gitlab variables');
-
-        // print to file on case if error happens
-        $rows = [];
-        $variableBag = $this->state->getGitlabVariablesBag();
-        foreach ($variableBag->except($variableBag->printAloneKeys()) as $variable) {
-            $this->logger->writeToFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
-
-            $rows[] = [$variable->key, $variable->value];
-        }
-
-        foreach ($variableBag->only($variableBag->printAloneKeys()) as $variable) {
-            $this->writeLogLine($variable->key, 'comment');
-            $this->writeLogLine($variable->value);
-        }
-
-        $this->table(['key', 'value'], $rows);
-
-        $this->writeLogLine(
-            "tip: put SSH_PUB_KEY => Gitlab.project -> Settings -> Repository -> Deploy keys",
-            'comment'
-        );
-
-        if ($this->isOnlyPrint() || !$this->confirmAction('Update gitlab variables?')) {
-            return;
-        }
-
-        $this->writeLogLine('Connecting to gitlab and creating variables...');
-
-        $creator = app(GitlabVariablesCreator::class)
-            ->setProject($this->state->getConfigurations()->project)
-            ->setVariableBag($variableBag);
-
-        $creator->execute();
-
-        foreach ($creator->getMessages() as $message) {
-            $this->writeLogLine($message, 'comment');
-        }
-
-        $fails = $creator->getFailMassages();
-
-        $this->writeLogLine('Gitlab variables created with "'.sizeof($fails).'" fail messages');
-
-        foreach ($fails as $fail) {
-            $this->writeLogLine($fail, 'error');
-        }
-    }
-
-    private function task_addGitlabToKnownHostsOnRemoteHost(): void
-    {
-        $this->newSection('add gitlab to confirmed (known hosts) on remote host');
-
-        if (!$this->confirmAction('Append gitlab IP to remote host known_hosts file?')) {
-            return;
-        }
-
-        $knownHost = '';
-        $this->optionallyExecuteCommand(
-            'ssh-keyscan -t ecdsa-sha2-nistp256 '.config('gitlab-deploy.gitlab-server'),
-            function ($type, $buffer) use (&$knownHost) {
-                $knownHost = trim($buffer);
-            }
-        );
-
-        $sshRemote = 'ssh '.static::$remoteSshCredentials;
-
-        $remoteKnownHosts = '';
-        $this->optionallyExecuteCommand(
-            $sshRemote.' "cat ~/.ssh/known_hosts"',
-            function ($type, $buffer) use (&$remoteKnownHosts) {
-                $remoteKnownHosts = $buffer;
-            }
-        );
-
-        if (!Str::contains($remoteKnownHosts, $knownHost)) {
-            $this->optionallyExecuteCommand($sshRemote." 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
-        } else {
-            $this->writeLogLine('Remote server already know gitlab host.');
-        }
     }
 
     /**
@@ -288,175 +179,11 @@ class PrepareDeployCommand extends Command
         return $deployerContent;
     }
 
-    private function task_putNewVariablesToDeployFile(): void
-    {
-        $this->newSection('putting static env variables to deploy file');
-
-        $env = $this->replace('{{DEPLOY_PHP_ENV}}');
-
-        $this->writeLogLine($env);
-
-        $this->putContentToFile(config('gitlab-deploy.deployer-php'), [
-            '/*CI_ENV*/' => $env,
-            "~/.ssh/id_rsa" => $this->replace("{{IDENTITY_FILE}}"),
-        ]);
-    }
-
-    private function task_runDeployPrepareCommand(): void
-    {
-        $this->newSection('run deploy prepare from localhost');
-
-        $this->optionallyExecuteCommand(
-            'php {{PROJ_DIR}}/vendor/bin/dep deploy:prepare {{CI_COMMIT_REF_NAME}} -v -o branch={{CI_COMMIT_REF_NAME}}',
-            function ($type, $buffer) {
-                $this->writeLogLine($type.' > '.trim($buffer));
-            }
-        );
-    }
-
-    private function task_prepareAndCopyDotEnvFileForRemote(): void
-    {
-        $this->newSection('setup env file for remote server and move to server');
-
-        $envExample = $this->replace('{{PROJ_DIR}}/.env.example');
-        $envOriginal = $this->replace('{{PROJ_DIR}}/.env');
-        $envBackup = $this->replace('{{PROJ_DIR}}/.env.backup');
-        $envHost = $envOriginal;
-
-        $this->writeLogLine('Backup original env file and create for host', 'comment');
-        $this->optionallyExecuteCommand("cp $envOriginal $envBackup");
-        $this->optionallyExecuteCommand("cp $envExample $envHost");
-
-        $mail = $this->state->getStage()->hasMailOptions()
-            ? [
-                'MAIL_HOST=mailhog' => $this->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
-                'MAIL_PORT=1025' => 'MAIL_PORT=587',
-                'MAIL_USERNAME=null' => $this->replace('MAIL_USERNAME={{MAIL_USER}}'),
-                'MAIL_PASSWORD=null' => $this->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
-                'MAIL_ENCRYPTION=null' => 'MAIL_ENCRYPTION=tls',
-                'MAIL_FROM_ADDRESS=null' => $this->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
-            ]
-            : [];
-
-        $output = new BufferedOutput();
-        Artisan::call('key:generate', ['--show' => true], $output);
-        $appKey = trim($output->fetch());
-
-        $envReplaces = array_merge($mail, [
-            'APP_KEY=' => 'APP_KEY='.$appKey,
-            'APP_URL=' => $this->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
-
-            'DB_DATABASE=' => $this->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
-            'DB_USERNAME=' => $this->replace('DB_USERNAME="{{DB_USERNAME}}"#'),
-            'DB_PASSWORD=' => $this->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
-        ]);
-
-        $this->writeLogLine('Filling env file for host', 'comment');
-        $this->writeLogLine(var_export($envReplaces, true));
-
-        $this->putContentToFile($envHost, $envReplaces);
-
-        $this->writeLogLine('Coping to remote', 'comment');
-
-        if (!$this->isOnlyPrint() && $this->confirmAction('Copy env file to remote server?')) {
-            $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-            $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
-            $this->optionallyExecuteCommand(
-                "ssh ".static::$remoteSshCredentials." 'test -d $sharedDir || mkdir $sharedDir'"
-            );
-            $this->optionallyExecuteCommand(
-                "scp ".self::$remoteScpOptions." \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
-                function ($type, $buffer) {
-                    $this->writeLogLine($type.' > '.trim($buffer));
-                }
-            );
-        }
-
-        $this->writeLogLine('Restore original env file', 'comment');
-        $this->optionallyExecuteCommand("cp $envHost $envHost.host");
-        $this->optionallyExecuteCommand("cp $envBackup $envOriginal");
-    }
-
-    private function task_runFirstDeployCommand(): void
-    {
-        $this->newSection('run deploy from local');
-
-        $fileNotExists =
-            !$this->isOnlyPrint() &&
-            !$this->confirmAction('Please, check if the file was copied correctly to remote host. It is right?', true);
-
-        if ($fileNotExists) {
-            // option only print disabled
-            // and file not copied
-            $this->writeLogLine('The deployment command was skipped.', 'error');
-
-            return;
-        }
-
-        $this->optionallyExecuteCommand(
-            'php {{PROJ_DIR}}/vendor/bin/dep deploy',
-            function ($type, $buffer) {
-                $this->writeLogLine($type.' > '.trim($buffer));
-            }
-        );
-    }
-
     private function rollbackDeployFileContent(DeployerFileContent $content): void
     {
         $this->writeLogLine('Rollback deploy file content', 'comment');
 
         $content->restore();
-    }
-
-    private function task_insertCustomAliasesOnRemoteHost(): void
-    {
-        $this->newSection('append custom aliases');
-
-        $shouldPutAliases = $this->option('aliases');
-
-        $mustConfirm = !($shouldPutAliases
-            || $this->option('no-interaction')
-            || $this->isOnlyPrint()
-            || $this->isForce());
-
-        if ($mustConfirm) {
-            $shouldPutAliases = $this->confirm('Are you want to add aliases for laravel artisan command?', false);
-        }
-
-        $filePath = __DIR__.'/../../examples/.bash_aliases';
-
-        if (!$shouldPutAliases && $this->isOnlyPrint()) {
-            $bashAliases = $this->replace(file_get_contents($filePath));
-
-            $this->logger->writeToFile($bashAliases);
-
-            return;
-        }
-
-        if (!$shouldPutAliases) {
-            return;
-        }
-
-        $aliasesPath = $this->replace(storage_path('deployer/.bash_aliases-{{STAGE}}'));
-        $aliasesLoader = <<<SHELL
-if [ -f  ~/.bash_aliases ];
-    then . ~/.bash_aliases
-fi
-SHELL;
-
-        $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
-        $this->putContentToFile($aliasesPath);
-
-        $this->writeLogLine('Optionally, copy next script to load aliases into ~/.bashrc file.', 'comment');
-        $this->writeLogLine($aliasesLoader);
-
-        $this->writeLogLine($this->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
-        $this->optionallyExecuteCommand(
-            "scp ".self::$remoteScpOptions." \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
-            function ($type, $buffer) {
-                $this->writeLogLine($type.' > '.trim($buffer));
-            }
-        );
     }
 
     /**
@@ -480,7 +207,6 @@ SHELL;
         return $task;
     }
 
-
     // --------------- output and logging --------------
 
     private function newSection(string $name): void
@@ -500,81 +226,14 @@ SHELL;
 
     private function writeLogLine(?string $content, string $style = null): void
     {
-        $this->logger->appendEchoLine($this->replace($content), $style);
+        $this->logger->appendEchoLine($this->state->getReplacements()->replace($content), $style);
     }
 
     // --------------- content processing --------------
 
-    private function confirmAction(string $question, bool $default = false): bool
-    {
-        return $this->isForce() || $this->confirm($question, $default);
-    }
-
-    private function forceExecuteCommand(string $command)
-    {
-        $this->runProcessCommand(true, $command);
-    }
-
-    private function optionallyExecuteCommand(string $command, callable $callable = null)
-    {
-        $this->runProcessCommand(false, $command, $callable);
-    }
-
-    private function runProcessCommand(bool $forceExecute, string $command, callable $callable = null): void
-    {
-        $command = $this->replace($command);
-
-        $this->writeLogLine($command, 'info');
-
-        if (!$forceExecute && $this->isOnlyPrint()) {
-            return;
-        }
-
-        $this->line('running command...'.PHP_EOL);
-        $process = Process::fromShellCommandline($command);
-        $process->run($callable);
-    }
-
-    private function replace(?string $subject, array $replaceMap = null): string
-    {
-        return $this->state->getReplacements()->replace($subject ?: '', $replaceMap);
-    }
-
-    private function putContentToFile(string $path, array $replace = null): void
-    {
-        if ($this->isOnlyPrint()) {
-            return;
-        }
-
-        try {
-            $contents = $this->replace($this->getContent($path), $replace);
-
-            $this->filesystem->put($path, $contents);
-        } catch (ErrorException $exception) {
-            $this->writeLogLine($exception->getMessage(), 'error');
-        }
-    }
-
-    private function getContent(string $filename): ?string
-    {
-        try {
-            $contents = $this->filesystem->get($filename);
-        } catch (ErrorException $exception) {
-            $this->writeLogLine('Failed to open file: '.$filename, 'error');
-            $contents = null;
-        }
-
-        return $contents;
-    }
-
     private function isOnlyPrint(): bool
     {
         return boolval($this->option('only-print'));
-    }
-
-    private function isForce(): bool
-    {
-        return boolval($this->option('force'));
     }
 
     private function getStageName(): string

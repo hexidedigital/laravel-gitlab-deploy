@@ -12,6 +12,7 @@ use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
 use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
+use function str;
 
 final class DeployerState
 {
@@ -55,17 +56,6 @@ final class DeployerState
         $builder = new ReplacementsBuilder($this->getStage());
 
         $replacements = $builder->build()->getReplacements();
-
-        $filePath = $replacements->replace(
-            \str(config('gitlab-deploy.ssh.folder'))
-                ->finish('/')
-                ->append(config('gitlab-deploy.ssh.key_name'))
-        );
-
-        $replacements->mergeReplaces([
-            '{{IDENTITY_FILE}}' => $filePath,
-            '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
-        ]);
 
         $this->setReplacements($replacements);
     }

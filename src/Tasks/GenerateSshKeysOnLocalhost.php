@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
@@ -19,13 +20,27 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     public function execute(): void
     {
-        $this->forceExecuteCommand('mkdir -p '.$this->replacements->replace(config('gitlab-deploy.ssh.folder')));
+        $this->ensureDirectoryExists();
 
-        if (!$this->isSshFilesExits() || $this->confirmAction('Should generate and override existed key?')) {
+        if ($this->checkExistedKeys()) {
             $option = $this->isSshFilesExits() ? '-y' : '';
-            $this->optionallyExecuteCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
+
+            $this->executor->runCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
         }
 
+        $this->updatePrivateKeyVariable();
+    }
+
+    public function ensureDirectoryExists()
+    {
+        $path = $this->replacements->replace(config('gitlab-deploy.ssh.folder'));
+
+        $this->logger->appendEchoLine("mkdir -p $path");
+        $this->filesystem->makeDirectory($path);
+    }
+
+    public function updatePrivateKeyVariable()
+    {
         $this->logger->appendEchoLine($this->replacements->replace('cat {{IDENTITY_FILE}}'), 'info');
 
         $content = $this->filesystem->get($this->replacements->replace('{{IDENTITY_FILE}}'));
@@ -37,6 +52,12 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         );
 
         $this->state->getGitlabVariablesBag()->add($variable->key, $variable);
+    }
+
+    public function checkExistedKeys(): bool
+    {
+        return !$this->isSshFilesExits()
+            || $this->confirmAction('Should generate and override existed key?');
     }
 
     private function isSshFilesExits(): bool
