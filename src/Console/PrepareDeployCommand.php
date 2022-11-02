@@ -526,7 +526,7 @@ PHP
             return;
         }
 
-        $aliasesPath = $this->replace("{{PROJ_DIR}}/deploy/.bash_aliases");
+        $aliasesPath = $this->replace("{{PROJ_DIR}}/.deploy/.bash_aliases");
 
         $this->optionallyExecuteCommand("cp $filePath $aliasesPath");
         $this->putContentToFile($aliasesPath);
