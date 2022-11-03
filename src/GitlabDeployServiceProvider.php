@@ -26,7 +26,7 @@ class GitlabDeployServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            $this->packagePath('examples/deploy.php.stub') => $this->app->basePath('.deploy.php'),
+            $this->packagePath('examples/deploy.php.stub') => $this->app->basePath('deploy.php'),
             $this->packagePath('examples/deploy-prepare.example.yml') => $this->app->basePath(
                 '.deploy/deploy-prepare.yml'
             ),

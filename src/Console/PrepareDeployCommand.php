@@ -163,7 +163,7 @@ class PrepareDeployCommand extends Command
 
     private function createLogFile()
     {
-        $this->logger = new BasicLogger();
+        $this->logger = new BasicLogger($this);
         $this->logger->openFile();
     }
 
@@ -172,9 +172,9 @@ class PrepareDeployCommand extends Command
      */
     private function saveInitialContentOfDeployFile(): DeployerFileContent
     {
-        $deployerContent = new DeployerFileContent($this->filesystem, config('gitlab-deploy.deployer-php'));
+        $deployerContent = new DeployerFileContent(config('gitlab-deploy.deployer-php'));
 
-        $deployerContent->backup();
+        $deployerContent->backup($this->isOnlyPrint());
 
         return $deployerContent;
     }
@@ -203,6 +203,7 @@ class PrepareDeployCommand extends Command
     {
         $task->setState($this->state);
         $task->setLogger($this->logger);
+        $task->setExecutor($this->executor);
 
         return $task;
     }

@@ -98,9 +98,9 @@ final class ParseConfiguration
         }
 
         $project = new GitlabProject(
-            id: $gitlab['project-id'],
-            token: $gitlab['token'],
-            url: $gitlab['domain'],
+            id: $project['project-id'],
+            token: $project['token'],
+            url: $project['domain'],
         );
 
         return [

@@ -20,10 +20,12 @@ class BasicLogger
      * @param string $fileName
      */
     public function __construct(
+        Command $command,
         string $timeFormat = 'Y-m-d-H-i-s',
         string $fileName = '.deploy/dep-log.',
     )
     {
+        $this->command = $command;
         $this->timeFormat = $timeFormat;
         $this->fileName = $fileName;
     }

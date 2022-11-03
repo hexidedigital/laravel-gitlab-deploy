@@ -8,12 +8,15 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class Variable implements Arrayable
 {
+    public readonly string $value;
+
     public function __construct(
         public readonly string $key,
         public readonly string $scope,
-        public readonly string $value,
+        ?string $value,
     )
     {
+        $this->value = strval($value);
     }
 
     public function toArray(): array

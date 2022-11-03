@@ -19,7 +19,11 @@ final class Replacements
     public function mergeReplaces(array $replaces = []): void
     {
         foreach ($replaces as $key => $replace) {
-            $this->replaceMap[$key] = $this->replace($replace);
+            try {
+                $this->replaceMap[$key] = $this->replace(strval($replace));
+            } catch (\Error $error) {
+                dd($replaces, $key, $replace);
+            }
         }
     }
 

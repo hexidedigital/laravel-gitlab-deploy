@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Helpers;
 
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class DeployerFileContent
 {
     private readonly string $content;
 
     public function __construct(
-        private readonly Filesystem $filesystem,
         private readonly string $path,
     )
     {
@@ -21,19 +19,26 @@ final class DeployerFileContent
     /**
      * @throws GitlabDeployException
      */
-    public function backup(): void
+    public function backup(bool $isOnlyPrint = false): void
     {
-        $content = $this->filesystem->get($this->path);
+        dump(\File::dirname($this->path));
 
-        if (empty($content)) {
+        dump(\File::files(base_path()));
+//        dump(\File::put('temp11223344.ttxx', ''));
+
+        dd($this->path, \File::get($this->path), \File::get(base_path('deploy.php')));
+
+        $content = \File::get($this->path);
+
+        if (empty($content) && !$isOnlyPrint) {
             throw new GitlabDeployException('Deploy file is empty or not exists.');
         }
 
-        $this->content = $content;
+        $this->content = strval($content);
     }
 
     public function restore(): void
     {
-        $this->filesystem->put(config('gitlab-deploy.deployer-php'), $this->content);
+        \File::put(config('gitlab-deploy.deployer-php'), $this->content);
     }
 }
