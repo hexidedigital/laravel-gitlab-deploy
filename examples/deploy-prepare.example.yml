@@ -1,8 +1,9 @@
+# schema https://raw.githubusercontent.com/hexidedigital/laravel-gitlab-deploy/develop/schema/deploy-prepare-v1.json
+
 # How to work with the file, read here
 # https://github.com/hexidedigital/laravel-gitlab-deploy#prepare
 
-version: 0.2
-
+version: 1
 
 # Repository configurations
 git-lab:
@@ -20,7 +21,7 @@ git-lab:
 # Server configurations
 stages:
   # Stage name to prepare command
-  dev:
+  - name: dev
     options:
       git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"

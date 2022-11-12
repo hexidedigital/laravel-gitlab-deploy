@@ -49,7 +49,8 @@ final class ParseConfiguration
 
         $stageBag = new StageBag();
 
-        foreach ($stages as $name => $stageOptions) {
+        foreach ($stages as $stageOptions) {
+            $name = $stageOptions['name'];
             $options = new Options(Arr::get($stageOptions, 'options', []));
             $server = new Server(Arr::get($stageOptions, 'server', []));
             $database = new Database(Arr::get($stageOptions, 'database', []));

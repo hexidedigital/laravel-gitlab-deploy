@@ -1,0 +1,173 @@
+{
+    "$id": "https://raw.githubusercontent.com/hexidedigital/laravel-gitlab-deploy/develop/schema/deploy-prepare-v1.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/DeployPrepare",
+    "definitions": {
+        "DeployPrepare": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "version": {
+                    "type": "integer"
+                },
+                "git-lab": {
+                    "$ref": "#/definitions/GitLab"
+                },
+                "stages": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/definitions/Stage"
+                    }
+                }
+            },
+            "required": [
+                "git-lab",
+                "stages",
+                "version"
+            ]
+        },
+        "GitLab": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "project": {
+                    "$ref": "#/definitions/Project"
+                }
+            },
+            "required": [
+                "project"
+            ]
+        },
+        "Project": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "project-id": {
+                    "type": "string"
+                },
+                "domain": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "https"
+                    ]
+                }
+            },
+            "required": [
+                "domain",
+                "project-id",
+                "token"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "git-url": {
+                            "type": "string"
+                        },
+                        "base-dir-pattern": {
+                            "type": "string"
+                        },
+                        "bin-composer": {
+                            "type": "string"
+                        },
+                        "bin-php": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "base-dir-pattern",
+                        "bin-composer",
+                        "bin-php",
+                        "git-url"
+                    ]
+                },
+                "server": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "ssh-port": {
+                            "type": "integer"
+                        },
+                        "domain": {
+                            "type": "string"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "login": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "domain",
+                        "host",
+                        "login",
+                        "password"
+                    ]
+                },
+                "database": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "database": {
+                            "type": "string"
+                        },
+                        "username": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "database",
+                        "password",
+                        "username"
+                    ]
+                },
+                "mail": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "hostname": {
+                            "type": "string"
+                        },
+                        "username": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "hostname",
+                        "password",
+                        "username"
+                    ]
+                }
+            },
+            "required": [
+                "database",
+                "name",
+                "options",
+                "server"
+            ]
+        }
+    }
+}
