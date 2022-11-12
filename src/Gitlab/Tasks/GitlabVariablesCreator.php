@@ -21,7 +21,12 @@ final class GitlabVariablesCreator
     private GitlabProject $project;
 
     private VariableBag $variableBag;
+
+    /**
+     * @var Collection<string, array>
+     */
     private Collection $projectVariables;
+
     private Gitlab\Api\Projects $projectsApi;
 
     private array $failMassages = [];
@@ -153,10 +158,18 @@ final class GitlabVariablesCreator
         return $this->projectVariables->has($this->makeKey($variable->key, $variable->scope));
     }
 
+    /**
+     * Returns all stored variables in project for all environments
+     *
+     * @return Collection<string, array>
+     */
     private function getProjectVariables(): Collection
     {
-        return collect($this->projectsApi->variables($this->project->id))
-            ->mapWithKeys(fn (array $variable) => [
+        /** @var array<int, array> $variables */
+        $variables = $this->projectsApi->variables($this->project->id);
+
+        return collect($variables)
+            ->mapWithKeys(fn (array $variable): array => [
                 $this->makeKey($variable['key'], $variable['environment_scope']) => $variable,
             ]);
     }

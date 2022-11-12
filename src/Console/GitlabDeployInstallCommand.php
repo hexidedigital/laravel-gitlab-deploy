@@ -17,7 +17,7 @@ class GitlabDeployInstallCommand extends Command
 
     protected string $packageName = 'gitlab-deploy';
 
-    public function handle()
+    public function handle(): void
     {
         $this->info('Installing package...');
 
@@ -32,7 +32,7 @@ class GitlabDeployInstallCommand extends Command
         $this->info('Installed');
     }
 
-    protected function configExists($fileName): bool
+    protected function configExists(string $fileName): bool
     {
         return File::exists(config_path($fileName));
     }
@@ -45,7 +45,7 @@ class GitlabDeployInstallCommand extends Command
         );
     }
 
-    protected function publishConfiguration($forcePublish = false): void
+    protected function publishConfiguration(bool $forcePublish = false): void
     {
         $params = [
             '--provider' => GitlabDeployServiceProvider::class,

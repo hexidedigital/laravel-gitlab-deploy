@@ -50,7 +50,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
         ];
     }
 
-    private function printVariables(VariableBag $variableBag)
+    private function printVariables(VariableBag $variableBag): void
     {
         foreach ($variableBag->only($this->printAloneKeys()) as $variable) {
             $this->logger->appendEchoLine($variable->key, 'comment');

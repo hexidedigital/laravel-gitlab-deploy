@@ -6,6 +6,9 @@ namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
 use Illuminate\Contracts\Support\Arrayable;
 
+/**
+ * @implements Arrayable<string, string|int|bool|null>
+ */
 abstract class BaseOption implements Arrayable
 {
     abstract public function __construct(array $source);

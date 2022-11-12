@@ -29,7 +29,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         $this->updatePrivateKeyVariable();
     }
 
-    public function ensureDirectoryExists()
+    public function ensureDirectoryExists(): void
     {
         $path = $this->replacements->replace(config('gitlab-deploy.ssh.folder'));
 
@@ -37,7 +37,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         $this->filesystem->makeDirectory($path);
     }
 
-    public function updatePrivateKeyVariable()
+    public function updatePrivateKeyVariable(): void
     {
         $this->logger->appendEchoLine($this->replacements->replace('cat {{IDENTITY_FILE}}'), 'info');
 

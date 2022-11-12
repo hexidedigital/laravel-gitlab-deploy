@@ -159,7 +159,7 @@ class PrepareDeployCommand extends Command
         $this->logger->appendEchoLine($exception->getMessage(), 'error');
     }
 
-    private function createLogFile()
+    private function createLogFile(): void
     {
         $this->logger = new BasicLogger($this);
         $this->logger->openFile();
