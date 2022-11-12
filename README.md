@@ -48,7 +48,7 @@ Examples of files to be copied can be viewed in
 After installing, you maybe want to publish files for deployment and sample files, right? Just do this:
 
 ```shell
-php artisan vendor:publish --tag="gitlab-deploy" --force
+php artisan gitlab-deploy:install
 ```
 
 # Usage
