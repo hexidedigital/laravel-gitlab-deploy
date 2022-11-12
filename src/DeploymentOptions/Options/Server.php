@@ -12,7 +12,7 @@ class Server extends BaseOption
     public string $password;
     public int $sshPort;
 
-    public function make(array $source): void
+    public function __construct(array $source)
     {
         $this->domain = data_get($source, 'domain');
         $this->host = data_get($source, 'host');

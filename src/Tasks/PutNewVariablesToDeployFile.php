@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks {
-
     use Illuminate\Contracts\Filesystem\Filesystem;
 
     final class PutNewVariablesToDeployFile extends BaseTask implements Task
@@ -12,8 +11,7 @@ namespace HexideDigital\GitlabDeploy\Tasks {
 
         public function __construct(
             private readonly Filesystem $filesystem,
-        )
-        {
+        ) {
         }
 
         public function execute(): void

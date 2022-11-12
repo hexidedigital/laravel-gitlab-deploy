@@ -15,13 +15,15 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 
 abstract class BaseTask implements Task
 {
-    protected readonly Configurations $configurations;
-    protected readonly Replacements $replacements;
-    protected readonly Stage $stage;
-    protected readonly BasicLogger $logger;
-    protected readonly DeployerState $state;
-    protected readonly Executor $executor;
-    protected readonly Command $command;
+    protected string $name;
+
+    protected Configurations $configurations;
+    protected Replacements $replacements;
+    protected Stage $stage;
+    protected BasicLogger $logger;
+    protected DeployerState $state;
+    protected Executor $executor;
+    protected Command $command;
 
     public function setState(DeployerState $state): void
     {

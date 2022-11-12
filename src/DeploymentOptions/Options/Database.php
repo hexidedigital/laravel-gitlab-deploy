@@ -10,7 +10,7 @@ final class Database extends BaseOption
     public readonly string $login;
     public readonly string $password;
 
-    public function make(array $source): void
+    public function __construct(array $source)
     {
         $this->name = data_get($source, 'database');
         $this->login = data_get($source, 'username');

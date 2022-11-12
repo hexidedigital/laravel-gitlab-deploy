@@ -12,8 +12,7 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
 
     public function __construct(
         private readonly Filesystem $filesystem,
-    )
-    {
+    ) {
     }
 
     public function execute(): void

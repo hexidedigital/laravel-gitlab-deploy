@@ -13,8 +13,7 @@ final class VariableBag
      */
     public function __construct(
         protected array $variables = [],
-    )
-    {
+    ) {
     }
 
     /**

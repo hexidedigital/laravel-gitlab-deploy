@@ -29,8 +29,7 @@ final class GitlabVariablesCreator
 
     public function __construct(
         GitLabManager $gitLabManager,
-    )
-    {
+    ) {
         $this->gitLabManager = $gitLabManager;
     }
 
@@ -111,7 +110,7 @@ final class GitlabVariablesCreator
     {
         // get `user@host` from "ssh-rsa AAA...AB3 user@host"
 
-        return Str::of($publicKey)->explode(' ')->last();
+        return (string)Str::of($publicKey)->explode(' ')->last();
     }
 
     private function createOrUpdateVariable(Variable $variable): void

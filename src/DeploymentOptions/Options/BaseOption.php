@@ -8,24 +8,15 @@ use Illuminate\Contracts\Support\Arrayable;
 
 abstract class BaseOption implements Arrayable
 {
-    protected array $source;
-
-    public function __construct(array $source)
-    {
-        $this->source = $source;
-
-        $this->make($source);
-    }
-
-    abstract public function make(array $source): void;
+    abstract public function __construct(array $source);
 
     public function isEmpty(): bool
     {
-        return empty($this->source) || $this->onyOfKeyIsEmpty();
+        return $this->onyOfKeyIsEmpty();
     }
 
-    protected function onyOfKeyIsEmpty(): bool
+    public function onyOfKeyIsEmpty(): bool
     {
-        return sizeof(array_filter($this->toArray(), fn($val) => !$val)) > 0;
+        return sizeof(array_filter($this->toArray(), fn ($val) => !$val)) > 0;
     }
 }

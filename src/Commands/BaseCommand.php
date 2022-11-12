@@ -6,5 +6,4 @@ namespace HexideDigital\GitlabDeploy\Commands;
 
 abstract class BaseCommand
 {
-
 }

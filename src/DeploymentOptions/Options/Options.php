@@ -11,7 +11,7 @@ class Options extends BaseOption
     public readonly string $binPhp;
     public readonly string $binComposer;
 
-    public function make(array $source): void
+    public function __construct(array $source)
     {
         $this->gitUrl = data_get($source, 'git-url');
         $this->baseDir = data_get($source, 'base-dir-pattern');

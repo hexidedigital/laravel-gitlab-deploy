@@ -14,8 +14,7 @@ final class VariableBagBuilder
     public function __construct(
         private readonly Replacements $replacements,
         private readonly string $stageName,
-    )
-    {
+    ) {
     }
 
     public function getVariableBag(): VariableBag

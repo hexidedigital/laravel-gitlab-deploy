@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Helpers;
 
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
-use Illuminate\Support\Arr;
 
 final class ReplacementsBuilder
 {
@@ -13,8 +12,7 @@ final class ReplacementsBuilder
 
     public function __construct(
         private readonly Stage $stage,
-    )
-    {
+    ) {
     }
 
     public function getReplacements(): Replacements

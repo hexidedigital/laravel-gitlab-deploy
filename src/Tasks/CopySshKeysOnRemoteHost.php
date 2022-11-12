@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
-use HexideDigital\GitlabDeploy\Gitlab\Variable;
-use Illuminate\Contracts\Filesystem\Filesystem;
-
 final class CopySshKeysOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'copy ssh to server - public key to remote host';

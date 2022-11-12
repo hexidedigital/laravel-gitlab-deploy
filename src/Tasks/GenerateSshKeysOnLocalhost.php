@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
-use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
@@ -14,8 +13,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     public function __construct(
         private readonly Filesystem $filesystem,
-    )
-    {
+    ) {
     }
 
     public function execute(): void

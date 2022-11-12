@@ -14,8 +14,7 @@ final class Variable implements Arrayable
         public readonly string $key,
         public readonly string $scope,
         ?string $value,
-    )
-    {
+    ) {
         $this->value = strval($value);
     }
 

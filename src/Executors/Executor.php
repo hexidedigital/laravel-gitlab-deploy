@@ -12,8 +12,7 @@ class Executor
         private readonly BasicLogger  $logger,
         private readonly Replacements $replacements,
         private readonly bool         $isOnlyPrint,
-    )
-    {
+    ) {
     }
 
     public function runCommand(string $command, callable $callable = null): void

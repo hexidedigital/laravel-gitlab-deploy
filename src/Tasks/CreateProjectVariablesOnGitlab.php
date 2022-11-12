@@ -13,8 +13,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
     public function __construct(
         private readonly GitlabVariablesCreator $creator,
-    )
-    {
+    ) {
     }
 
     public function execute(): void
@@ -53,7 +52,6 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
         }
 
         if (isset($this->command)) {
-
             $this->command->table(['key', 'value'], $rows);
         }
 

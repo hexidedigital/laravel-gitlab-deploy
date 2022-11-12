@@ -8,12 +8,11 @@ use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 
 final class DeployerFileContent
 {
-    private readonly string $content;
+    private string $content;
 
     public function __construct(
         private readonly string $path,
-    )
-    {
+    ) {
     }
 
     /**
@@ -26,7 +25,7 @@ final class DeployerFileContent
         dump(\File::files(base_path()));
 //        dump(\File::put('temp11223344.ttxx', ''));
 
-        dd($this->path, \File::get($this->path), \File::get(base_path('deploy.php')));
+//        dd($this->path, \File::get($this->path), \File::get(base_path('deploy.php')));
 
         $content = \File::get($this->path);
 

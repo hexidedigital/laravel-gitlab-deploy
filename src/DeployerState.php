@@ -12,7 +12,6 @@ use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
 use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
-use function str;
 
 final class DeployerState
 {

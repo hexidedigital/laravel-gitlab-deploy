@@ -44,11 +44,11 @@ class PrepareDeployCommand extends Command
     // ---------------------
     // runtime defined properties
     // ---------------------
-    protected readonly Filesystem $filesystem;
-    protected readonly DeployerState $state;
+    protected Filesystem $filesystem;
+    protected DeployerState $state;
 
-    protected readonly BasicLogger $logger;
-    protected readonly Executor $executor;
+    protected BasicLogger $logger;
+    protected Executor $executor;
 
 
     // --------------- command info --------------
@@ -80,8 +80,7 @@ class PrepareDeployCommand extends Command
 
     public function __construct(
         Filesystem $filesystem,
-    )
-    {
+    ) {
         parent::__construct();
 
         $this->filesystem = $filesystem;
@@ -136,7 +135,6 @@ class PrepareDeployCommand extends Command
             foreach ($finishTasks as $task) {
                 $this->executeTask($task);
             }
-
         } catch (GitlabDeployException $exception) {
             $finishedWithError = true;
             $this->printError('Deploy command unexpected finished.', $exception);

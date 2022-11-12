@@ -18,7 +18,7 @@ use Symfony\Component\Yaml\Yaml;
 
 final class ParseConfiguration
 {
-    public readonly Configurations $configurations;
+    public Configurations $configurations;
 
     /**
      * @throws GitlabDeployException
