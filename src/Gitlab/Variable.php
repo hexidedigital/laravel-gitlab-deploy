@@ -4,26 +4,15 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Gitlab;
 
-use Illuminate\Contracts\Support\Arrayable;
-
-final class Variable implements Arrayable
+final class Variable
 {
     public readonly string $value;
 
     public function __construct(
         public readonly string $key,
         public readonly string $scope,
-        ?string $value,
+        mixed $value,
     ) {
         $this->value = strval($value);
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'key' => $this->key,
-            'value' => $this->value,
-            'scope' => $this->scope,
-        ];
     }
 }

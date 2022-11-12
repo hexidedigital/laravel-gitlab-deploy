@@ -37,15 +37,28 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
         $this->printMessages();
     }
 
+    /**
+     * Variables that have a large content to display in a table
+     *
+     * @return array<string>
+     */
+    public function printAloneKeys(): array
+    {
+        return [
+            'SSH_PRIVATE_KEY',
+            'SSH_PUB_KEY',
+        ];
+    }
+
     private function printVariables(VariableBag $variableBag)
     {
-        foreach ($variableBag->only($variableBag->printAloneKeys()) as $variable) {
+        foreach ($variableBag->only($this->printAloneKeys()) as $variable) {
             $this->logger->appendEchoLine($variable->key, 'comment');
             $this->logger->appendEchoLine($variable->value);
         }
 
         $rows = [];
-        foreach ($variableBag->except($variableBag->printAloneKeys()) as $variable) {
+        foreach ($variableBag->except($this->printAloneKeys()) as $variable) {
             $this->logger->writeToFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];

@@ -9,26 +9,28 @@ use Illuminate\Support\Arr;
 final class VariableBag
 {
     /**
-     * @param array<string, Variable> $variables
+     * All the registered variables
+     *
+     * @var array<string, Variable> $variables
      */
-    public function __construct(
-        protected array $variables = [],
-    ) {
-    }
+    protected array $variables = [];
 
     /**
-     * @param string $key
+     * Add a new variable to variables bag
+     *
      * @param Variable $variable
      * @return self
      */
-    public function add(string $key, Variable $variable): self
+    public function add(Variable $variable): self
     {
-        $this->variables[$key] = $variable;
+        $this->variables[$variable->key] = $variable;
 
         return $this;
     }
 
     /**
+     * Get a variable from the variables bag for a given key.
+     *
      * @param string $key
      * @return Variable|null
      */
@@ -38,6 +40,8 @@ final class VariableBag
     }
 
     /**
+     * Returns only the variables from the bag with the specified keys.
+     *
      * @return array<string, Variable>
      */
     public function except(array $keys): array
@@ -46,21 +50,12 @@ final class VariableBag
     }
 
     /**
+     * Returns all variables in the bag except the variables with specified keys.
+     *
      * @return array<string, Variable>
      */
     public function only(array $keys): array
     {
-        return Arr::except($this->variables, $keys);
-    }
-
-    /**
-     * @return array<string>
-     */
-    public function printAloneKeys(): array
-    {
-        return [
-            'SSH_PRIVATE_KEY',
-            'SSH_PUB_KEY',
-        ];
+        return Arr::only($this->variables, $keys);
     }
 }

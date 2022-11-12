@@ -49,7 +49,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
             value: $content
         );
 
-        $this->state->getGitlabVariablesBag()->add($variable->key, $variable);
+        $this->state->getGitlabVariablesBag()->add($variable);
     }
 
     public function checkExistedKeys(): bool

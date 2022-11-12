@@ -48,7 +48,7 @@ final class VariableBagBuilder
                 value: $value,
             );
 
-            $bag->add($variable->key, $variable);
+            $bag->add($variable);
         }
 
         $this->variableBag = $bag;
