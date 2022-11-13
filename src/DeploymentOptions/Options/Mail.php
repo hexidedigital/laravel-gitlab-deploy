@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Mail extends BaseOption
+final class Mail implements BaseOption
 {
     public readonly string $name;
     public readonly string $login;
@@ -18,6 +18,15 @@ class Mail extends BaseOption
     }
 
     public function toArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'login' => $this->login,
+            'password' => $this->password,
+        ];
+    }
+
+    public function toReplacesArray(): array
     {
         return [
             '{{MAIL_HOSTNAME}}' => $this->name,

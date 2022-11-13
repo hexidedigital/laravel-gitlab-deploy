@@ -2,27 +2,21 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Helpers;
+namespace HexideDigital\GitlabDeploy\Helpers\Builders;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\Helpers\Replacements;
 
 final class VariableBagBuilder
 {
-    private VariableBag $variableBag;
-
     public function __construct(
         private readonly Replacements $replacements,
         private readonly string $stageName,
     ) {
     }
 
-    public function getVariableBag(): VariableBag
-    {
-        return $this->variableBag;
-    }
-
-    public function build(): VariableBagBuilder
+    public function build(): VariableBag
     {
         $bag = new VariableBag();
 
@@ -51,8 +45,6 @@ final class VariableBagBuilder
             $bag->add($variable);
         }
 
-        $this->variableBag = $bag;
-
-        return $this;
+        return $bag;
     }
 }

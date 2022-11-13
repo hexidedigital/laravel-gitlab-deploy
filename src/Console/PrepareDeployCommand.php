@@ -95,7 +95,8 @@ class PrepareDeployCommand extends Command
         try {
             // prepare
             $this->state = new DeployerState();
-            $this->state->prepare($this->getStageName());
+            $this->state->prepare($this->stageName());
+            $this->state->setIsPrintOnly($this->isOnlyPrint());
 
             // begin of process
             $this->executor = new Executor(
@@ -235,7 +236,7 @@ class PrepareDeployCommand extends Command
         return boolval($this->option('only-print'));
     }
 
-    private function getStageName(): string
+    private function stageName(): string
     {
         return $this->argument('stage');
     }

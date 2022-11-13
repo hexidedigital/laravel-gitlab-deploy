@@ -9,15 +9,18 @@ use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 final class StageBag
 {
     /**
+     * All the registered stages
+     *
      * @var array<string, Stage> $stages
      */
-    public array $stages = [];
+    private array $stages;
 
-    public function __construct(array $stages = [])
-    {
-        $this->stages = $stages;
-    }
-
+    /**
+     * Add a new stage to stages bag
+     *
+     * @param Stage $stage
+     * @return $this
+     */
     public function add(Stage $stage): StageBag
     {
         $this->stages[$stage->name] = $stage;
@@ -26,6 +29,10 @@ final class StageBag
     }
 
     /**
+     * Get a stage from the stages bag for a given name.
+     *
+     * @param string $name
+     * @return Stage
      * @throws GitlabDeployException
      */
     public function get(string $name): Stage

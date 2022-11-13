@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Server extends BaseOption
+final class Server implements BaseOption
 {
     public string $domain;
     public string $host;
@@ -22,6 +22,17 @@ class Server extends BaseOption
     }
 
     public function toArray(): array
+    {
+        return [
+            'sshPort' => $this->sshPort,
+            'domain' => $this->domain,
+            'host' => $this->host,
+            'login' => $this->login,
+            'password' => $this->password,
+        ];
+    }
+
+    public function toReplacesArray(): array
     {
         return [
             '{{USER}}' => $this->login,

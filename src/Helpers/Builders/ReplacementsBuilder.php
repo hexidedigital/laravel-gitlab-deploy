@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Helpers;
+namespace HexideDigital\GitlabDeploy\Helpers\Builders;
 
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
+use HexideDigital\GitlabDeploy\Helpers\Replacements;
 
 final class ReplacementsBuilder
 {
@@ -36,9 +37,9 @@ final class ReplacementsBuilder
              *
              * other - PROJ_DIR CI_COMMIT_REF_NAME
              */
-            $this->stage->options->toArray(),
-            $this->stage->database->toArray(),
-            $this->stage->hasMailOptions() ? $this->stage->mail->toArray() : [],
+            $this->stage->options->toReplacesArray(),
+            $this->stage->database->toReplacesArray(),
+            $this->stage->hasMailOptions() ? $this->stage->mail->toReplacesArray() : [],
             [
                 '{{PROJ_DIR}}' => base_path(),
                 '{{CI_COMMIT_REF_NAME}}' => $this->stage->name,

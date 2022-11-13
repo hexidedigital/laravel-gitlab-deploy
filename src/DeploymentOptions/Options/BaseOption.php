@@ -7,19 +7,11 @@ namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 use Illuminate\Contracts\Support\Arrayable;
 
 /**
- * @implements Arrayable<string, string|int|bool|null>
+ * @extends Arrayable<string, string|int|bool|null>
  */
-abstract class BaseOption implements Arrayable
+interface BaseOption extends Arrayable
 {
-    abstract public function __construct(array $source);
+    public function __construct(array $source);
 
-    public function isEmpty(): bool
-    {
-        return $this->onyOfKeyIsEmpty();
-    }
-
-    public function onyOfKeyIsEmpty(): bool
-    {
-        return sizeof(array_filter($this->toArray(), fn ($val) => !$val)) > 0;
-    }
+    public function toReplacesArray(): array;
 }

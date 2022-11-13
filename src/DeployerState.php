@@ -8,10 +8,13 @@ use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\Helpers\Builders\ConfigurationBuilder;
+use HexideDigital\GitlabDeploy\Helpers\Builders\ReplacementsBuilder;
+use HexideDigital\GitlabDeploy\Helpers\Builders\VariableBagBuilder;
 use HexideDigital\GitlabDeploy\Helpers\ParseConfiguration;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
-use HexideDigital\GitlabDeploy\Helpers\ReplacementsBuilder;
-use HexideDigital\GitlabDeploy\Helpers\VariableBagBuilder;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Container\CircularDependencyException;
 
 final class DeployerState
 {
@@ -19,35 +22,46 @@ final class DeployerState
     private Configurations $configurations;
     private Stage $stage;
     private VariableBag $gitlabVariablesBag;
+    private bool $isPrintOnly;
 
     /**
+     * @param string $stageName
+     * @throws BindingResolutionException
+     * @throws CircularDependencyException
      * @throws GitlabDeployException
      */
-    public function prepare(string $getStageName): void
+    public function prepare(string $stageName): void
     {
-        $this->parseConfigurations($getStageName);
+        $this->parseConfigurations($stageName);
         $this->setupReplacements();
         $this->setupGitlabVariables();
     }
 
     /**
+     * @param string $stageName
      * @throws GitlabDeployException
+     * @throws BindingResolutionException
+     * @throws CircularDependencyException
      */
     public function parseConfigurations(string $stageName): void
     {
         $parser = app(ParseConfiguration::class);
 
-        $parser->parseFile(config('gitlab-deploy.config-file'));
+        $fileData = $parser->parseFile(config('gitlab-deploy.config-file'));
 
-        $this->setConfigurations($parser->configurations);
-        $this->setStage($parser->configurations->stageBag->get($stageName));
+        $builder = app(ConfigurationBuilder::class);
+
+        $configurations = $builder->build($fileData);
+
+        $this->setConfigurations($configurations);
+        $this->setStage($configurations->stageBag->get($stageName));
     }
 
     public function setupGitlabVariables(): void
     {
         $builder = new VariableBagBuilder($this->replacements, $this->stage->name);
 
-        $this->gitlabVariablesBag = $builder->build()->getVariableBag();
+        $this->gitlabVariablesBag = $builder->build();
     }
 
     public function setupReplacements(): void
@@ -97,5 +111,15 @@ final class DeployerState
     public function setGitlabVariablesBag(VariableBag $gitlabVariablesBag): void
     {
         $this->gitlabVariablesBag = $gitlabVariablesBag;
+    }
+
+    public function isPrintOnly(): bool
+    {
+        return $this->isPrintOnly;
+    }
+
+    public function setIsPrintOnly(bool $isPrintOnly): void
+    {
+        $this->isPrintOnly = $isPrintOnly;
     }
 }

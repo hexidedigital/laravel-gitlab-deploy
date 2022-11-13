@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\DeploymentOptions\Options;
 
-class Options extends BaseOption
+final class Options implements BaseOption
 {
     public readonly string $gitUrl;
     public readonly string $baseDir;
@@ -20,6 +20,16 @@ class Options extends BaseOption
     }
 
     public function toArray(): array
+    {
+        return [
+            'gitUrl' => $this->gitUrl,
+            'baseDir' => $this->baseDir,
+            'binPhp' => $this->binPhp,
+            'binComposer' => $this->binComposer,
+        ];
+    }
+
+    public function toReplacesArray(): array
     {
         return [
             '{{CI_REPOSITORY_URL}}' => $this->gitUrl,
