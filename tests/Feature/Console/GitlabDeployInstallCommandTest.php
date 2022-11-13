@@ -61,7 +61,7 @@ test('when a config file is present users can choose to overwrite it', function 
 
     assertNotEquals('initial content', File::get(config_path('gitlab-deploy.php')));
     assertEquals(
-        File::get(__DIR__ . '/../../config/gitlab-deploy.php'),
+        File::get(__DIR__ . '/../../../config/gitlab-deploy.php'),
         File::get(config_path('gitlab-deploy.php'))
     );
 
