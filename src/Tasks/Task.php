@@ -7,6 +7,7 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Executors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use HexideDigital\GitlabDeploy\PipeData;
 use Illuminate\Console\Command;
 
 interface Task
@@ -25,5 +26,5 @@ interface Task
 
     public function canBeSkipped(): bool;
 
-    public function execute(): void;
+    public function handle(PipeData $pipeData, callable $next): mixed;
 }

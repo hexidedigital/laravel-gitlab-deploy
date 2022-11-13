@@ -8,7 +8,7 @@ final class HelpfulSuggestion extends BaseTask implements Task
 {
     protected string $name = 'IDEA Setup and helpers';
 
-    public function execute(): void
+    public function handle(): void
     {
         $content = $this->replacements->replace($this->getContent());
 

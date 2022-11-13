@@ -17,7 +17,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     ) {
     }
 
-    public function execute(): void
+    public function handle(): void
     {
         $envExample = $this->replacements->replace('{{PROJ_DIR}}/.env.example');
         $envOriginal = $this->replacements->replace('{{PROJ_DIR}}/.env');

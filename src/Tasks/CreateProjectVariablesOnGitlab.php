@@ -16,7 +16,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
     ) {
     }
 
-    public function execute(): void
+    public function handle(): void
     {
         $variableBag = $this->state->getGitlabVariablesBag();
 

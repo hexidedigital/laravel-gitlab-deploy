@@ -10,7 +10,7 @@ final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'Generate generate ssh-keys on remote host';
 
-    public function execute(): void
+    public function handle(): void
     {
         if ($this->confirmAction('Generate ssh keys on remote host')) {
             $this->executor->runCommand('ssh {{remoteSshCredentials}} "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');

@@ -8,7 +8,7 @@ final class CopySshKeysOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'copy ssh to server - public key to remote host';
 
-    public function execute(): void
+    public function handle(): void
     {
         $this->logger->appendEchoLine($this->replacements->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
 

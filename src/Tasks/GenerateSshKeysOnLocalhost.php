@@ -16,7 +16,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
     ) {
     }
 
-    public function execute(): void
+    public function handle(): void
     {
         $this->ensureDirectoryExists();
 

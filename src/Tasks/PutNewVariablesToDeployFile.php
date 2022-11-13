@@ -2,32 +2,35 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Tasks {
-    use Illuminate\Contracts\Filesystem\Filesystem;
+namespace HexideDigital\GitlabDeploy\Tasks;
 
-    final class PutNewVariablesToDeployFile extends BaseTask implements Task
+use HexideDigital\GitlabDeploy\PipeData;
+use Illuminate\Contracts\Filesystem\Filesystem;
+
+final class PutNewVariablesToDeployFile extends BaseTask implements Task
+{
+    protected string $name = 'putting static env variables to deploy file';
+
+    public function __construct(
+        private readonly Filesystem $filesystem,
+    ) {
+    }
+
+    public function handle(PipeData $pipeData, callable $next): mixed
     {
-        protected string $name = 'putting static env variables to deploy file';
+        $env = $this->replacements->replace('{{DEPLOY_PHP_ENV}}');
 
-        public function __construct(
-            private readonly Filesystem $filesystem,
-        ) {
-        }
+        $this->logger->appendEchoLine($env);
 
-        public function execute(): void
-        {
-            $env = $this->replacements->replace('{{DEPLOY_PHP_ENV}}');
+        $path = config('gitlab-deploy.deployer-php');
 
-            $this->logger->appendEchoLine($env);
+        $replaces = [
+            '/*CI_ENV*/' => $env,
+            '~/.ssh/id_rsa' => $this->replacements->replace('{{IDENTITY_FILE}}'),
+        ];
 
-            $path = config('gitlab-deploy.deployer-php');
+        $this->updateWithReplaces($this->filesystem, $path, $replaces);
 
-            $replaces = [
-                '/*CI_ENV*/' => $env,
-                '~/.ssh/id_rsa' => $this->replacements->replace('{{IDENTITY_FILE}}'),
-            ];
-
-            $this->updateWithReplaces($this->filesystem, $path, $replaces);
-        }
+        return $next($pipeData);
     }
 }

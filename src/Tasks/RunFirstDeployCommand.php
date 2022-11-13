@@ -8,7 +8,7 @@ final class RunFirstDeployCommand extends BaseTask implements Task
 {
     protected string $name = 'run deploy from local';
 
-    public function execute(): void
+    public function handle(): void
     {
         $fileExists = $this->confirmAction('Please, check if the file was copied correctly to remote host. It is right?', true);
 

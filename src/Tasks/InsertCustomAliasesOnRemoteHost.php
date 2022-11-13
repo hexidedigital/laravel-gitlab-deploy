@@ -15,7 +15,7 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
     ) {
     }
 
-    public function execute(): void
+    public function handle(): void
     {
         $shouldPutAliases = $this->confirmAction('Are you want to add aliases for laravel artisan command?', false);
 

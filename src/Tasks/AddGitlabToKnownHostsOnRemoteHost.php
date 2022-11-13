@@ -10,7 +10,7 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'add gitlab to confirmed (known hosts) on remote host';
 
-    public function execute(): void
+    public function handle(): void
     {
         if (!$this->confirmAction('Append gitlab IP to remote host known_hosts file?')) {
             return;

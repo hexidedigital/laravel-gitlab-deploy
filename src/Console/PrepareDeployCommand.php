@@ -9,6 +9,7 @@ use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
 use HexideDigital\GitlabDeploy\Executors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\DeployerFileContent;
+use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\Tasks\AddGitlabToKnownHostsOnRemoteHost;
 use HexideDigital\GitlabDeploy\Tasks\CopySshKeysOnRemoteHost;
 use HexideDigital\GitlabDeploy\Tasks\CreateProjectVariablesOnGitlab;
@@ -22,6 +23,7 @@ use HexideDigital\GitlabDeploy\Tasks\RunFirstDeployCommand;
 use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -99,11 +101,20 @@ class PrepareDeployCommand extends Command
             $this->state->setIsPrintOnly($this->isOnlyPrint());
 
             // begin of process
-            $this->executor = new Executor(
+            $executor = new Executor(
                 $this->logger,
                 $this->state->getReplacements(),
                 $this->isOnlyPrint(),
             );
+
+            $pipeData = new PipeData(
+                $this->state,
+                $this->logger,
+                $executor,
+            );
+
+            $pipeline = app(Pipeline::class)
+                ->send($pipeData);
 
             $prepareTasks = [
                 GenerateSshKeysOnLocalhost::class,
@@ -113,9 +124,11 @@ class PrepareDeployCommand extends Command
                 AddGitlabToKnownHostsOnRemoteHost::class,
             ];
 
-            foreach ($prepareTasks as $task) {
-                $this->executeTask($task);
-            }
+            $pipeline->through($pipeline);
+
+//            foreach ($prepareTasks as $task) {
+//                $this->executeTask($task);
+//            }
 
             $deployerTasks = [
                 PutNewVariablesToDeployFile::class,
@@ -191,34 +204,25 @@ class PrepareDeployCommand extends Command
      */
     private function executeTask(string $taskClass): void
     {
-        $task = $this->prepareTask(app($taskClass));
+        $task = app($taskClass);
 
         $this->newSection($task->getTaskName());
 
         $task->execute();
     }
 
-    private function prepareTask(Task $task): Task
-    {
-        $task->setState($this->state);
-        $task->setLogger($this->logger);
-        $task->setExecutor($this->executor);
-
-        return $task;
-    }
-
     // --------------- output and logging --------------
 
     private function newSection(string $name): void
     {
-        $string = strip_tags($this->step++.'. '.Str::ucfirst($name));
+        $string = strip_tags($this->step++ . '. ' . Str::ucfirst($name));
 
         $length = Str::length($string) + 12;
 
         $this->writeLogLine('');
 
         $this->writeLogLine(str_repeat('*', $length));
-        $this->writeLogLine('*     '.$string.'     *');
+        $this->writeLogLine('*     ' . $string . '     *');
         $this->writeLogLine(str_repeat('*', $length));
 
         $this->writeLogLine('');
