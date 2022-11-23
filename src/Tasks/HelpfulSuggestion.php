@@ -12,9 +12,9 @@ final class HelpfulSuggestion extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $content = $this->replacements->replace($this->getContent());
+        $content = $this->getReplacements()->replace($this->getContent());
 
-        $this->logger->appendEchoLine($content);
+        $this->getLogger()->appendEchoLine($content);
     }
 
     private function getContent(): string

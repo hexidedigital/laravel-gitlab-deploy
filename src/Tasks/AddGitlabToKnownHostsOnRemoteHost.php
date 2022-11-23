@@ -18,7 +18,7 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
         }
 
         $knownHost = '';
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             'ssh-keyscan -t ecdsa-sha2-nistp256 ' . config('gitlab-deploy.gitlab-server'),
             function ($type, $buffer) use (&$knownHost) {
                 $knownHost = trim($buffer);
@@ -28,7 +28,7 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
         $sshRemote = 'ssh {{remoteSshCredentials}}';
 
         $remoteKnownHosts = '';
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             $sshRemote . ' "cat ~/.ssh/known_hosts"',
             function ($type, $buffer) use (&$remoteKnownHosts) {
                 $remoteKnownHosts = $buffer;
@@ -36,9 +36,9 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
         );
 
         if (!Str::contains($remoteKnownHosts, $knownHost)) {
-            $this->executor->runCommand($sshRemote . " 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
+            $this->getExecutor()->runCommand($sshRemote . " 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
         } else {
-            $this->logger->appendEchoLine('Remote server already know gitlab host.');
+            $this->getLogger()->appendEchoLine('Remote server already know gitlab host.');
         }
     }
 }

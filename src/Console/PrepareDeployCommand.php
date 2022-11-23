@@ -6,7 +6,9 @@ namespace HexideDigital\GitlabDeploy\Console;
 
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use HexideDigital\GitlabDeploy\Executors\Executor;
+use HexideDigital\GitlabDeploy\ProcessExecutors\BasicExecutor;
+use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
+use HexideDigital\GitlabDeploy\ProcessExecutors\NullExecutor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\Tasks;
@@ -20,23 +22,26 @@ use Throwable;
 
 class PrepareDeployCommand extends Command
 {
-    // ---------------------
-    // only to describe command
-    // ---------------------
     protected $name = 'deploy:gitlab';
+
     protected $description = 'Command to prepare your deploy';
 
-
-    // ---------------------
-    // runtime defined properties
-    // ---------------------
-    protected DeployerState $state;
-
     protected BasicLogger $logger;
-    protected Executor $executor;
 
+    public function handle(): int
+    {
+        try {
+            $this->executeTasks();
+        } catch (Throwable) {
+            $this->logger->closeFile();
 
-    // --------------- command info --------------
+            return self::FAILURE;
+        } finally {
+            $this->logger->closeFile();
+        }
+
+        return self::SUCCESS;
+    }
 
     protected function getArguments(): array
     {
@@ -63,24 +68,7 @@ class PrepareDeployCommand extends Command
         ];
     }
 
-    public function handle(): int
-    {
-        try {
-            $this->createLogFile();
-
-            $this->executeTasks();
-        } catch (Throwable) {
-            $this->logger->closeFile();
-
-            return self::FAILURE;
-        } finally {
-            $this->logger->closeFile();
-        }
-
-        return self::SUCCESS;
-    }
-
-    private function createLogFile(): void
+    protected function createLogFile(): void
     {
         $this->logger = new BasicLogger($this);
         $this->logger->openFile();
@@ -92,68 +80,116 @@ class PrepareDeployCommand extends Command
      * @throws BindingResolutionException
      * @throws GitlabDeployException
      */
-    private function executeTasks(): void
+    protected function executeTasks(): void
     {
         try {
-            // prepare
-            $this->state = new DeployerState();
-            $this->state->prepare($this->stageName());
-            $this->state->setIsPrintOnly($this->isOnlyPrint());
+            $pipeData = $this->preparePipeData();
 
-            // begin of process
-            $executor = new Executor(
-                $this->logger,
-                $this->state->getReplacements(),
-                $this->isOnlyPrint(),
-            );
-
-            $pipeData = new PipeData(
-                $this->state,
-                $this->logger,
-                $executor,
-            );
-
-            $prepareTasks = [
-                Tasks\GenerateSshKeysOnLocalhost::class,
-                Tasks\CopySshKeysOnRemoteHost::class,
-                Tasks\GenerateSshKeysOnRemoteHost::class,
-                Tasks\CreateProjectVariablesOnGitlab::class,
-                Tasks\AddGitlabToKnownHostsOnRemoteHost::class,
-                Tasks\SaveInitialContentOfDeployFile::class,
-                Tasks\PutNewVariablesToDeployFile::class,
-                Tasks\PrepareAndCopyDotEnvFileForRemote::class,
-                Tasks\RunFirstDeployCommand::class,
-                Tasks\RollbackDeployFileContent::class,
-                Tasks\InsertCustomAliasesOnRemoteHost::class,
-                Tasks\HelpfulSuggestion::class,
-            ];
+            $prepareTasks = $this->getTasks();
 
             app(Pipeline::class)
                 ->send($pipeData)
                 ->through($prepareTasks);
         } catch (GitlabDeployException $exception) {
             $this->printError('Deploy command unexpected finished.', $exception);
+
             throw $exception;
         } catch (Throwable $exception) {
             $this->printError('Error happened! See laravel log file.', $exception);
+
             throw $exception;
         }
     }
 
-    private function printError(string $error, Throwable $exception): void
+    /**
+     * @throws CircularDependencyException
+     * @throws BindingResolutionException
+     * @throws GitlabDeployException
+     */
+    protected function preparePipeData(): PipeData
+    {
+        $this->createLogFile();
+
+        $state = $this->makeState();
+
+        $executor = $this->getExecutor($state);
+
+        return new PipeData(
+            $state,
+            $this->logger,
+            $executor,
+        );
+    }
+
+    /**
+     * @param DeployerState $state
+     * @return Executor
+     */
+    protected function getExecutor(DeployerState $state): Executor
+    {
+        if ($this->isOnlyPrint()) {
+            $executor = new NullExecutor(
+                $this->logger,
+                $state->getReplacements(),
+            );
+        } else {
+            $executor = new BasicExecutor(
+                $this->logger,
+                $state->getReplacements(),
+            );
+        }
+
+        return $executor;
+    }
+
+    /**
+     * @return DeployerState
+     * @throws BindingResolutionException
+     * @throws CircularDependencyException
+     * @throws GitlabDeployException
+     */
+    protected function makeState(): DeployerState
+    {
+        $state = new DeployerState();
+        $state->prepare($this->stageName());
+        $state->setIsPrintOnly($this->isOnlyPrint());
+
+        return $state;
+    }
+
+    /**
+     * @return array<class-string<Tasks\Task>>
+     */
+    protected function getTasks(): array
+    {
+        return [
+            Tasks\GenerateSshKeysOnLocalhost::class,
+            Tasks\CopySshKeysOnRemoteHost::class,
+            Tasks\GenerateSshKeysOnRemoteHost::class,
+            Tasks\CreateProjectVariablesOnGitlab::class,
+            Tasks\AddGitlabToKnownHostsOnRemoteHost::class,
+            Tasks\SaveInitialContentOfDeployFile::class,
+            Tasks\PutNewVariablesToDeployFile::class,
+            Tasks\PrepareAndCopyDotEnvFileForRemote::class,
+            Tasks\RunFirstDeployCommand::class,
+            Tasks\RollbackDeployFileContent::class,
+            Tasks\InsertCustomAliasesOnRemoteHost::class,
+            Tasks\HelpfulSuggestion::class,
+        ];
+    }
+
+    protected function printError(string $error, Throwable $exception): void
     {
         $this->logger->appendEchoLine($error, 'error');
         $this->logger->appendEchoLine($exception->getMessage(), 'error');
     }
 
-    // --------------- content processing --------------
-
-    private function isOnlyPrint(): bool
+    protected function isOnlyPrint(): bool
     {
         return boolval($this->option('only-print'));
     }
 
-    private function stageName(): string
+    protected function stageName(): string
     {
         return $this->argument('stage');
     }

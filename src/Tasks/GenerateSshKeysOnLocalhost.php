@@ -24,7 +24,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         if ($this->checkExistedKeys()) {
             $option = $this->isSshFilesExits() ? '-y' : '';
 
-            $this->executor->runCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" ' . $option);
+            $this->getExecutor()->runCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" ' . $option);
         }
 
         $this->updatePrivateKeyVariable();
@@ -32,25 +32,25 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     public function ensureDirectoryExists(): void
     {
-        $path = $this->replacements->replace(config('gitlab-deploy.ssh.folder'));
+        $path = $this->getReplacements()->replace(config('gitlab-deploy.ssh.folder'));
 
-        $this->logger->appendEchoLine("mkdir -p $path");
+        $this->getLogger()->appendEchoLine("mkdir -p $path");
         $this->filesystem->makeDirectory($path);
     }
 
     public function updatePrivateKeyVariable(): void
     {
-        $this->logger->appendEchoLine($this->replacements->replace('cat {{IDENTITY_FILE}}'), 'info');
+        $this->getLogger()->appendEchoLine($this->getReplacements()->replace('cat {{IDENTITY_FILE}}'), 'info');
 
-        $content = $this->filesystem->get($this->replacements->replace('{{IDENTITY_FILE}}'));
+        $content = $this->filesystem->get($this->getReplacements()->replace('{{IDENTITY_FILE}}'));
 
         $variable = new Variable(
             key: 'SSH_PRIVATE_KEY',
-            scope: $this->state->getStage()->name,
+            scope: $this->getState()->getStage()->name,
             value: $content
         );
 
-        $this->state->getGitlabVariablesBag()->add($variable);
+        $this->getState()->getGitlabVariablesBag()->add($variable);
     }
 
     public function checkExistedKeys(): bool
@@ -61,7 +61,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     private function isSshFilesExits(): bool
     {
-        return $this->filesystem->exists($this->replacements->replace('{{IDENTITY_FILE}}'))
-            || $this->filesystem->exists($this->replacements->replace('{{IDENTITY_FILE_PUB}}'));
+        return $this->filesystem->exists($this->getReplacements()->replace('{{IDENTITY_FILE}}'))
+            || $this->filesystem->exists($this->getReplacements()->replace('{{IDENTITY_FILE_PUB}}'));
     }
 }

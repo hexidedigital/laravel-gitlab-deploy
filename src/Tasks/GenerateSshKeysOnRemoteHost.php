@@ -14,11 +14,11 @@ final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
     public function execute(Pipedata $pipeData): void
     {
         if ($this->confirmAction('Generate ssh keys on remote host')) {
-            $this->executor->runCommand('ssh {{remoteSshCredentials}} "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
+            $this->getExecutor()->runCommand('ssh {{remoteSshCredentials}} "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
         }
 
         $pubKeyContent = '';
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             'ssh {{remoteSshCredentials}} "cat ~/.ssh/id_rsa.pub"',
             function ($type, $buffer) use (&$pubKeyContent) {
                 $pubKeyContent = $buffer;
@@ -27,12 +27,12 @@ final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 
         $pubKeyVariable = new Variable(
             key: 'SSH_PUB_KEY',
-            scope: $this->state->getStage()->name,
+            scope: $this->getState()->getStage()->name,
             value: $pubKeyContent
         );
 
-        $this->state->getGitlabVariablesBag()->add($pubKeyVariable);
+        $this->getState()->getGitlabVariablesBag()->add($pubKeyVariable);
 
-        $this->logger->appendEchoLine('Remote pub-key: ' . $pubKeyVariable->value, 'info');
+        $this->getLogger()->appendEchoLine('Remote pub-key: ' . $pubKeyVariable->value, 'info');
     }
 }

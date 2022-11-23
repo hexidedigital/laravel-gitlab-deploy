@@ -12,10 +12,10 @@ final class CopySshKeysOnRemoteHost extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $this->logger->appendEchoLine(
-            $this->replacements->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
+        $this->getLogger()->appendEchoLine(
+            $this->getReplacements()->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
         );
 
-        $this->executor->runCommand('ssh-copy-id {{remoteSshCredentials}}');
+        $this->getExecutor()->runCommand('ssh-copy-id {{remoteSshCredentials}}');
     }
 }

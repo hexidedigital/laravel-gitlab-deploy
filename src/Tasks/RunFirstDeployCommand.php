@@ -20,15 +20,15 @@ final class RunFirstDeployCommand extends BaseTask implements Task
         if (!$fileExists) {
             // option only print disabled
             // and file not copied
-            $this->logger->appendEchoLine('The deployment command was skipped.', 'error');
+            $this->getLogger()->appendEchoLine('The deployment command was skipped.', 'error');
 
             return;
         }
 
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             'php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
-                $this->logger->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
             }
         );
     }

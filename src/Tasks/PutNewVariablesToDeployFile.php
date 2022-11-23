@@ -18,15 +18,15 @@ final class PutNewVariablesToDeployFile extends BaseTask implements Task
 
     public function execute(PipeData $pipeData): void
     {
-        $env = $this->replacements->replace('{{DEPLOY_PHP_ENV}}');
+        $env = $this->getReplacements()->replace('{{DEPLOY_PHP_ENV}}');
 
-        $this->logger->appendEchoLine($env);
+        $this->getLogger()->appendEchoLine($env);
 
         $path = config('gitlab-deploy.deployer-php');
 
         $replaces = [
             '/*CI_ENV*/' => $env,
-            '~/.ssh/id_rsa' => $this->replacements->replace('{{IDENTITY_FILE}}'),
+            '~/.ssh/id_rsa' => $this->getReplacements()->replace('{{IDENTITY_FILE}}'),
         ];
 
         $this->updateWithReplaces($this->filesystem, $path, $replaces);

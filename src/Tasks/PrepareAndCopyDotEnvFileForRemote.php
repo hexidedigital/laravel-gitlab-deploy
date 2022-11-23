@@ -20,17 +20,17 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $envExample = $this->replacements->replace('{{PROJ_DIR}}/.env.example');
-        $envOriginal = $this->replacements->replace('{{PROJ_DIR}}/.env');
-        $envBackup = $this->replacements->replace('{{PROJ_DIR}}/.env.backup');
+        $envExample = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.example');
+        $envOriginal = $this->getReplacements()->replace('{{PROJ_DIR}}/.env');
+        $envBackup = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.backup');
         $envHost = $envOriginal;
 
         $this->moveFiles($envOriginal, $envBackup, $envExample, $envHost);
 
         $envReplaces = $this->getEnvReplaces();
 
-        $this->logger->appendEchoLine('Filling env file for host', 'comment');
-        $this->logger->appendEchoLine(var_export($envReplaces, true));
+        $this->getLogger()->appendEchoLine('Filling env file for host', 'comment');
+        $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
 
         $this->updateWithReplaces($this->filesystem, $envHost, $envReplaces);
 
@@ -44,14 +44,14 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      */
     private function getEnvReplaces(): array
     {
-        $mail = $this->state->getStage()->hasMailOptions()
+        $mail = $this->getState()->getStage()->hasMailOptions()
             ? [
-                'MAIL_HOST=mailhog' => $this->replacements->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
+                'MAIL_HOST=mailhog' => $this->getReplacements()->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
                 'MAIL_PORT=1025' => 'MAIL_PORT=587',
-                'MAIL_USERNAME=null' => $this->replacements->replace('MAIL_USERNAME={{MAIL_USER}}'),
-                'MAIL_PASSWORD=null' => $this->replacements->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
+                'MAIL_USERNAME=null' => $this->getReplacements()->replace('MAIL_USERNAME={{MAIL_USER}}'),
+                'MAIL_PASSWORD=null' => $this->getReplacements()->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
                 'MAIL_ENCRYPTION=null' => 'MAIL_ENCRYPTION=tls',
-                'MAIL_FROM_ADDRESS=null' => $this->replacements->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
+                'MAIL_FROM_ADDRESS=null' => $this->getReplacements()->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
             ]
             : [];
 
@@ -61,11 +61,11 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 
         return array_merge($mail, [
             'APP_KEY=' => 'APP_KEY=' . $appKey,
-            'APP_URL=' => $this->replacements->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
+            'APP_URL=' => $this->getReplacements()->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
 
-            'DB_DATABASE=' => $this->replacements->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
-            'DB_USERNAME=' => $this->replacements->replace('DB_USERNAME="{{DB_USERNAME}}"#'),
-            'DB_PASSWORD=' => $this->replacements->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
+            'DB_DATABASE=' => $this->getReplacements()->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
+            'DB_USERNAME=' => $this->getReplacements()->replace('DB_USERNAME="{{DB_USERNAME}}"#'),
+            'DB_PASSWORD=' => $this->getReplacements()->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
         ]);
     }
 
@@ -79,20 +79,20 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
             return;
         }
 
-        $this->logger->appendEchoLine('Coping to remote', 'comment');
+        $this->getLogger()->appendEchoLine('Coping to remote', 'comment');
 
-        $this->logger->appendEchoLine(
-            $this->replacements->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
+        $this->getLogger()->appendEchoLine(
+            $this->getReplacements()->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
         );
 
         $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             "ssh {{remoteSshCredentials}} 'test -d $sharedDir || mkdir -p $sharedDir'"
         );
-        $this->executor->runCommand(
+        $this->getExecutor()->runCommand(
             "scp {{remoteScpOptions}} \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
             function ($type, $buffer) {
-                $this->logger->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
             }
         );
     }
@@ -105,9 +105,9 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      */
     private function restoreFiles(array|string $envHost, array|string $envBackup, array|string $envOriginal): void
     {
-        $this->logger->appendEchoLine('Restore original env file', 'comment');
-        $this->executor->runCommand("cp $envHost $envHost.host");
-        $this->executor->runCommand("cp $envBackup $envOriginal");
+        $this->getLogger()->appendEchoLine('Restore original env file', 'comment');
+        $this->getExecutor()->runCommand("cp $envHost $envHost.host");
+        $this->getExecutor()->runCommand("cp $envBackup $envOriginal");
     }
 
     /**
@@ -123,9 +123,9 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         array|string $envExample,
         array|string $envHost
     ): void {
-        $this->logger->appendEchoLine('Backup original env file and create for host', 'comment');
+        $this->getLogger()->appendEchoLine('Backup original env file and create for host', 'comment');
 
-        $this->executor->runCommand("cp $envOriginal $envBackup");
-        $this->executor->runCommand("cp $envExample $envHost");
+        $this->getExecutor()->runCommand("cp $envOriginal $envBackup");
+        $this->getExecutor()->runCommand("cp $envExample $envHost");
     }
 }

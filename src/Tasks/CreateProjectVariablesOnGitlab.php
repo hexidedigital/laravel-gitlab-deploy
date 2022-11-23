@@ -19,7 +19,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $variableBag = $this->state->getGitlabVariablesBag();
+        $variableBag = $this->getState()->getGitlabVariablesBag();
 
         $this->printVariables($variableBag);
 
@@ -27,10 +27,10 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
             return;
         }
 
-        $this->logger->appendEchoLine('Connecting to gitlab and creating variables...');
+        $this->getLogger()->appendEchoLine('Connecting to gitlab and creating variables...');
 
         $this->creator
-            ->setProject($this->state->getConfigurations()->project)
+            ->setProject($this->getState()->getConfigurations()->project)
             ->setVariableBag($variableBag);
 
         $this->creator->execute();
@@ -54,22 +54,22 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
     private function printVariables(VariableBag $variableBag): void
     {
         foreach ($variableBag->only($this->printAloneKeys()) as $variable) {
-            $this->logger->appendEchoLine($variable->key, 'comment');
-            $this->logger->appendEchoLine($variable->value);
+            $this->getLogger()->appendEchoLine($variable->key, 'comment');
+            $this->getLogger()->appendEchoLine($variable->value);
         }
 
         $rows = [];
         foreach ($variableBag->except($this->printAloneKeys()) as $variable) {
-            $this->logger->writeToFile($variable->key . PHP_EOL . $variable->value . PHP_EOL);
+            $this->getLogger()->writeToFile($variable->key . PHP_EOL . $variable->value . PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];
         }
 
         if (isset($this->command)) {
-            $this->command->table(['key', 'value'], $rows);
+            $this->getCommand()->table(['key', 'value'], $rows);
         }
 
-        $this->logger->appendEchoLine(
+        $this->getLogger()->appendEchoLine(
             "tip: put `SSH_PUB_KEY` to path => Gitlab.project -> Settings -> Repository -> Deploy keys",
             'comment'
         );
@@ -78,15 +78,15 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
     private function printMessages(): void
     {
         foreach ($this->creator->getMessages() as $message) {
-            $this->logger->appendEchoLine($message, 'comment');
+            $this->getLogger()->appendEchoLine($message, 'comment');
         }
 
         $fails = $this->creator->getFailMassages();
 
-        $this->logger->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
+        $this->getLogger()->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
 
         foreach ($fails as $fail) {
-            $this->logger->appendEchoLine($fail, 'error');
+            $this->getLogger()->appendEchoLine($fail, 'error');
         }
     }
 }
