@@ -16,7 +16,7 @@ final class PutNewVariablesToDeployFile extends BaseTask implements Task
     ) {
     }
 
-    public function handle(PipeData $pipeData, callable $next): mixed
+    public function execute(PipeData $pipeData): void
     {
         $env = $this->replacements->replace('{{DEPLOY_PHP_ENV}}');
 
@@ -30,7 +30,5 @@ final class PutNewVariablesToDeployFile extends BaseTask implements Task
         ];
 
         $this->updateWithReplaces($this->filesystem, $path, $replaces);
-
-        return $next($pipeData);
     }
 }

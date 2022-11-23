@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use HexideDigital\GitlabDeploy\PipeData;
 
 final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'Generate generate ssh-keys on remote host';
 
-    public function handle(): void
+    public function execute(Pipedata $pipeData): void
     {
         if ($this->confirmAction('Generate ssh keys on remote host')) {
             $this->executor->runCommand('ssh {{remoteSshCredentials}} "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N \"\""');
@@ -32,6 +33,6 @@ final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 
         $this->state->getGitlabVariablesBag()->add($pubKeyVariable);
 
-        $this->logger->appendEchoLine('Remote pub-key: '.$pubKeyVariable->value, 'info');
+        $this->logger->appendEchoLine('Remote pub-key: ' . $pubKeyVariable->value, 'info');
     }
 }

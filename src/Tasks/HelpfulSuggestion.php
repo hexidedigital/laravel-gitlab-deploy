@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
+use HexideDigital\GitlabDeploy\PipeData;
+
 final class HelpfulSuggestion extends BaseTask implements Task
 {
     protected string $name = 'IDEA Setup and helpers';
 
-    public function handle(): void
+    public function execute(Pipedata $pipeData): void
     {
         $content = $this->replacements->replace($this->getContent());
 

@@ -6,6 +6,7 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Tasks\GitlabVariablesCreator;
 use HexideDigital\GitlabDeploy\Gitlab\VariableBag;
+use HexideDigital\GitlabDeploy\PipeData;
 
 final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 {
@@ -16,7 +17,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
     ) {
     }
 
-    public function handle(): void
+    public function execute(Pipedata $pipeData): void
     {
         $variableBag = $this->state->getGitlabVariablesBag();
 
@@ -59,7 +60,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
         $rows = [];
         foreach ($variableBag->except($this->printAloneKeys()) as $variable) {
-            $this->logger->writeToFile($variable->key.PHP_EOL.$variable->value.PHP_EOL);
+            $this->logger->writeToFile($variable->key . PHP_EOL . $variable->value . PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];
         }
@@ -82,7 +83,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
         $fails = $this->creator->getFailMassages();
 
-        $this->logger->appendEchoLine('Gitlab variables created with "'.sizeof($fails).'" fail messages');
+        $this->logger->appendEchoLine('Gitlab variables created with "' . sizeof($fails) . '" fail messages');
 
         foreach ($fails as $fail) {
             $this->logger->appendEchoLine($fail, 'error');

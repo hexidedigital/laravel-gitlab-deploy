@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
+use HexideDigital\GitlabDeploy\PipeData;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -17,7 +18,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     ) {
     }
 
-    public function handle(): void
+    public function execute(Pipedata $pipeData): void
     {
         $envExample = $this->replacements->replace('{{PROJ_DIR}}/.env.example');
         $envOriginal = $this->replacements->replace('{{PROJ_DIR}}/.env');
@@ -41,7 +42,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     /**
      * @return array<string, string>
      */
-    public function getEnvReplaces(): array
+    private function getEnvReplaces(): array
     {
         $mail = $this->state->getStage()->hasMailOptions()
             ? [
@@ -59,7 +60,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         $appKey = trim($output->fetch());
 
         return array_merge($mail, [
-            'APP_KEY=' => 'APP_KEY='.$appKey,
+            'APP_KEY=' => 'APP_KEY=' . $appKey,
             'APP_URL=' => $this->replacements->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
 
             'DB_DATABASE=' => $this->replacements->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
@@ -72,7 +73,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      * @param array|string $envHost
      * @return void
      */
-    public function copyFileToRemote(array|string $envHost): void
+    private function copyFileToRemote(array|string $envHost): void
     {
         if (!$this->confirmAction('Copy env file to remote server?', true)) {
             return;
@@ -80,7 +81,9 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 
         $this->logger->appendEchoLine('Coping to remote', 'comment');
 
-        $this->logger->appendEchoLine($this->replacements->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>'));
+        $this->logger->appendEchoLine(
+            $this->replacements->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
+        );
 
         $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
         $this->executor->runCommand(
@@ -89,7 +92,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         $this->executor->runCommand(
             "scp {{remoteScpOptions}} \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
             function ($type, $buffer) {
-                $this->logger->appendEchoLine($type.' > '.trim($buffer));
+                $this->logger->appendEchoLine($type . ' > ' . trim($buffer));
             }
         );
     }
@@ -100,7 +103,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      * @param array|string $envOriginal
      * @return void
      */
-    public function restoreFiles(array|string $envHost, array|string $envBackup, array|string $envOriginal): void
+    private function restoreFiles(array|string $envHost, array|string $envBackup, array|string $envOriginal): void
     {
         $this->logger->appendEchoLine('Restore original env file', 'comment');
         $this->executor->runCommand("cp $envHost $envHost.host");
@@ -114,8 +117,12 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      * @param array|string $envHost
      * @return void
      */
-    public function moveFiles(array|string $envOriginal, array|string $envBackup, array|string $envExample, array|string $envHost): void
-    {
+    private function moveFiles(
+        array|string $envOriginal,
+        array|string $envBackup,
+        array|string $envExample,
+        array|string $envHost
+    ): void {
         $this->logger->appendEchoLine('Backup original env file and create for host', 'comment');
 
         $this->executor->runCommand("cp $envOriginal $envBackup");

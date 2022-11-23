@@ -10,6 +10,7 @@ use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Executors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use HexideDigital\GitlabDeploy\PipeData;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
@@ -61,6 +62,22 @@ abstract class BaseTask implements Task
     public function canBeSkipped(): bool
     {
         return true;
+    }
+
+    public function handle(PipeData $pipeData, callable $next): mixed
+    {
+        if (
+            $this->canBeSkipped()
+            || !$this->shouldRunInPrintMode()
+        ) {
+            return $next($pipeData);
+        }
+
+        $this->logger->newSection($pipeData->incrementStepNumber(), $this->getTaskName());
+
+        $this->execute($pipeData);
+
+        return $next($pipeData);
     }
 
     protected function confirmAction(string $question, bool $default = false): bool

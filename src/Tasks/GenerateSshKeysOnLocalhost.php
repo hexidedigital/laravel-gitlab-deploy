@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
+use HexideDigital\GitlabDeploy\PipeData;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
@@ -16,14 +17,14 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
     ) {
     }
 
-    public function handle(): void
+    public function execute(Pipedata $pipeData): void
     {
         $this->ensureDirectoryExists();
 
         if ($this->checkExistedKeys()) {
             $option = $this->isSshFilesExits() ? '-y' : '';
 
-            $this->executor->runCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" '.$option);
+            $this->executor->runCommand('ssh-keygen -t rsa -f "{{IDENTITY_FILE}}" -N "" ' . $option);
         }
 
         $this->updatePrivateKeyVariable();

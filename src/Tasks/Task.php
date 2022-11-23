@@ -26,5 +26,7 @@ interface Task
 
     public function canBeSkipped(): bool;
 
+    public function execute(PipeData $pipeData): void;
+
     public function handle(PipeData $pipeData, callable $next): mixed;
 }
