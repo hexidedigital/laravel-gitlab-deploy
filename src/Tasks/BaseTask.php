@@ -33,7 +33,7 @@ abstract class BaseTask implements Task
         $this->processDeployerState($pipeData->state);
 
         $this->pipeData = $pipeData;
-        $this->logger = $this->getLogger();
+        $this->logger = $pipeData->logger;
         $this->executor = $pipeData->executor;
     }
 
