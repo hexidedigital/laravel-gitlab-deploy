@@ -30,15 +30,23 @@ class PrepareDeployCommand extends Command
 
     public function handle(): int
     {
+        $this->info('Start-upping...');
+
+        $this->createLogFile();
+
         try {
             $this->executeTasks();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             $this->logger->closeFile();
+
+            $this->info('Command finished with unexpected exception - ' . $exception->getMessage());
 
             return self::FAILURE;
         } finally {
             $this->logger->closeFile();
         }
+
+        $this->info('Command successfully finished!');
 
         return self::SUCCESS;
     }
@@ -85,11 +93,16 @@ class PrepareDeployCommand extends Command
         try {
             $pipeData = $this->preparePipeData();
 
+            $this->info('Fetching available tasks...');
+
             $prepareTasks = $this->getTasks();
+
+            $this->info('Running tasks...');
 
             app(Pipeline::class)
                 ->send($pipeData)
-                ->through($prepareTasks);
+                ->through($prepareTasks)
+                ->thenReturn();
         } catch (GitlabDeployException $exception) {
             $this->printError('Deploy command unexpected finished.', $exception);
 
@@ -108,8 +121,6 @@ class PrepareDeployCommand extends Command
      */
     protected function preparePipeData(): PipeData
     {
-        $this->createLogFile();
-
         $state = $this->makeState();
 
         $executor = $this->getExecutor($state);
