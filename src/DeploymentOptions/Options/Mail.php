@@ -29,9 +29,9 @@ final class Mail implements BaseOption
     public function toReplacesArray(): array
     {
         return [
-            '{{MAIL_HOSTNAME}}' => $this->name,
-            '{{MAIL_USER}}' => $this->login,
-            '{{MAIL_PASSWORD}}' => $this->password,
+            'MAIL_HOSTNAME' => $this->name,
+            'MAIL_USER' => $this->login,
+            'MAIL_PASSWORD' => $this->password,
         ];
     }
 }

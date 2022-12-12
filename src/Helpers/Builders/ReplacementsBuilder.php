@@ -26,7 +26,7 @@ final class ReplacementsBuilder
         $this->replacements = new Replacements();
 
         // server - USER HOST SSH_PORT DEPLOY_DOMAIN DEPLOY_SERVER DEPLOY_USER DEPLOY_PASS
-        $this->replacements->mergeReplaces($this->stage->server->toReplacesArray());
+        $this->replacements->merge($this->stage->server->toReplacesArray());
 
 
         /*-----------------------
@@ -43,21 +43,21 @@ final class ReplacementsBuilder
             $this->stage->database->toReplacesArray(),
             $this->stage->hasMailOptions() ? $this->stage->mail->toReplacesArray() : [],
             [
-                '{{PROJ_DIR}}' => base_path(),
-                '{{CI_COMMIT_REF_NAME}}' => $this->stage->name,
-                '{{STAGE}}' => $this->stage->name,
+                'PROJ_DIR' => base_path(),
+                'CI_COMMIT_REF_NAME' => $this->stage->name,
+                'STAGE' => $this->stage->name,
 
-                '{{DEPLOY_BASE_DIR}}' => $this->replacements->replace($this->stage->options->baseDir),
+                'DEPLOY_BASE_DIR' => $this->replacements->replace($this->stage->options->baseDir),
             ],
         );
-        $this->replacements->mergeReplaces($data);
+        $this->replacements->merge($data);
 
 
         /*-----------------------
          * step 3
          */
-        $this->replacements->mergeReplaces([
-            '{{DEPLOY_PHP_ENV}}' => <<<PHP
+        $this->replacements->merge([
+            'DEPLOY_PHP_ENV' => <<<PHP
 \$CI_REPOSITORY_URL = "{{CI_REPOSITORY_URL}}";
 \$CI_COMMIT_REF_NAME = "{{CI_COMMIT_REF_NAME}}";
 \$BIN_PHP = "{{BIN_PHP}}";
@@ -74,15 +74,15 @@ PHP,
             ->append(config('gitlab-deploy.ssh.key_name'))
             ->value();
 
-        $this->replacements->mergeReplaces([
-            '{{IDENTITY_FILE}}' => $filePath,
-            '{{IDENTITY_FILE_PUB}}' => "$filePath.pub",
+        $this->replacements->merge([
+            'IDENTITY_FILE' => $filePath,
+            'IDENTITY_FILE_PUB' => "$filePath.pub",
 
-            '{{remoteSshCredentials}}' => '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"',
-            '{{remoteScpOptions}}' => '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}',
+            'remoteSshCredentials' => '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"',
+            'remoteScpOptions' => '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}',
         ]);
 
-        $this->replacements->mergeReplaces($data);
+        $this->replacements->merge($data);
 
         return $this;
     }

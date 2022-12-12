@@ -35,14 +35,14 @@ final class Server implements BaseOption
     public function toReplacesArray(): array
     {
         return [
-            '{{USER}}' => $this->login,
-            '{{HOST}}' => $this->host,
+            'USER' => $this->login,
+            'HOST' => $this->host,
 
-            '{{SSH_PORT}}' => $this->sshPort,
-            '{{DEPLOY_DOMAIN}}' => $this->domain,
-            '{{DEPLOY_SERVER}}' => $this->host,
-            '{{DEPLOY_USER}}' => $this->login,
-            '{{DEPLOY_PASS}}' => $this->password,
+            'SSH_PORT' => $this->sshPort,
+            'DEPLOY_DOMAIN' => $this->domain,
+            'DEPLOY_SERVER' => $this->host,
+            'DEPLOY_USER' => $this->login,
+            'DEPLOY_PASS' => $this->password,
         ];
     }
 }

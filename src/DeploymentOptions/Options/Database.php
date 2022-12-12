@@ -29,9 +29,9 @@ final class Database implements BaseOption
     public function toReplacesArray(): array
     {
         return [
-            '{{DB_DATABASE}}' => $this->name,
-            '{{DB_USERNAME}}' => $this->login,
-            '{{DB_PASSWORD}}' => $this->password,
+            'DB_DATABASE' => $this->name,
+            'DB_USERNAME' => $this->login,
+            'DB_PASSWORD' => $this->password,
         ];
     }
 }

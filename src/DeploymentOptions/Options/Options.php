@@ -32,10 +32,10 @@ final class Options implements BaseOption
     public function toReplacesArray(): array
     {
         return [
-            '{{CI_REPOSITORY_URL}}' => $this->gitUrl,
-            '{{DEPLOY_BASE_DIR}}' => $this->baseDir,
-            '{{BIN_PHP}}' => $this->binPhp,
-            '{{BIN_COMPOSER}}' => $this->binComposer,
+            'CI_REPOSITORY_URL' => $this->gitUrl,
+            'DEPLOY_BASE_DIR' => $this->baseDir,
+            'BIN_PHP' => $this->binPhp,
+            'BIN_COMPOSER' => $this->binComposer,
         ];
     }
 }
