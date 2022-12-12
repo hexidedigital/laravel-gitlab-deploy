@@ -6,16 +6,10 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
 use HexideDigital\GitlabDeploy\PipeData;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 {
     protected string $name = 'generate ssh keys - private key to gitlab (localhost)';
-
-    public function __construct(
-        private readonly Filesystem $filesystem,
-    ) {
-    }
 
     public function execute(Pipedata $pipeData): void
     {
@@ -35,14 +29,19 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         $path = $this->getReplacements()->replace(config('gitlab-deploy.ssh.folder'));
 
         $this->getLogger()->appendEchoLine("mkdir -p $path");
-        $this->filesystem->makeDirectory($path);
+
+        if (\File::isDirectory($path)) {
+            return;
+        }
+
+        \File::makeDirectory($path, recursive: true);
     }
 
     public function updatePrivateKeyVariable(): void
     {
         $this->getLogger()->appendEchoLine($this->getReplacements()->replace('cat {{IDENTITY_FILE}}'), 'info');
 
-        $content = $this->filesystem->get($this->getReplacements()->replace('{{IDENTITY_FILE}}'));
+        $content = $this->identityFileContent();
 
         $variable = new Variable(
             key: 'SSH_PRIVATE_KEY',
@@ -61,7 +60,14 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     private function isSshFilesExits(): bool
     {
-        return $this->filesystem->exists($this->getReplacements()->replace('{{IDENTITY_FILE}}'))
-            || $this->filesystem->exists($this->getReplacements()->replace('{{IDENTITY_FILE_PUB}}'));
+        return \File::exists($this->getReplacements()->replace('{{IDENTITY_FILE}}'))
+            || \File::exists($this->getReplacements()->replace('{{IDENTITY_FILE_PUB}}'));
+    }
+
+    private function identityFileContent(): string
+    {
+        return $this->isPrintOnly()
+            ? ''
+            : \File::get($this->getReplacements()->replace('{{IDENTITY_FILE}}'));
     }
 }

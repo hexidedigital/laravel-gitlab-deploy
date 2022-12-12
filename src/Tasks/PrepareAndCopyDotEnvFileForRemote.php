@@ -5,18 +5,12 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\PipeData;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 {
     protected string $name = 'setup env file for remote server and move to server';
-
-    public function __construct(
-        private readonly Filesystem $filesystem,
-    ) {
-    }
 
     public function execute(Pipedata $pipeData): void
     {
@@ -32,7 +26,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         $this->getLogger()->appendEchoLine('Filling env file for host', 'comment');
         $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
 
-        $this->updateWithReplaces($this->filesystem, $envHost, $envReplaces);
+        $this->updateWithPatternReplaces($envHost, $envReplaces);
 
         $this->copyFileToRemote($envHost);
 
@@ -70,10 +64,10 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     }
 
     /**
-     * @param array|string $envHost
+     * @param string $envHost
      * @return void
      */
-    private function copyFileToRemote(array|string $envHost): void
+    private function copyFileToRemote(string $envHost): void
     {
         if (!$this->confirmAction('Copy env file to remote server?', true)) {
             return;
@@ -98,12 +92,12 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     }
 
     /**
-     * @param array|string $envHost
-     * @param array|string $envBackup
-     * @param array|string $envOriginal
+     * @param string $envHost
+     * @param string $envBackup
+     * @param string $envOriginal
      * @return void
      */
-    private function restoreFiles(array|string $envHost, array|string $envBackup, array|string $envOriginal): void
+    private function restoreFiles(string $envHost, string $envBackup, string $envOriginal): void
     {
         $this->getLogger()->appendEchoLine('Restore original env file', 'comment');
         $this->getExecutor()->runCommand("cp $envHost $envHost.host");
@@ -111,18 +105,14 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     }
 
     /**
-     * @param array|string $envOriginal
-     * @param array|string $envBackup
-     * @param array|string $envExample
-     * @param array|string $envHost
+     * @param string $envOriginal
+     * @param string $envBackup
+     * @param string $envExample
+     * @param string $envHost
      * @return void
      */
-    private function moveFiles(
-        array|string $envOriginal,
-        array|string $envBackup,
-        array|string $envExample,
-        array|string $envHost
-    ): void {
+    private function moveFiles(string $envOriginal, string $envBackup, string $envExample, string $envHost): void
+    {
         $this->getLogger()->appendEchoLine('Backup original env file and create for host', 'comment');
 
         $this->getExecutor()->runCommand("cp $envOriginal $envBackup");

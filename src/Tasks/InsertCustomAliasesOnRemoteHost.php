@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
+use File;
 use HexideDigital\GitlabDeploy\PipeData;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
 {
     protected string $name = 'append custom aliases';
-
-    public function __construct(
-        private readonly Filesystem $filesystem,
-    ) {
-    }
 
     public function execute(Pipedata $pipeData): void
     {
@@ -22,8 +17,8 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
 
         $filePath = __DIR__ . '/../../examples/.bash_aliases';
 
-        if (!$shouldPutAliases) {
-            $bashAliases = $this->getReplacements()->replace($this->filesystem->get($filePath));
+        if (!$shouldPutAliases || $this->isPrintOnly()) {
+            $bashAliases = $this->getReplacements()->replace(File::get($filePath));
 
             $this->getLogger()->writeToFile($bashAliases);
 
@@ -39,7 +34,7 @@ SHELL;
 
         $this->getExecutor()->runCommand("cp $filePath $aliasesPath");
 
-        $this->updateWithReplaces($this->filesystem, $aliasesPath);
+        $this->updateWithPatternReplaces($aliasesPath);
 
         $this->getLogger()->appendEchoLine('Optionally, copy next script to load aliases into ~/.bashrc file.', 'comment');
         $this->getLogger()->appendEchoLine($aliasesLoader);

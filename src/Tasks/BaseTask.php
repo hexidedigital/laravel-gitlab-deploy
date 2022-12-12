@@ -154,14 +154,16 @@ abstract class BaseTask implements Task
         return $this->command->confirm($question, $default);
     }
 
-    protected function updateWithReplaces(Filesystem $filesystem, string $path, array $replaces = null): void
+    protected function updateWithPatternReplaces(string $path, array $additionalPlaceholders = null): void
     {
         if ($this->isPrintOnly()) {
             return;
         }
 
-        $contents = $this->replacements->replace($filesystem->get($path), $replaces);
+        $contents = $this->replacements->replace(\File::get($path), $additionalPlaceholders);
 
-        $filesystem->put($path, $contents);
+        $this->getLogger()->appendEchoLine($contents);
+
+        \File::put($path, $contents);
     }
 }
