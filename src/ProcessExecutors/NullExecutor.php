@@ -11,6 +11,5 @@ final class NullExecutor extends Executor
      */
     protected function execute(string $command, ?callable $callable): void
     {
-        $this->logger->appendEchoLine('running command...' . PHP_EOL);
     }
 }

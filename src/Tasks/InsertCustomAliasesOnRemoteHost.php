@@ -18,7 +18,9 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
         $filePath = __DIR__ . '/../../examples/.bash_aliases';
 
         if (!$shouldPutAliases || $this->isPrintOnly()) {
-            $bashAliases = $this->getReplacements()->replace(File::get($filePath));
+            $content = $this->getContent($filePath);
+
+            $bashAliases = $this->getReplacements()->replace($content);
 
             $this->getLogger()->writeToFile($bashAliases);
 
@@ -33,14 +35,11 @@ fi
 SHELL;
 
         $this->getExecutor()->runCommand("cp $filePath $aliasesPath");
-
-        $this->updateWithPatternReplaces($aliasesPath);
-
-        $this->getLogger()->appendEchoLine('Optionally, copy next script to load aliases into ~/.bashrc file.', 'comment');
+        $this->getLogger()->appendEchoLine('Optionally, copy next script to load aliases into <comment>`~/.bashrc`</comment> file.');
         $this->getLogger()->appendEchoLine($aliasesLoader);
 
         $this->getLogger()->appendEchoLine(
-            $this->getReplacements()->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
+            $this->getReplacements()->replace('Can ask a password, enter <info>{{DEPLOY_PASS}}</info>')
         );
         $this->getExecutor()->runCommand(
             "scp {{remoteScpOptions}} \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",

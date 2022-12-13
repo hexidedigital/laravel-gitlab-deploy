@@ -7,12 +7,11 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
-use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\PipeData;
+use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 abstract class BaseTask implements Task
 {
@@ -145,6 +144,44 @@ abstract class BaseTask implements Task
         return $this->getState()->isPrintOnly();
     }
 
+    public function writeContent(string $path, string $contents): void
+    {
+        $this->getLogger()->appendEchoLine("Updating content for file: <comment>$path</comment>");
+
+        if ($this->isPrintOnly()) {
+            return;
+        }
+
+        \File::put($path, $contents);
+    }
+
+    public function getContent(string $path): string
+    {
+        $this->getLogger()->appendEchoLine("Reading content from file: <comment>$path</comment>");
+
+        if ($this->isPrintOnly()) {
+            return '';
+        }
+
+        return \File::get($path) ?: '';
+    }
+
+    /**
+     * @param string $from
+     * @param mixed $to
+     * @return void
+     */
+    public function copyFile(string $from, mixed $to): void
+    {
+        $this->getLogger()->appendEchoLine("Coping files: from [<comment>$from</comment>], to [<comment>$to</comment>]");
+
+        if ($this->isPrintOnly()) {
+            return;
+        }
+
+        \File::copy($from, $to);
+    }
+
     protected function confirmAction(string $question, bool $default = false): bool
     {
         if (!isset($this->command)) {
@@ -154,16 +191,20 @@ abstract class BaseTask implements Task
         return $this->command->confirm($question, $default);
     }
 
-    protected function updateWithPatternReplaces(string $path, array $additionalPlaceholders = null): void
+    protected function writeContentWithReplaces(string $path, array $patterns): void
     {
         if ($this->isPrintOnly()) {
             return;
         }
 
-        $contents = $this->replacements->replace(\File::get($path), $additionalPlaceholders);
+        $contents = $this->getContent($path);
 
-        $this->getLogger()->appendEchoLine($contents);
+        foreach ($patterns as $pattern => $replacement) {
+            $replacement = $this->replacements->replace($replacement);
 
-        \File::put($path, $contents);
+            $contents = preg_replace("/$pattern/m", $replacement, $contents);
+        }
+
+        $this->writeContent($path, $contents);
     }
 }

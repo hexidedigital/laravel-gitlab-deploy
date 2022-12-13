@@ -14,15 +14,15 @@ final class PutNewVariablesToDeployFile extends BaseTask implements Task
     {
         $env = $this->getReplacements()->replace('{{DEPLOY_PHP_ENV}}');
 
-        $this->getLogger()->appendEchoLine($env);
+        $this->getLogger()->appendEchoLine($env, 'comment');
 
         $path = config('gitlab-deploy.deployer-php');
 
         $patterns = [
-            '/*CI_ENV*/' => $env,
-            '~/.ssh/id_rsa' => $this->getReplacements()->replace('{{IDENTITY_FILE}}'),
+            '\/\*CI_ENV\*\/' => $env,
+            '~\/\.ssh\/id_rsa' => $this->getReplacements()->replace('{{IDENTITY_FILE}}'),
         ];
 
-        $this->updateWithPatternReplaces($path, $patterns);
+        $this->writeContentWithReplaces($path, $patterns);
     }
 }

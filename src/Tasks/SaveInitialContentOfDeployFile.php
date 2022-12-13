@@ -14,12 +14,6 @@ final class SaveInitialContentOfDeployFile extends BaseTask implements Task
     {
         $path = config('gitlab-deploy.deployer-php');
 
-        $this->getLogger()->appendEchoLine("cp $path $path.tmp");
-
-        if ($this->isPrintOnly()) {
-            return;
-        }
-
-        \File::copy($path, $path . '.tmp');
+        $this->copyFile($path, $path . '.tmp');
     }
 }

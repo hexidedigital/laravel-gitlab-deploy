@@ -23,10 +23,10 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 
         $envReplaces = $this->getEnvReplaces();
 
-        $this->getLogger()->appendEchoLine('Filling env file for host', 'comment');
+        $this->getLogger()->appendEchoLine('Filling env file for host...', 'comment');
         $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
 
-        $this->updateWithPatternReplaces($envHost, $envReplaces);
+        $this->writeContentWithReplaces($envHost, $envReplaces);
 
         $this->copyFileToRemote($envHost);
 
@@ -40,12 +40,12 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     {
         $mail = $this->getState()->getStage()->hasMailOptions()
             ? [
-                'MAIL_HOST=mailhog' => $this->getReplacements()->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
-                'MAIL_PORT=1025' => 'MAIL_PORT=587',
-                'MAIL_USERNAME=null' => $this->getReplacements()->replace('MAIL_USERNAME={{MAIL_USER}}'),
-                'MAIL_PASSWORD=null' => $this->getReplacements()->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
-                'MAIL_ENCRYPTION=null' => 'MAIL_ENCRYPTION=tls',
-                'MAIL_FROM_ADDRESS=null' => $this->getReplacements()->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
+                '^MAIL_HOST=.*$' => $this->getReplacements()->replace('MAIL_HOST={{MAIL_HOSTNAME}}'),
+                '^MAIL_PORT=.*$' => 'MAIL_PORT=587',
+                '^MAIL_USERNAME=.*$' => $this->getReplacements()->replace('MAIL_USERNAME={{MAIL_USER}}'),
+                '^MAIL_PASSWORD=.*$' => $this->getReplacements()->replace('MAIL_PASSWORD={{MAIL_PASSWORD}}'),
+                '^MAIL_ENCRYPTION=.*$' => 'MAIL_ENCRYPTION=tls',
+                '^MAIL_FROM_ADDRESS=.*$' => $this->getReplacements()->replace('MAIL_FROM_ADDRESS={{MAIL_USER}}'),
             ]
             : [];
 
@@ -54,12 +54,12 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         $appKey = trim($output->fetch());
 
         return array_merge($mail, [
-            'APP_KEY=' => 'APP_KEY=' . $appKey,
-            'APP_URL=' => $this->getReplacements()->replace('APP_URL="{{DEPLOY_DOMAIN}}"#'),
+            '^APP_KEY=.*$' => 'APP_KEY=' . $appKey,
+            '^APP_URL=.*$' => $this->getReplacements()->replace('APP_URL={{DEPLOY_DOMAIN}}'),
 
-            'DB_DATABASE=' => $this->getReplacements()->replace('DB_DATABASE="{{DB_DATABASE}}"#'),
-            'DB_USERNAME=' => $this->getReplacements()->replace('DB_USERNAME="{{DB_USERNAME}}"#'),
-            'DB_PASSWORD=' => $this->getReplacements()->replace('DB_PASSWORD="{{DB_PASSWORD}}"#'),
+            '^DB_DATABASE=.*$' => $this->getReplacements()->replace('DB_DATABASE={{DB_DATABASE}}'),
+            '^DB_USERNAME=.*$' => $this->getReplacements()->replace('DB_USERNAME={{DB_USERNAME}}'),
+            '^DB_PASSWORD=.*$' => $this->getReplacements()->replace('DB_PASSWORD={{DB_PASSWORD}}'),
         ]);
     }
 

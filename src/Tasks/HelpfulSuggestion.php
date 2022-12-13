@@ -12,12 +12,12 @@ final class HelpfulSuggestion extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $content = $this->getReplacements()->replace($this->getContent());
+        $content = $this->getReplacements()->replace($this->getTemplateForOutput());
 
         $this->getLogger()->appendEchoLine($content);
     }
 
-    private function getContent(): string
+    private function getTemplateForOutput(): string
     {
         return <<<EOF
     <info>- mount path</info>
@@ -40,6 +40,7 @@ final class HelpfulSuggestion extends BaseTask implements Task
     db_name: {{DB_DATABASE}}
     db_user: {{DB_USERNAME}}
     password: {{DB_PASSWORD}}
+
 EOF;
     }
 }

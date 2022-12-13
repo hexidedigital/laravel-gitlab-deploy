@@ -17,18 +17,9 @@ abstract class Executor
     {
         $command = $this->prepareCommand($command);
 
-        $this->logInfo($command);
+        $this->logger->appendEchoLine("Command: <info>$command</info>");
 
         $this->execute($command, $callable);
-    }
-
-    /**
-     * @param string $command
-     * @return void
-     */
-    protected function logInfo(string $command): void
-    {
-        $this->logger->appendEchoLine($command, 'info');
     }
 
     protected function prepareCommand(string $command): string
