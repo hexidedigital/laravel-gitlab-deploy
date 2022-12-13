@@ -19,7 +19,7 @@ Remote server must use GNU/Linux.
 You can install this package via composer using:
 
 ```shell
-composer require --dev hexide-digital/gitlab-deploy:^1.0
+composer require --dev hexide-digital/gitlab-deploy:1.x-dev
 ```
 
 or manually add line to `composer.json`
@@ -27,7 +27,7 @@ or manually add line to `composer.json`
 ```json
 {
     "require-dev": {
-        "hexide-digital/gitlab-deploy": "^1.0"
+        "hexide-digital/gitlab-deploy": "1.x-dev"
     }
 }
 ```
