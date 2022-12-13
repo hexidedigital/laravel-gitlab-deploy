@@ -5,7 +5,18 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-beta.2...1.x)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.1...1.x)
+
+## [v1.0.0-RC.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-beta.1...v1.0.0-RC.1) - 2022-12-13
+
+> More details will be describer later. Main changes:
+
+- Totally changed structure for package - add new classes and update oldest.
+- GitHub workflows
+- Some code tests for package
+- Using config file
+- Code quality tools - phpstan, pint
+- Ability write and use custom tasks
 
 ## [v1.0.0-beta.2](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-beta.1...v1.0.0-beta.2) - 2022-09-16
 
