@@ -76,7 +76,7 @@ final class GitlabVariablesCreator
 
     private function prepareClient(): void
     {
-        $this->gitLabManager->setUrl($this->project->token);
+        $this->gitLabManager->setUrl($this->project->url);
         $this->gitLabManager->authenticate($this->project->token, Gitlab\Client::AUTH_HTTP_TOKEN);
     }
 
