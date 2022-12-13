@@ -95,13 +95,17 @@ class PrepareDeployCommand extends Command
 
             $this->info('Fetching available tasks...');
 
-            $prepareTasks = $this->getTasks();
+            $tasks = $this->getTasks();
+
+            if (empty($tasks)){
+                throw new GitlabDeployException('Tasks list is empty!');
+            }
 
             $this->info('Running tasks...');
 
             app(Pipeline::class)
                 ->send($pipeData)
-                ->through($prepareTasks)
+                ->through($tasks)
                 ->thenReturn();
         } catch (GitlabDeployException $exception) {
             $this->printError('Deploy command unexpected finished.', $exception);
@@ -173,20 +177,7 @@ class PrepareDeployCommand extends Command
      */
     protected function getTasks(): array
     {
-        return [
-            Tasks\GenerateSshKeysOnLocalhost::class,
-            Tasks\CopySshKeysOnRemoteHost::class,
-            Tasks\GenerateSshKeysOnRemoteHost::class,
-            Tasks\CreateProjectVariablesOnGitlab::class,
-            Tasks\AddGitlabToKnownHostsOnRemoteHost::class,
-            Tasks\SaveInitialContentOfDeployFile::class,
-            Tasks\PutNewVariablesToDeployFile::class,
-            Tasks\PrepareAndCopyDotEnvFileForRemote::class,
-            Tasks\RunFirstDeployCommand::class,
-            Tasks\RollbackDeployFileContent::class,
-            Tasks\InsertCustomAliasesOnRemoteHost::class,
-            Tasks\HelpfulSuggestion::class,
-        ];
+        return config('gitlab-deploy.tasks', []);
     }
 
     protected function printError(string $error, Throwable $exception): void

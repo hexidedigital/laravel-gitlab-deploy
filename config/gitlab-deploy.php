@@ -1,5 +1,7 @@
 <?php
 
+use HexideDigital\GitlabDeploy\Tasks;
+
 return [
 
     'gitlab-server' => env('GITLAB_HOST', 'gitlab.hexide-digital.com,188.34.141.230'),
@@ -19,7 +21,22 @@ return [
     ],
 
     'tasks' => [
-        // ...
+        Tasks\GenerateSshKeysOnLocalhost::class,
+        Tasks\CopySshKeysOnRemoteHost::class,
+        Tasks\GenerateSshKeysOnRemoteHost::class,
+
+        Tasks\CreateProjectVariablesOnGitlab::class,
+        Tasks\AddGitlabToKnownHostsOnRemoteHost::class,
+        Tasks\SaveInitialContentOfDeployFile::class,
+
+        Tasks\PutNewVariablesToDeployFile::class,
+        Tasks\PrepareAndCopyDotEnvFileForRemote::class,
+
+        Tasks\RunFirstDeployCommand::class,
+        Tasks\RollbackDeployFileContent::class,
+        Tasks\InsertCustomAliasesOnRemoteHost::class,
+
+        Tasks\HelpfulSuggestion::class,
     ],
 
 ];

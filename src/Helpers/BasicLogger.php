@@ -38,6 +38,10 @@ class BasicLogger
 
     public function closeFile(): void
     {
+        if (!is_resource($this->fileResource)) {
+            return;
+        }
+
         fclose($this->fileResource);
     }
 
