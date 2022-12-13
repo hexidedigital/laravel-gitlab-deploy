@@ -97,7 +97,7 @@ class PrepareDeployCommand extends Command
 
             $tasks = $this->getTasks();
 
-            if (empty($tasks)){
+            if (empty($tasks)) {
                 throw new GitlabDeployException('Tasks list is empty!');
             }
 

@@ -11,7 +11,7 @@ final class VariableBag
     /**
      * All the registered variables
      *
-     * @var array<string, Variable> $variables
+     * @var array<string, Variable>
      */
     protected array $variables = [];
 

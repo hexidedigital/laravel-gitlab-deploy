@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Tasks;
 
-use File;
 use HexideDigital\GitlabDeploy\PipeData;
 
 final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task

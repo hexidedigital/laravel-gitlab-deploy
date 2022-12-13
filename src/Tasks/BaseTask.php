@@ -75,7 +75,6 @@ abstract class BaseTask implements Task
         return $next($pipeData);
     }
 
-
     /**
      * @return PipeData
      */

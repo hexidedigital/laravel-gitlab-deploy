@@ -11,7 +11,7 @@ final class StageBag
     /**
      * All the registered stages
      *
-     * @var array<string, Stage> $stages
+     * @var array<string, Stage>
      */
     private array $stages;
 

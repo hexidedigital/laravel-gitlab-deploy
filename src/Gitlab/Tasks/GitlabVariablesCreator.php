@@ -86,9 +86,9 @@ final class GitlabVariablesCreator
             try {
                 $this->createOrUpdateVariable($variable);
             } catch (\Exception $exception) {
-                $this->failMassages[] = 'Failed to create variable ['.$variable->key.'].'
-                    .' Exception message ['.$exception->getMessage().'].'
-                    .' Exception class ['.get_class($exception).']';
+                $this->failMassages[] = 'Failed to create variable [' . $variable->key . '].'
+                    . ' Exception message [' . $exception->getMessage() . '].'
+                    . ' Exception class [' . get_class($exception) . ']';
             }
         }
     }
@@ -106,8 +106,8 @@ final class GitlabVariablesCreator
             );
         } catch (\Exception $exception) {
             $this->failMassages[] = 'Failed to append deploy key.'
-                .' Exception message ['.$exception->getMessage().'].'
-                .' Exception class ['.get_class($exception).']';
+                . ' Exception message [' . $exception->getMessage() . '].'
+                . ' Exception class [' . get_class($exception) . ']';
         }
     }
 
@@ -176,6 +176,6 @@ final class GitlabVariablesCreator
 
     private function makeKey(string $key, string $envScope): string
     {
-        return $key.self::SEPARATOR.$envScope;
+        return $key . self::SEPARATOR . $envScope;
     }
 }

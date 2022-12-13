@@ -33,7 +33,7 @@ class BasicLogger
 
     public function openFile(): void
     {
-        $this->fileResource = fopen(base_path($this->fileName.date($this->timeFormat).'.log'), 'w');
+        $this->fileResource = fopen(base_path($this->fileName . date($this->timeFormat) . '.log'), 'w');
     }
 
     public function closeFile(): void
@@ -54,7 +54,7 @@ class BasicLogger
 
     public function writeToFile(?string $content = ''): void
     {
-        fwrite($this->fileResource, $content.PHP_EOL);
+        fwrite($this->fileResource, $content . PHP_EOL);
     }
 
     public function newSection(int $step, string $name): void
