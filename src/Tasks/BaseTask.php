@@ -34,6 +34,7 @@ abstract class BaseTask implements Task
         $this->pipeData = $pipeData;
         $this->logger = $pipeData->logger;
         $this->executor = $pipeData->executor;
+        $this->command = $pipeData->command;
     }
 
     public function processDeployerState(DeployerState $state): void
@@ -187,6 +188,11 @@ abstract class BaseTask implements Task
         if (!isset($this->command)) {
             return $default;
         }
+
+        if ($this->isPrintOnly()) {
+            return $default;
+        }
+
 
         return $this->command->confirm($question, $default);
     }

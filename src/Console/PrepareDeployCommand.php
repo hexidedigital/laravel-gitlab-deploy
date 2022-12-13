@@ -133,6 +133,7 @@ class PrepareDeployCommand extends Command
             $state,
             $this->logger,
             $executor,
+            $this
         );
     }
 

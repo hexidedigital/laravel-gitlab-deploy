@@ -6,6 +6,7 @@ namespace HexideDigital\GitlabDeploy;
 
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use Illuminate\Console\Command;
 
 class PipeData
 {
@@ -15,6 +16,7 @@ class PipeData
         public readonly DeployerState $state,
         public readonly BasicLogger $logger,
         public readonly Executor $executor,
+        public readonly Command $command,
     ) {
     }
 
