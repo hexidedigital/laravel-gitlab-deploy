@@ -19,7 +19,7 @@ Remote server must use GNU/Linux.
 You can install this package via composer using:
 
 ```shell
-composer require --dev hexide-digital/gitlab-deploy:^1.0
+composer require --dev hexide-digital/gitlab-deploy:1.x-dev
 ```
 
 or manually add line to `composer.json`
@@ -27,7 +27,7 @@ or manually add line to `composer.json`
 ```json
 {
     "require-dev": {
-        "hexide-digital/gitlab-deploy": "^1.0"
+        "hexide-digital/gitlab-deploy": "1.x-dev"
     }
 }
 ```
@@ -48,7 +48,7 @@ Examples of files to be copied can be viewed in
 After installing, you maybe want to publish files for deployment and sample files, right? Just do this:
 
 ```shell
-php artisan vendor:publish --tag="gitlab-deploy" --force
+php artisan gitlab-deploy:install
 ```
 
 # Usage

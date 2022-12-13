@@ -6,25 +6,84 @@ namespace HexideDigital\GitlabDeploy\Helpers;
 
 final class Replacements
 {
-    public static string $prefix = '{{';
-    public static string $suffix = '}}';
+    private static string $prefix = '{{';
+    private static string $suffix = '}}';
 
-    private array $replaceMap = [];
+    private array $placeholders = [];
 
-    public function __construct(array $replaceMap)
+    public function __construct(array $placeholders = [])
     {
-        $this->mergeReplaces($replaceMap);
+        $this->merge($placeholders);
     }
 
-    public function mergeReplaces(array $replaces = []): void
+    public function merge(array $placeholders = []): void
     {
-        $this->replaceMap = array_merge($this->replaceMap, $replaces);
+        collect($placeholders)
+            ->each(fn (?string $placeholder, string $key) => $this->add($key, strval($placeholder)));
     }
 
-    public function replace(string $subject, array $replaceMap = null): array|string
+    public function add(string $key, string $placeholder): void
     {
-        $replaceMap = is_null($replaceMap) ? $this->replaceMap : $replaceMap;
+        $this->placeholders[$key] = $placeholder;
+    }
 
-        return str_replace(array_keys($replaceMap), array_values($replaceMap), $subject);
+    public function get(string $key): string
+    {
+        return $this->placeholders[$key] ?? " ---|$key|--- ";
+    }
+
+    public function replace(?string $subject, array $additionalPlaceholders = []): string
+    {
+        $this->merge($additionalPlaceholders ?: []);
+
+        return $this->interpolate($subject ?: '');
+    }
+
+    public function interpolate(string $subject, int $level = 1): string
+    {
+        if ($level > $this->getMaxReplaceLevelDeep()) {
+            return $subject;
+        }
+
+        $pattern = $this->makePattern();
+
+        return preg_replace_callback($pattern, function ($match) use ($level) {
+            [$fullTagMatch, $tagName] = $match;
+
+            // Do not replace tags with :keep
+            if (strpos($tagName, ':keep')) {
+                return str_replace(':keep', '', $fullTagMatch);
+            }
+
+            // Replace tags with only one time
+            if (str_starts_with($tagName, '!')) {
+                return $this->get(rtrim($tagName, '!'));
+            }
+
+            return $this->interpolate($this->get($tagName), $level + 1);
+        }, $subject);
+    }
+
+    public static function getSuffix(): string
+    {
+        return self::$suffix;
+    }
+
+    public static function getPrefix(): string
+    {
+        return self::$prefix;
+    }
+
+    public function getMaxReplaceLevelDeep(): int
+    {
+        return 5;
+    }
+
+    public function makePattern(): string
+    {
+        $prefix = self::getPrefix();
+        $suffix = self::getSuffix();
+
+        return "/$prefix([^$suffix]*)$suffix/";
     }
 }

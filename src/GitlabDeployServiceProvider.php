@@ -4,50 +4,31 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy;
 
+use HexideDigital\GitlabDeploy\Console\GitlabDeployInstallCommand;
 use HexideDigital\GitlabDeploy\Console\PrepareDeployCommand;
-use Illuminate\Support\ServiceProvider;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class GitlabDeployServiceProvider extends ServiceProvider
+class GitlabDeployServiceProvider extends PackageServiceProvider
 {
-    protected array $commands = [
-        'deploy-gitlab' => PrepareDeployCommand::class,
-    ];
-
-    public function register()
+    public function configurePackage(Package $package): void
     {
-        foreach ($this->commands as $alias => $command) {
-            $this->app->singleton($alias, $command);
-        }
+        $package
+            ->name('gitlab-deploy')
+            ->hasConfigFile('gitlab-deploy')
+            ->hasCommands([
+                GitlabDeployInstallCommand::class,
+                PrepareDeployCommand::class,
+            ])
+            ->publishesServiceProvider('GitlabDeployServiceProvider');
     }
 
-    public function boot()
+    public function packageBooted(): void
     {
         $this->publishes([
-            $this->packagePath('examples/deploy.php.stub') => $this->app->basePath('deploy.php'),
-            $this->packagePath('examples/deploy-prepare.example.yml') => $this->app->basePath('.deploy/deploy-prepare.yml'),
-            $this->packagePath('examples/.gitignore.stub') => $this->app->basePath('.deploy/.gitignore'),
-        ], 'gitlab-deploy');
-
-        $this->publishes([
-            $this->packagePath('config/gitlab-deploy.php') => $this->app->configPath('gitlab-deploy.php'),
-        ], 'config');
-
-        $this->mergeConfigFrom($this->packagePath('config/gitlab-deploy.php'), 'gitlab-deploy');
-
-        if ($this->app->runningInConsole()) {
-            $this->commands(array_keys($this->commands));
-        }
-    }
-
-    /**
-     * Get the absolute path to some package resource.
-     *
-     * @param string $path The relative path to the resource
-     *
-     * @return string
-     */
-    protected function packagePath(string $path): string
-    {
-        return __DIR__ . '/../' . $path;
+            $this->package->basePath('/../examples/deploy.php.stub') => base_path('deploy.php'),
+            $this->package->basePath('/../examples/deploy-prepare.example.yml') => base_path('.deploy/deploy-prepare.yml'),
+            $this->package->basePath('/../examples/.gitignore.stub') => base_path('.deploy/.gitignore'),
+        ], "{$this->package->shortName()}-examples");
     }
 }

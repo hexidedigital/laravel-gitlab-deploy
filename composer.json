@@ -1,9 +1,23 @@
 {
     "name": "hexide-digital/gitlab-deploy",
     "description": "Prepare your project to deploy",
-    "type": "library",
+    "keywords": [
+        "hexide-digital",
+        "laravel",
+        "gitlabdeploy"
+    ],
+    "homepage": "https://github.com/hexidedigital/laravel-gitlab-deploy",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Oleksandr-Moik",
+            "email": "sashamoik2016@gmail.com",
+            "role": "Developer"
+        }
+    ],
     "require": {
         "php": "^8.1",
+        "spatie/laravel-package-tools": "^1.13.0",
         "graham-campbell/gitlab": "^5.6",
         "guzzlehttp/guzzle": "^7.4",
         "http-interop/http-factory-guzzle": "^1.0",
@@ -15,29 +29,55 @@
         "illuminate/console": "^9.0",
         "illuminate/contracts": "^9.0"
     },
-    "license": "MIT",
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "nunomaduro/collision": "^6.0",
+        "nunomaduro/larastan": "^2.0.1",
+        "orchestra/testbench": "^7.0",
+        "pestphp/pest": "^1.21",
+        "pestphp/pest-plugin-laravel": "^1.1",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan-deprecation-rules": "^1.0",
+        "phpstan/phpstan-phpunit": "^1.0",
+        "phpunit/phpunit": "^9.5"
+    },
     "autoload": {
         "psr-4": {
-            "HexideDigital\\GitlabDeploy\\": "src/"
+            "HexideDigital\\GitlabDeploy\\": "src"
         }
     },
-    "authors": [
-        {
-            "name": "Oleksandr-Moik",
-            "email": "sasha.moik.2016@gmail.com",
-            "homepage": "https://github.com/Oleksandr-Moik",
-            "role": "developer"
+    "autoload-dev": {
+        "psr-4": {
+            "HexideDigital\\GitlabDeploy\\Tests\\": "tests"
         }
-    ],
-    "minimum-stability": "dev",
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "lint": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
     "extra": {
-        "branch-alias": {
-            "dev-master": "1.x-dev"
-        },
         "laravel": {
             "providers": [
                 "HexideDigital\\GitlabDeploy\\GitlabDeployServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "GitlabDeploy": "HexideDigital\\GitlabDeploy\\Facades\\GitlabDeploy"
+            }
+        },
+        "branch-alias": {
+            "dev-master": "1.x-dev"
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
