@@ -78,7 +78,7 @@ class PrepareDeployCommand extends Command
 
     protected function createLogFile(): void
     {
-        $this->logger = new BasicLogger($this);
+        $this->logger = new BasicLogger($this, config('gitlab-deploy.store-log-folder'));
         $this->logger->openFile();
     }
 

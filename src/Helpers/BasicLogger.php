@@ -13,27 +13,27 @@ class BasicLogger
     protected $fileResource;
     protected Command $command;
 
+    protected readonly string $fileNameTemplate;
     protected readonly string $timeFormat;
-    protected readonly string $fileName;
 
     /**
      * @param Command $command
      * @param string $timeFormat
-     * @param string $fileName
+     * @param string $fileNameTemplate
      */
     public function __construct(
         Command $command,
+        string $fileNameTemplate,
         string $timeFormat = 'Y-m-d-H-i-s',
-        string $fileName = '.deploy/dep-log.',
     ) {
         $this->command = $command;
+        $this->fileNameTemplate = $fileNameTemplate;
         $this->timeFormat = $timeFormat;
-        $this->fileName = $fileName;
     }
 
     public function openFile(): void
     {
-        $this->fileResource = fopen(base_path($this->fileName . date($this->timeFormat) . '.log'), 'w');
+        $this->fileResource = fopen($this->makeFileName(), 'w');
     }
 
     public function closeFile(): void
@@ -68,5 +68,10 @@ class BasicLogger
         $this->appendEchoLine('*     ' . $string . '     *');
         $this->appendEchoLine(str_repeat('*', $length));
         $this->appendEchoLine();
+    }
+
+    protected function makeFileName(): string
+    {
+        return rtrim($this->fileNameTemplate, '/') . '/' . date($this->timeFormat) . '.log';
     }
 }
