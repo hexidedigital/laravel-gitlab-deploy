@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Helpers;
 
+use File;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
 class BasicLogger
 {
-    /** @var resource */
-    protected $fileResource;
+    protected string $fileResourceName;
     protected Command $command;
 
     protected readonly string $fileNameTemplate;
@@ -33,16 +33,13 @@ class BasicLogger
 
     public function openFile(): void
     {
-        $this->fileResource = fopen($this->makeFileName(), 'w');
-    }
+        $fileName = $this->makeFileName();
 
-    public function closeFile(): void
-    {
-        if (!is_resource($this->fileResource)) {
-            return;
-        }
+        File::ensureDirectoryExists(File::dirname($fileName));
 
-        fclose($this->fileResource);
+        $this->fileResourceName = $fileName;
+
+        File::put($this->fileResourceName, '');
     }
 
     public function appendEchoLine(?string $content = '', string $style = null): void
@@ -54,7 +51,10 @@ class BasicLogger
 
     public function writeToFile(?string $content = ''): void
     {
-        fwrite($this->fileResource, $content . PHP_EOL);
+        File::put(
+            $this->fileResourceName,
+            File::get($this->fileResourceName) . PHP_EOL . $content
+        );
     }
 
     public function newSection(int $step, string $name): void
