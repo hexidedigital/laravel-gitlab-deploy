@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Console;
+namespace HexideDigital\GitlabDeploy\Console\Commands;
 
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
+use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\BasicExecutor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\NullExecutor;
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
-use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\Tasks;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Container\BindingResolutionException;

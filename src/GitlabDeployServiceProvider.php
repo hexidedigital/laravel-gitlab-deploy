@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy;
 
-use HexideDigital\GitlabDeploy\Console\GitlabDeployInstallCommand;
-use HexideDigital\GitlabDeploy\Console\PrepareDeployCommand;
+use HexideDigital\GitlabDeploy\Console\Commands\GitlabDeployInstallCommand;
+use HexideDigital\GitlabDeploy\Console\Commands\PrepareDeployCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

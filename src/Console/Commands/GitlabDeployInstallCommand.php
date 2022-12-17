@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace HexideDigital\GitlabDeploy\Console;
+namespace HexideDigital\GitlabDeploy\Console\Commands;
 
 use File;
 use HexideDigital\GitlabDeploy\GitlabDeployServiceProvider;
