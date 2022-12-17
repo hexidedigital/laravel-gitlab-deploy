@@ -56,7 +56,7 @@
         "analyse": "vendor/bin/phpstan analyse",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "lint": "vendor/bin/pint"
+        "lint": "vendor/bin/pint src tests"
     },
     "config": {
         "sort-packages": true,
