@@ -32,18 +32,14 @@ class PrepareDeployCommand extends Command
     {
         $this->info('Start-upping...');
 
-        $this->createLogFile();
-
         try {
+            $this->createLogFile();
+
             $this->executeTasks();
         } catch (Throwable $exception) {
-            $this->logger->closeFile();
-
-            $this->info('Command finished with unexpected exception - ' . $exception->getMessage());
+            $this->error("Command finished with unexpected exception - <info>{$exception->getMessage()}</info>");
 
             return self::FAILURE;
-        } finally {
-            $this->logger->closeFile();
         }
 
         $this->info('Command successfully finished!');
@@ -78,7 +74,7 @@ class PrepareDeployCommand extends Command
 
     protected function createLogFile(): void
     {
-        $this->logger = new BasicLogger($this);
+        $this->logger = new BasicLogger($this, config('gitlab-deploy.store-log-folder'));
         $this->logger->openFile();
     }
 
