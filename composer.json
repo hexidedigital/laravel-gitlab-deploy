@@ -17,17 +17,17 @@
     ],
     "require": {
         "php": "^8.1",
-        "spatie/laravel-package-tools": "^1.13.0",
+        "deployer/deployer": "^7.0",
         "graham-campbell/gitlab": "^5.6",
         "guzzlehttp/guzzle": "^7.4",
         "http-interop/http-factory-guzzle": "^1.0",
-        "symfony/yaml": "^6.1",
+        "illuminate/console": "^9.0",
+        "illuminate/contracts": "^9.0",
+        "illuminate/support": "^9.0",
+        "spatie/laravel-package-tools": "^1.13.0",
         "symfony/console": "^6.0",
         "symfony/process": "^6.0",
-        "deployer/deployer": "^7.0",
-        "illuminate/support": "^9.0",
-        "illuminate/console": "^9.0",
-        "illuminate/contracts": "^9.0"
+        "symfony/yaml": "^6.1"
     },
     "require-dev": {
         "laravel/pint": "^1.0",
