@@ -100,8 +100,8 @@ final class GitlabVariablesCreator
 
             $this->gitLabManager->projects()->addDeployKey(
                 project_id: $this->project->id,
-                title: $this->getServerNameFromPublicKey($publicKeyVariable->key),
-                key: $publicKeyVariable->key,
+                title: $this->getServerNameFromPublicKey($publicKeyVariable->value),
+                key: $publicKeyVariable->value,
                 canPush: false
             );
         } catch (\Exception $exception) {
