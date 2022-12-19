@@ -16,6 +16,7 @@ final class CopySshKeysOnRemoteHost extends BaseTask implements Task
             $this->getReplacements()->replace('Can ask a password, enter <info>{{DEPLOY_PASS}}</info>')
         );
 
-        $this->getExecutor()->runCommand('ssh-copy-id {{remoteSshCredentials}}');
+        $this->confirmAction('Copy ssh keys to remote?', false)
+        && $this->getExecutor()->runCommand('ssh-copy-id {{remoteSshCredentials}}');
     }
 }
