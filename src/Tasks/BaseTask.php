@@ -65,11 +65,10 @@ abstract class BaseTask implements Task
     {
         $this->processPipeData($pipeData);
 
-        if ($this->isPrintOnly() && !$this->shouldRunInPrintMode()) {
-            return $next($pipeData);
-        }
-
-        $this->getLogger()->newSection($pipeData->incrementStepNumber(), $this->getTaskName());
+        $this->getLogger()->newSection(
+            $pipeData->incrementStepNumber(),
+            $this->getTaskName(),
+        );
 
         $this->execute($pipeData);
 

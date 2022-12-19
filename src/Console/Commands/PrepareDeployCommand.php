@@ -11,11 +11,13 @@ use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\BasicExecutor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\NullExecutor;
-use HexideDigital\GitlabDeploy\Tasks;
+use HexideDigital\GitlabDeploy\Tasks\Task;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\CircularDependencyException;
 use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\LazyCollection;
+use ReflectionClass;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Throwable;
@@ -87,21 +89,21 @@ class PrepareDeployCommand extends Command
     protected function executeTasks(): void
     {
         try {
-            $pipeData = $this->preparePipeData();
-
             $this->info('Fetching available tasks...');
 
-            $tasks = $this->getTasks();
+            $tasksToExecute = $this->getTasksToExecute();
 
-            if (empty($tasks)) {
+            if ($tasksToExecute->isEmpty()) {
                 throw new GitlabDeployException('Tasks list is empty!');
             }
+
+            $pipeData = $this->preparePipeData();
 
             $this->info('Running tasks...');
 
             app(Pipeline::class)
                 ->send($pipeData)
-                ->through($tasks)
+                ->through($tasksToExecute->all())
                 ->thenReturn();
         } catch (GitlabDeployException $exception) {
             $this->printError('Deploy command unexpected finished.', $exception);
@@ -170,11 +172,36 @@ class PrepareDeployCommand extends Command
     }
 
     /**
-     * @return array<class-string<Tasks\Task>>
+     * @return LazyCollection<Task>
      */
-    protected function getTasks(): array
+    protected function getTasks(): LazyCollection
     {
-        return config('gitlab-deploy.tasks', []);
+        return new LazyCollection(function () {
+            foreach (config('gitlab-deploy.tasks', []) as $taskClass) {
+                if (is_subclass_of($taskClass, Task::class) &&
+                    !(new ReflectionClass($taskClass))->isAbstract()) {
+                    yield $taskClass;
+                }
+            }
+        });
+    }
+
+    /**
+     * @return LazyCollection<Task>
+     */
+    protected function getTasksToExecute(): LazyCollection
+    {
+        return new LazyCollection(function () {
+            foreach ($this->getTasks() as $taskName) {
+                $task = app($taskName);
+
+                if ($this->isOnlyPrint() && !$task->shouldRunInPrintMode()) {
+                    continue;
+                }
+
+                yield $task;
+            }
+        });
     }
 
     protected function printError(string $error, Throwable $exception): void
