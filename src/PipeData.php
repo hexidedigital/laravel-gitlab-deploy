@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy;
 
-use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use Illuminate\Console\Command;
 
 class PipeData

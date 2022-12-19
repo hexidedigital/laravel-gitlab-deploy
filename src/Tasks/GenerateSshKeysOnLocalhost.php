@@ -6,6 +6,7 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\Gitlab\Variable;
 use HexideDigital\GitlabDeploy\PipeData;
+use Illuminate\Support\Facades\File;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 {
@@ -24,7 +25,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         $this->updatePrivateKeyVariable();
     }
 
-    public function ensureDirectoryExists(): void
+    private function ensureDirectoryExists(): void
     {
         $this->getLogger()->appendEchoLine('Ensure directory exists.');
 
@@ -32,14 +33,10 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
         $this->getLogger()->appendEchoLine("mkdir -p $path", 'info');
 
-        if (\File::isDirectory($path)) {
-            return;
-        }
-
-        \File::makeDirectory($path, recursive: true);
+        File::ensureDirectoryExists($path);
     }
 
-    public function updatePrivateKeyVariable(): void
+    private function updatePrivateKeyVariable(): void
     {
         $this->getLogger()->appendEchoLine($this->getReplacements()->replace('cat {{IDENTITY_FILE}}'), 'info');
 
@@ -54,7 +51,7 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
         $this->getState()->getGitlabVariablesBag()->add($variable);
     }
 
-    public function checkExistedKeys(): bool
+    private function checkExistedKeys(): bool
     {
         return !$this->isSshFilesExits()
             || $this->confirmAction('Should generate and override existed key?');
@@ -62,8 +59,8 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     private function isSshFilesExits(): bool
     {
-        return \File::exists($this->getReplacements()->replace('{{IDENTITY_FILE}}'))
-            || \File::exists($this->getReplacements()->replace('{{IDENTITY_FILE_PUB}}'));
+        return File::exists($this->getReplacements()->replace('{{IDENTITY_FILE}}'))
+            || File::exists($this->getReplacements()->replace('{{IDENTITY_FILE_PUB}}'));
     }
 
     private function identityFileContent(): string

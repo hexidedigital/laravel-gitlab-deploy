@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Helpers;
 
-use File;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class BasicLogger

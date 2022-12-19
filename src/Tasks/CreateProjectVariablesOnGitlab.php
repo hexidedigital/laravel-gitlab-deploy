@@ -43,7 +43,7 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
      *
      * @return array<string>
      */
-    public function printAloneKeys(): array
+    private function printAloneKeys(): array
     {
         return [
             'SSH_PRIVATE_KEY',
@@ -80,10 +80,12 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
         $fails = $this->creator->getFailMassages();
 
-        $this->getLogger()->appendEchoLine('Gitlab variables created with "<info>' . sizeof($fails) . '</info>" fail messages');
+        $count = sizeof($fails);
 
-        foreach ($fails as $fail) {
-            $this->getLogger()->appendEchoLine($fail, 'error');
+        $this->getLogger()->appendEchoLine('Gitlab variables created with "<info>' . $count . '</info>" fail messages');
+
+        foreach ($fails as $failMessage) {
+            $this->getLogger()->appendEchoLine($failMessage, 'error');
         }
     }
 }

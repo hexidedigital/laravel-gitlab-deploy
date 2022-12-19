@@ -12,6 +12,7 @@ use HexideDigital\GitlabDeploy\Helpers\Replacements;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 abstract class BaseTask implements Task
 {
@@ -152,7 +153,7 @@ abstract class BaseTask implements Task
             return;
         }
 
-        \File::put($path, $contents);
+        File::put($path, $contents);
     }
 
     public function getContent(string $path): string
@@ -163,7 +164,7 @@ abstract class BaseTask implements Task
             return '';
         }
 
-        return \File::get($path) ?: '';
+        return File::get($path) ?: '';
     }
 
     /**
@@ -179,7 +180,7 @@ abstract class BaseTask implements Task
             return;
         }
 
-        \File::copy($from, $to);
+        File::copy($from, $to);
     }
 
     protected function confirmAction(string $question, bool $default = false): bool
@@ -191,7 +192,6 @@ abstract class BaseTask implements Task
         if ($this->isPrintOnly()) {
             return $default;
         }
-
 
         return $this->command->confirm($question, $default);
     }

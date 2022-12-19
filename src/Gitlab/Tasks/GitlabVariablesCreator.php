@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Gitlab\Tasks;
 
+use Exception;
 use Gitlab;
 use GrahamCampbell\GitLab\GitLabManager;
 use HexideDigital\GitlabDeploy\Gitlab\GitlabProject;
@@ -85,7 +86,7 @@ final class GitlabVariablesCreator
         foreach ($this->variableBag->except(['SSH_PUB_KEY']) as $variable) {
             try {
                 $this->createOrUpdateVariable($variable);
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 $this->failMassages[] = 'Failed to create variable [' . $variable->key . '].'
                     . ' Exception message [' . $exception->getMessage() . '].'
                     . ' Exception class [' . get_class($exception) . ']';
@@ -104,7 +105,7 @@ final class GitlabVariablesCreator
                 key: $publicKeyVariable->value,
                 canPush: false
             );
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->failMassages[] = 'Failed to append deploy key.'
                 . ' Exception message [' . $exception->getMessage() . '].'
                 . ' Exception class [' . get_class($exception) . ']';
