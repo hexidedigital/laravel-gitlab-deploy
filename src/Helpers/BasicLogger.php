@@ -46,6 +46,11 @@ class BasicLogger
     {
         $this->writeToFile(strip_tags($content ?: ''));
 
+        $this->writeToTerminal($content, $style);
+    }
+
+    public function writeToTerminal(?string $content = '', ?string $style = null): void
+    {
         $this->command->line($content ?: '', $style);
     }
 
