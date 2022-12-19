@@ -183,6 +183,17 @@ abstract class BaseTask implements Task
         File::copy($from, $to);
     }
 
+    public function removeFile(string $path): void
+    {
+        $this->getLogger()->appendEchoLine("Deleting path: <comment>$path</comment>");
+
+        if ($this->isPrintOnly()) {
+            return;
+        }
+
+        File::delete($path);
+    }
+
     protected function confirmAction(string $question, bool $default = false): bool
     {
         if (!isset($this->command)) {

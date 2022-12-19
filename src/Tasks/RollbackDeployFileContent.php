@@ -15,5 +15,7 @@ final class RollbackDeployFileContent extends BaseTask implements Task
         $path = config('gitlab-deploy.deployer-php');
 
         $this->copyFile($path . '.tmp', $path);
+
+        $this->removeFile($path . '.tmp');
     }
 }
