@@ -14,23 +14,20 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 
     public function execute(Pipedata $pipeData): void
     {
-        $envExample = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.example');
-        $envOriginal = $this->getReplacements()->replace('{{PROJ_DIR}}/.env');
+        $envMain = $this->getReplacements()->replace('{{PROJ_DIR}}/.env');
         $envBackup = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.backup');
-        $envHost = $envOriginal;
 
-        $this->moveFiles($envOriginal, $envBackup, $envExample, $envHost);
+        $this->storeOriginalFiles($envMain, $envBackup);
 
-        $envReplaces = $this->getEnvReplaces();
+        $this->fillEnvFile($envMain);
 
-        $this->getLogger()->appendEchoLine('Filling env file for host...', 'comment');
-        $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
+        $this->copyFileToRemote($envMain);
 
-        $this->writeContentWithReplaces($envHost, $envReplaces);
+        $this->getExecutor()->runCommand("cp $envMain {{PROJ_DIR}}/.env.host");
 
-        $this->copyFileToRemote($envHost);
+        $this->restoreFiles($envBackup, $envMain);
 
-        $this->restoreFiles($envHost, $envBackup, $envOriginal);
+        $this->removeFile($envBackup);
     }
 
     /**
@@ -64,10 +61,10 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     }
 
     /**
-     * @param string $envHost
+     * @param string $envMain
      * @return void
      */
-    private function copyFileToRemote(string $envHost): void
+    private function copyFileToRemote(string $envMain): void
     {
         if (!$this->confirmAction('Copy env file to remote server?', true)) {
             return;
@@ -84,7 +81,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
             "ssh {{remoteSshCredentials}} 'test -d $sharedDir || mkdir -p $sharedDir'"
         );
         $this->getExecutor()->runCommand(
-            "scp {{remoteScpOptions}} \"$envHost\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
+            "scp {{remoteScpOptions}} \"$envMain\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
             function ($type, $buffer) {
                 $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
             }
@@ -92,30 +89,43 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     }
 
     /**
-     * @param string $envHost
      * @param string $envBackup
-     * @param string $envOriginal
+     * @param string $envMain
      * @return void
      */
-    private function restoreFiles(string $envHost, string $envBackup, string $envOriginal): void
+    private function restoreFiles(string $envBackup, string $envMain): void
     {
         $this->getLogger()->appendEchoLine('Restore original env file', 'comment');
-        $this->getExecutor()->runCommand("cp $envHost $envHost.host");
-        $this->getExecutor()->runCommand("cp $envBackup $envOriginal");
+
+        $this->getExecutor()->runCommand("cp $envBackup $envMain");
     }
 
     /**
-     * @param string $envOriginal
+     * @param string $envMain
      * @param string $envBackup
-     * @param string $envExample
-     * @param string $envHost
      * @return void
      */
-    private function moveFiles(string $envOriginal, string $envBackup, string $envExample, string $envHost): void
+    private function storeOriginalFiles(string $envMain, string $envBackup): void
     {
         $this->getLogger()->appendEchoLine('Backup original env file and create for host', 'comment');
 
-        $this->getExecutor()->runCommand("cp $envOriginal $envBackup");
-        $this->getExecutor()->runCommand("cp $envExample $envHost");
+        $this->getExecutor()->runCommand("cp $envMain $envBackup");
+    }
+
+    /**
+     * @param string $envMain
+     * @return void
+     */
+    private function fillEnvFile(string $envMain): void
+    {
+        $this->getLogger()->appendEchoLine('Filling env file for host...', 'comment');
+
+        $this->getExecutor()->runCommand("cp {{PROJ_DIR}}/.env.example $envMain");
+
+        $envReplaces = $this->getEnvReplaces();
+
+        $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
+
+        $this->writeContentWithReplaces($envMain, $envReplaces);
     }
 }
