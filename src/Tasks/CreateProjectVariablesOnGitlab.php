@@ -10,7 +10,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 {
-    protected string $name = 'gitlab variables';
+    protected string $name = 'Gitlab variables';
 
     public function __construct(
         private readonly GitlabVariablesCreator $creator,
@@ -23,11 +23,11 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 
         $this->printVariables($variableBag);
 
-        if (!$this->confirmAction('Update gitlab variables?')) {
+        if (!$this->confirmAction('Update Gitlab variables?')) {
             return;
         }
 
-        $this->getLogger()->appendEchoLine('Connecting to gitlab and creating variables...');
+        $this->getLogger()->appendEchoLine('Connecting to Gitlab and creating variables...');
 
         $this->creator
             ->setProject($this->getState()->getConfigurations()->project)

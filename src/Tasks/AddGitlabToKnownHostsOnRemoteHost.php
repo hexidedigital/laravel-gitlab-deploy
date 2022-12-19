@@ -9,11 +9,11 @@ use Illuminate\Support\Str;
 
 final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
 {
-    protected string $name = 'add gitlab to confirmed (known hosts) on remote host';
+    protected string $name = 'add Gitlab to confirmed (known hosts) on remote host';
 
     public function execute(Pipedata $pipeData): void
     {
-        if (!$this->confirmAction('Append gitlab IP to remote host known_hosts file?')) {
+        if (!$this->confirmAction('Append Gitlab IP to remote host known_hosts file?')) {
             return;
         }
 
@@ -38,7 +38,7 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
         if (!Str::contains($remoteKnownHosts, $knownHost)) {
             $this->getExecutor()->runCommand($sshRemote . " 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
         } else {
-            $this->getLogger()->appendEchoLine('Remote server already know gitlab host.');
+            $this->getLogger()->appendEchoLine('Remote server already know Gitlab host.');
         }
     }
 }

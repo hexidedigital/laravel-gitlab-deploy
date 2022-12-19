@@ -18,7 +18,7 @@ class GitlabDeployException extends Exception
     public static function emptyGitlabProjectCredentials(array $values): GitlabDeployException
     {
         return new GitlabDeployException(
-            'To process deploy prepare you must specify gitlab credentials - ' . implode(', ', $values)
+            'To process deploy prepare you must specify Gitlab credentials - ' . implode(', ', $values)
         );
     }
 }

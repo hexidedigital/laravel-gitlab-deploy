@@ -15,11 +15,11 @@ final class GitlabProject
         public readonly string $url,
     ) {
         if (empty($this->token)) {
-            throw new GitlabDeployException('Provide api token for gitlab project');
+            throw new GitlabDeployException('Provide api token for Gitlab project');
         }
 
         if (empty($this->url)) {
-            throw new GitlabDeployException('Provide domain url for gitlab project');
+            throw new GitlabDeployException('Provide domain url for Gitlab project');
         }
     }
 }
