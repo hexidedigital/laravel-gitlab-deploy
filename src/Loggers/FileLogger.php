@@ -27,7 +27,7 @@ final class FileLogger implements Logger
         $this->createFile();
     }
 
-    public function line(?string $content = ''): void
+    public function line(?string $content = '', ?string $style = null): void
     {
         $content = trim(strip_tags($content ?: ''));
 

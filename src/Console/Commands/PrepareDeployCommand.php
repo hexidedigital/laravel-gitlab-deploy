@@ -189,7 +189,7 @@ class PrepareDeployCommand extends Command
     }
 
     /**
-     * @return LazyCollection<Task>
+     * @return LazyCollection<int, Task>
      */
     protected function getTasks(): LazyCollection
     {
@@ -197,21 +197,19 @@ class PrepareDeployCommand extends Command
             foreach (config('gitlab-deploy.tasks', []) as $taskClass) {
                 if (is_subclass_of($taskClass, Task::class) &&
                     !(new ReflectionClass($taskClass))->isAbstract()) {
-                    yield $taskClass;
+                    yield app($taskClass);
                 }
             }
         });
     }
 
     /**
-     * @return LazyCollection<Task>
+     * @return LazyCollection<int, Task>
      */
     protected function getTasksToExecute(): LazyCollection
     {
         return new LazyCollection(function () {
-            foreach ($this->getTasks() as $taskName) {
-                $task = app($taskName);
-
+            foreach ($this->getTasks() as $task) {
                 if ($this->isOnlyPrint() && !$task->shouldRunInPrintMode()) {
                     continue;
                 }
