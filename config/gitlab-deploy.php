@@ -8,6 +8,7 @@ return [
 
     'deployer-php' => base_path('deploy.php'),
 
+    'working-dir' => base_path('.deploy'),
     'store-log-folder' => base_path('.deploy/logs'),
     'config-file' => base_path('.deploy/deploy-prepare.yml'),
 
