@@ -10,7 +10,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 {
-    protected string $name = 'setup env file for remote server and move to server';
+    protected string $name = '🌳 Setup env file for remote server and move to server';
 
     public function execute(Pipedata $pipeData): void
     {

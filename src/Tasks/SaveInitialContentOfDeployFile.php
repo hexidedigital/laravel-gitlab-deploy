@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class SaveInitialContentOfDeployFile extends BaseTask implements Task
 {
-    protected string $name = 'save initial content of deploy file';
+    protected string $name = '💾 Save initial content of deploy file';
 
     public function execute(Pipedata $pipeData): void
     {

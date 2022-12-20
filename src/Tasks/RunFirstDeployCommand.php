@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class RunFirstDeployCommand extends BaseTask implements Task
 {
-    protected string $name = 'run deploy from local';
+    protected string $name = '🚀 Run deploy from local';
 
     public function execute(Pipedata $pipeData): void
     {

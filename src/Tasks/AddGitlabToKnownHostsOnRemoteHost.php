@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
 {
-    protected string $name = 'add Gitlab to confirmed (known hosts) on remote host';
+    protected string $name = '✔ Add Gitlab to confirmed (known hosts) on remote host';
 
     public function execute(Pipedata $pipeData): void
     {

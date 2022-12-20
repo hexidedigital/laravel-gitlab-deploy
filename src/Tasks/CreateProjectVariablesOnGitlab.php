@@ -10,7 +10,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 {
-    protected string $name = 'Gitlab variables';
+    protected string $name = '📝 Gitlab variables';
 
     public function __construct(
         private readonly GitlabVariablesCreator $creator,

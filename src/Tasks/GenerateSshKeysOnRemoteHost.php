@@ -9,7 +9,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 {
-    protected string $name = 'Generate generate ssh-keys on remote host';
+    protected string $name = '🔑 Generate generate ssh-keys on remote host';
 
     public function execute(Pipedata $pipeData): void
     {

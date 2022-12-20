@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
 {
-    protected string $name = 'append custom aliases';
+    protected string $name = '💻 Append custom aliases to remote server';
 
     public function execute(Pipedata $pipeData): void
     {

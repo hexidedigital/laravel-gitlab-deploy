@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class HelpfulSuggestion extends BaseTask implements Task
 {
-    protected string $name = 'IDEA Setup and helpers';
+    protected string $name = '✨ IDEA Setup and helpers';
 
     public function execute(Pipedata $pipeData): void
     {

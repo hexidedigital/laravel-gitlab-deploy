@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\File;
 
 final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 {
-    protected string $name = 'generate ssh keys - private key to Gitlab (localhost)';
+    protected string $name = '🔑 Generate ssh-keys on localhost';
 
     public function execute(Pipedata $pipeData): void
     {

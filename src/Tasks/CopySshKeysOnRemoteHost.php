@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class CopySshKeysOnRemoteHost extends BaseTask implements Task
 {
-    protected string $name = 'copy ssh to server - public key to remote host';
+    protected string $name = '📋 Copy ssh to remote server (public key)';
 
     public function execute(Pipedata $pipeData): void
     {

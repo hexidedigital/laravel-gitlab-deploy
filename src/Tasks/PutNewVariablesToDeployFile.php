@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class PutNewVariablesToDeployFile extends BaseTask implements Task
 {
-    protected string $name = 'putting static env variables to deploy file';
+    protected string $name = '🧰 Putting static env variables to deploy file';
 
     public function execute(PipeData $pipeData): void
     {
