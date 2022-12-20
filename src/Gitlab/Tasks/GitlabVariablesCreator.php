@@ -107,8 +107,8 @@ final class GitlabVariablesCreator
             );
         } catch (Exception $exception) {
             $this->failMassages[] = 'Failed to append deploy key.'
-                . ' Exception message [' . $exception->getMessage() . '].'
-                . ' Exception class [' . get_class($exception) . ']';
+                . ' Exception message <b>[' . $exception->getMessage() . ']</b>.'
+                . ' Exception class <b>[' . get_class($exception) . ']</b>';
         }
     }
 

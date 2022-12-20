@@ -69,23 +69,31 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
             $this->getCommand()->table(['key', 'value'], $rows);
         }
 
-        $this->getLogger()->appendEchoLine('<comment>tip</comment>: put `SSH_PUB_KEY` to path => <info>Gitlab.project -> Settings -> Repository -> Deploy keys</info>');
+        $this->getLogger()->appendEchoLine(
+            <<<HTML
+<span class="text-info">tip</span>: put `SSH_PUB_KEY` to path => <span class="text-lime-500">Gitlab.project -> Settings -> Repository -> Deploy keys</span>
+HTML
+        );
     }
 
     private function printMessages(): void
     {
         foreach ($this->creator->getMessages() as $message) {
-            $this->getLogger()->appendEchoLine($message, 'comment');
+            $this->getLogger()->appendEchoLine("<span class='italic'>$message</span>", 'comment');
         }
 
         $fails = $this->creator->getFailMassages();
 
         $count = sizeof($fails);
 
-        $this->getLogger()->appendEchoLine('Gitlab variables created with "<info>' . $count . '</info>" fail messages');
+        $this->getLogger()->appendEchoLine(
+            <<<HTML
+Gitlab variables created with "<span class="text-red font-bold">$count</span>" fail messages
+HTML
+        );
 
         foreach ($fails as $failMessage) {
-            $this->getLogger()->appendEchoLine($failMessage, 'error');
+            $this->getLogger()->appendEchoLine("<span class='italic'>$failMessage</span>", 'error');
         }
     }
 }

@@ -14,7 +14,9 @@ final class PutNewVariablesToDeployFile extends BaseTask implements Task
     {
         $env = $this->getReplacements()->replace('{{DEPLOY_PHP_ENV}}');
 
-        $this->getLogger()->appendEchoLine($env, 'comment');
+        $this->getLogger()->appendEchoLine(
+            view('gitlab-deploy::console.code-fragment', ['content' => $env])->render()
+        );
 
         $path = config('gitlab-deploy.deployer-php');
 

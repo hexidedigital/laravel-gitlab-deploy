@@ -17,6 +17,7 @@ class PipeData
         public readonly BasicLogger $logger,
         public readonly Executor $executor,
         public readonly Command $command,
+        public readonly int $totalSteps,
     ) {
     }
 

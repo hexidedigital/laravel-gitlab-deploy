@@ -16,6 +16,7 @@ class GitlabDeployServiceProvider extends PackageServiceProvider
         $package
             ->name('gitlab-deploy')
             ->hasConfigFile('gitlab-deploy')
+            ->hasViews('gitlab-deploy')
             ->hasCommands([
                 GitlabDeployInstallCommand::class,
                 PrepareDeployCommand::class,

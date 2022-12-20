@@ -14,6 +14,8 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
     public function execute(Pipedata $pipeData): void
     {
         if (!$this->confirmAction('Append Gitlab IP to remote host known_hosts file?')) {
+            $this->skipping();
+
             return;
         }
 

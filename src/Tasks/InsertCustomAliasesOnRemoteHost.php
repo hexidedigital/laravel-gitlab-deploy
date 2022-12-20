@@ -22,6 +22,7 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
             $bashAliases = $this->getReplacements()->replace($content);
 
             $this->getLogger()->writeToFile($bashAliases);
+            $this->getLogger()->writeToTerminal('Bash aliases written to log file');
 
             return;
         }
@@ -34,12 +35,15 @@ fi
 SHELL;
 
         $this->getExecutor()->runCommand("cp $filePath $aliasesPath");
-        $this->getLogger()->appendEchoLine('Optionally, copy next script to load aliases into <comment>`~/.bashrc`</comment> file.');
-        $this->getLogger()->appendEchoLine($aliasesLoader);
-
         $this->getLogger()->appendEchoLine(
-            $this->getReplacements()->replace('Can ask a password, enter <info>{{DEPLOY_PASS}}</info>')
+            'Optionally, copy next script to load aliases into <span class="text-info">`~/.bashrc`</span> file.'
         );
+        $this->getLogger()->appendEchoLine(
+            view('gitlab-deploy::console.code-fragment', ['content' => $aliasesLoader])->render()
+        );
+
+        $this->canAskPassword();
+
         $this->getExecutor()->runCommand(
             "scp {{remoteScpOptions}} \"$aliasesPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"~/.bash_aliases\"",
             function ($type, $buffer) {

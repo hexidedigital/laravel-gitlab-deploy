@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Helpers;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
+use function Termwind\render;
 
 class BasicLogger
 {
@@ -44,14 +47,26 @@ class BasicLogger
 
     public function appendEchoLine(?string $content = '', string $style = null): void
     {
-        $this->writeToFile(strip_tags($content ?: ''));
+        $this->writeToFile(trim(strip_tags($content ?: '')));
 
         $this->writeToTerminal($content, $style);
     }
 
     public function writeToTerminal(?string $content = '', ?string $style = null): void
     {
-        $this->command->line($content ?: '', $style);
+        $styleMap = [
+            'comment' => 'text-comment',
+            'error' => 'text-error',
+            'info' => 'text-info',
+        ];
+
+        $color = Arr::get($styleMap, $style ?: '');
+
+        render(
+            <<<HTML
+<div class="max-w-150 mx-2 $color">$content</div>
+HTML
+        );
     }
 
     public function writeToFile(?string $content = ''): void
@@ -62,17 +77,26 @@ class BasicLogger
         );
     }
 
-    public function newSection(int $step, string $name): void
+    public function newSection(int $step, string $name, int $total): void
     {
-        $string = strip_tags($step . '. ' . Str::ucfirst($name));
+        $stepName = Str::of($name)->ucfirst()->finish('.')->value();
 
-        $length = Str::length($string) + 12;
+        $this->writeToTerminal(
+            view('gitlab-deploy::console.step', [
+                'step' => $step,
+                'stepName' => $stepName,
+                'total' => $total,
+            ])->render()
+        );
 
-        $this->appendEchoLine();
-        $this->appendEchoLine(str_repeat('*', $length));
-        $this->appendEchoLine('*     ' . $string . '     *');
-        $this->appendEchoLine(str_repeat('*', $length));
-        $this->appendEchoLine();
+        $string = strip_tags("Step - $step/$total. $stepName");
+        $length = mb_strlen($string) + 12;
+
+        $this->writeToFile();
+        $this->writeToFile(str_repeat('*', $length));
+        $this->writeToFile('*     ' . $string . '     *');
+        $this->writeToFile(str_repeat('*', $length));
+        $this->writeToFile();
     }
 
     protected function makeFileName(): string

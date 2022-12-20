@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\Helpers\Replacements;
 abstract class Executor
 {
     public function __construct(
-        protected readonly BasicLogger  $logger,
+        protected readonly BasicLogger $logger,
         protected readonly Replacements $replacements,
     ) {
     }
@@ -17,7 +17,11 @@ abstract class Executor
     {
         $command = $this->prepareCommand($command);
 
-        $this->logger->appendEchoLine("Command: <info>$command</info>");
+        $this->logger->appendEchoLine(
+            <<<HTML
+<span class="text-info">Command:</span> <span class="text-command">$command</span>
+HTML
+        );
 
         $this->execute($command, $callable);
     }
