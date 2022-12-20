@@ -6,7 +6,9 @@ namespace HexideDigital\GitlabDeploy\Console\Commands;
 
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use HexideDigital\GitlabDeploy\Loggers\ConsoleLogger;
+use HexideDigital\GitlabDeploy\Loggers\FileLogger;
+use HexideDigital\GitlabDeploy\Loggers\LoggerBag;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\BasicExecutor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
@@ -30,7 +32,7 @@ class PrepareDeployCommand extends Command
 
     protected $description = 'Command to prepare your deploy';
 
-    protected BasicLogger $logger;
+    protected LoggerBag $logger;
 
     /**
      * @throws CircularDependencyException
@@ -46,7 +48,7 @@ class PrepareDeployCommand extends Command
         $this->infoLine('🛠 Preparing command.');
 
         try {
-            $this->createLogFile();
+            $this->createLoggers();
 
             $this->executeTasks();
 
@@ -95,10 +97,13 @@ class PrepareDeployCommand extends Command
         ];
     }
 
-    protected function createLogFile(): void
+    protected function createLoggers(): void
     {
-        $this->logger = new BasicLogger($this, config('gitlab-deploy.store-log-folder'));
-        $this->logger->openFile();
+        $this->logger = new LoggerBag();
+        $this->logger->addLogger(new FileLogger(config('gitlab-deploy.store-log-folder')));
+        $this->logger->addLogger(new ConsoleLogger());
+
+        $this->logger->init();
     }
 
     /**
@@ -218,8 +223,8 @@ class PrepareDeployCommand extends Command
 
     protected function printError(string $error, Throwable $exception): void
     {
-        $this->logger->appendEchoLine($error, 'error');
-        $this->logger->appendEchoLine(
+        $this->logger->line($error, 'error');
+        $this->logger->line(
             <<<HTML
 <span class="font-bold my-1">{$exception->getMessage()}</span>
 HTML

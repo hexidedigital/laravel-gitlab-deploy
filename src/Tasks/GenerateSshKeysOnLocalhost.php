@@ -27,18 +27,18 @@ final class GenerateSshKeysOnLocalhost extends BaseTask implements Task
 
     private function ensureDirectoryExists(): void
     {
-        $this->getLogger()->appendEchoLine('Ensure directory exists.');
+        $this->getLogger()->line('Ensure directory exists.');
 
         $path = $this->getReplacements()->replace(config('gitlab-deploy.ssh.folder'));
 
-        $this->getLogger()->appendEchoLine("mkdir -p $path", 'info');
+        $this->getLogger()->line("mkdir -p $path", 'info');
 
         File::ensureDirectoryExists($path);
     }
 
     private function updatePrivateKeyVariable(): void
     {
-        $this->getLogger()->appendEchoLine($this->getReplacements()->replace('cat {{IDENTITY_FILE}}'), 'info');
+        $this->getLogger()->line($this->getReplacements()->replace('cat {{IDENTITY_FILE}}'), 'info');
 
         $content = $this->identityFileContent();
 

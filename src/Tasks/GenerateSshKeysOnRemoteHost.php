@@ -35,7 +35,7 @@ final class GenerateSshKeysOnRemoteHost extends BaseTask implements Task
 
         $this->getState()->getGitlabVariablesBag()->add($pubKeyVariable);
 
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             'Remote pub-key: <span class="text-orange">' . $pubKeyVariable->value . '</span>'
         );
     }

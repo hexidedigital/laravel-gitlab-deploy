@@ -7,8 +7,8 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use HexideDigital\GitlabDeploy\Loggers\LoggerBag;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use Illuminate\Console\Command;
@@ -23,7 +23,7 @@ abstract class BaseTask implements Task
 
     protected Configurations $configurations;
     protected Replacements $replacements;
-    protected BasicLogger $logger;
+    protected LoggerBag $logger;
     protected DeployerState $state;
     protected Executor $executor;
     protected Command $command;
@@ -109,9 +109,9 @@ abstract class BaseTask implements Task
     }
 
     /**
-     * @return BasicLogger
+     * @return LoggerBag
      */
-    public function getLogger(): BasicLogger
+    public function getLogger(): LoggerBag
     {
         return $this->logger;
     }
@@ -147,7 +147,7 @@ abstract class BaseTask implements Task
 
     public function writeContent(string $path, string $contents): void
     {
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             <<<HTML
 Updating content for file: <span class="text-orange-500">$path</span>
 HTML
@@ -162,7 +162,7 @@ HTML
 
     public function getContent(string $path): string
     {
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             <<<HTML
 Reading content from file: <span class="text-lime-500">$path</span>
 HTML
@@ -182,7 +182,7 @@ HTML
      */
     public function copyFile(string $from, mixed $to): void
     {
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             <<<HTML
 Coping files: from [<span class="text-lime-500">$from</span>], to [<span class="text-orange-500">$to</span>]
 HTML
@@ -197,7 +197,7 @@ HTML
 
     public function removeFile(string $path): void
     {
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             <<<HTML
 Deleting path: <span class="text-red-500">$path</span>
 HTML
@@ -220,7 +220,7 @@ HTML
             return $default;
         }
 
-        $this->getLogger()->writeToTerminal("<div class='text-blue-500 mt-1'>$question</div>");
+        $this->getLogger()->getConsoleLogger()->line("<div class='text-blue-500 mt-1'>$question</div>");
 
         return $this->command->confirm('', $default);
     }
@@ -244,7 +244,7 @@ HTML
 
     protected function canAskPassword(): void
     {
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             $this->getReplacements()->replace(
                 view('gitlab-deploy::console.can-ask-password')->render()
             )
@@ -255,7 +255,7 @@ HTML
     {
         $prefix = $content ? ' - ' : '';
         $content = $prefix . $content;
-        $this->getLogger()->appendEchoLine(
+        $this->getLogger()->line(
             <<<HTML
 <span class="text-gray italic">Skipped{$content}.</span>
 HTML

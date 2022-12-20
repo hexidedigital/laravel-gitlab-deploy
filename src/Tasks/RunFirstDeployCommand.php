@@ -21,7 +21,7 @@ final class RunFirstDeployCommand extends BaseTask implements Task
             $this->skipping();
             // option only print disabled
             // and file not copied
-            $this->getLogger()->appendEchoLine('The deployment command was skipped.', 'error');
+            $this->getLogger()->line('The deployment command was skipped.', 'error');
 
             return;
         }
@@ -29,7 +29,7 @@ final class RunFirstDeployCommand extends BaseTask implements Task
         $this->getExecutor()->runCommand(
             'php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
-                $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->getLogger()->line($type . ' > ' . trim($buffer));
             }
         );
     }

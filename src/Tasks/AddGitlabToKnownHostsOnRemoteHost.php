@@ -40,7 +40,7 @@ final class AddGitlabToKnownHostsOnRemoteHost extends BaseTask implements Task
         if (!Str::contains($remoteKnownHosts, $knownHost)) {
             $this->getExecutor()->runCommand($sshRemote . " 'echo \"$knownHost\" >> ~/.ssh/known_hosts'");
         } else {
-            $this->getLogger()->appendEchoLine('Remote server already know Gitlab host.');
+            $this->getLogger()->line('Remote server already know Gitlab host.');
         }
     }
 }

@@ -20,9 +20,9 @@ final class HelpfulSuggestion extends BaseTask implements Task
     {
         $content = $this->getReplacements()->replace($this->getTemplateForFile());
 
-        $this->getLogger()->writeToFile(strip_tags($content));
+        $this->getLogger()->getFileLogger()->line(strip_tags($content));
 
-        $this->getLogger()->writeToTerminal(
+        $this->getLogger()->getConsoleLogger()->line(
             $this->getReplacements()->replace(
                 $this->getTemplateForConsole()
             )
@@ -57,7 +57,7 @@ EOF;
     private function getTemplateForConsole(): string
     {
         return $this->bladeCompiler->render(
-            /** @lang Blade */
+        /** @lang Blade */
             <<<BLADE
 <div class="mb-2">
     <div class="">
