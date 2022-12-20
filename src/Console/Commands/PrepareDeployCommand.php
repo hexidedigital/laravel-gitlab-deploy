@@ -6,7 +6,9 @@ namespace HexideDigital\GitlabDeploy\Console\Commands;
 
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
+use HexideDigital\GitlabDeploy\Loggers\ConsoleLogger;
+use HexideDigital\GitlabDeploy\Loggers\FileLogger;
+use HexideDigital\GitlabDeploy\Loggers\LoggerBag;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\BasicExecutor;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
@@ -22,31 +24,52 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Throwable;
 
+use function Termwind\{render, style};
+
 class PrepareDeployCommand extends Command
 {
     protected $name = 'deploy:gitlab';
 
     protected $description = 'Command to prepare your deploy';
 
-    protected BasicLogger $logger;
+    protected LoggerBag $logger;
 
+    /**
+     * @throws CircularDependencyException
+     * @throws BindingResolutionException
+     * @throws Throwable
+     */
     public function handle(): int
     {
-        $this->info('Start-upping...');
+        $this->setUpStyles();
+
+        render(view('gitlab-deploy::console.logo')->render());
+
+        $this->infoLine('🛠 Preparing command.');
 
         try {
-            $this->createLogFile();
+            $this->createLoggers();
 
             $this->executeTasks();
-        } catch (Throwable $exception) {
-            $this->error("Command finished with unexpected exception - <info>{$exception->getMessage()}</info>");
+
+            $this->infoLine('🎉 Command successfully finished!');
+        } catch (GitlabDeployException $exception) {
+            $this->printError('🤕 Deploy command failed.', $exception);
+
+            report($exception);
 
             return self::FAILURE;
         }
 
-        $this->info('Command successfully finished!');
-
         return self::SUCCESS;
+    }
+
+    protected function setUpStyles(): void
+    {
+        style('text-command')->apply('text-orange-500');
+        style('text-comment')->apply('text-blue-500');
+        style('text-info')->apply('text-lime-500');
+        style('text-error')->apply('text-red-500');
     }
 
     protected function getArguments(): array
@@ -74,10 +97,13 @@ class PrepareDeployCommand extends Command
         ];
     }
 
-    protected function createLogFile(): void
+    protected function createLoggers(): void
     {
-        $this->logger = new BasicLogger($this, config('gitlab-deploy.store-log-folder'));
-        $this->logger->openFile();
+        $this->logger = new LoggerBag();
+        $this->logger->setFileLogger(new FileLogger(config('gitlab-deploy.store-log-folder')));
+        $this->logger->setConsoleLogger(new ConsoleLogger());
+
+        $this->logger->init();
     }
 
     /**
@@ -88,32 +114,22 @@ class PrepareDeployCommand extends Command
      */
     protected function executeTasks(): void
     {
-        try {
-            $this->info('Fetching available tasks...');
+        $this->infoLine('👀 Fetching available tasks...');
 
-            $tasksToExecute = $this->getTasksToExecute();
+        $tasksToExecute = $this->getTasksToExecute();
 
-            if ($tasksToExecute->isEmpty()) {
-                throw new GitlabDeployException('Tasks list is empty!');
-            }
-
-            $pipeData = $this->preparePipeData();
-
-            $this->info('Running tasks...');
-
-            app(Pipeline::class)
-                ->send($pipeData)
-                ->through($tasksToExecute->all())
-                ->thenReturn();
-        } catch (GitlabDeployException $exception) {
-            $this->printError('Deploy command unexpected finished.', $exception);
-
-            throw $exception;
-        } catch (Throwable $exception) {
-            $this->printError('Error happened! See laravel log file.', $exception);
-
-            throw $exception;
+        if ($tasksToExecute->isEmpty()) {
+            throw new GitlabDeployException('🤨 Tasks list is empty!');
         }
+
+        $pipeData = $this->preparePipeData($tasksToExecute->count());
+
+        $this->infoLine('🤖 Running tasks...');
+
+        app(Pipeline::class)
+            ->send($pipeData)
+            ->through($tasksToExecute->all())
+            ->thenReturn();
     }
 
     /**
@@ -121,7 +137,7 @@ class PrepareDeployCommand extends Command
      * @throws BindingResolutionException
      * @throws GitlabDeployException
      */
-    protected function preparePipeData(): PipeData
+    protected function preparePipeData(int $tasksToExecute): PipeData
     {
         $state = $this->makeState();
 
@@ -131,7 +147,8 @@ class PrepareDeployCommand extends Command
             $state,
             $this->logger,
             $executor,
-            $this
+            $this,
+            $tasksToExecute,
         );
     }
 
@@ -206,8 +223,14 @@ class PrepareDeployCommand extends Command
 
     protected function printError(string $error, Throwable $exception): void
     {
-        $this->logger->appendEchoLine($error, 'error');
-        $this->logger->appendEchoLine($exception->getMessage(), 'error');
+        $this->logger->line($error, 'error');
+        $this->logger->line(
+            <<<HTML
+<span class="font-bold my-1">{$exception->getMessage()}</span>
+HTML
+            ,
+            'error'
+        );
     }
 
     protected function isOnlyPrint(): bool
@@ -218,5 +241,23 @@ class PrepareDeployCommand extends Command
     protected function stageName(): string
     {
         return $this->argument('stage');
+    }
+
+    protected function infoLine(string $content): void
+    {
+        $this->renderLine(
+            <<<HTML
+<div class="text-info">$content</div>
+HTML
+        );
+    }
+
+    protected function renderLine(string $content): void
+    {
+        render(
+            <<<HTML
+<div class="max-w-150 mx-2">$content</div>
+HTML
+        );
     }
 }

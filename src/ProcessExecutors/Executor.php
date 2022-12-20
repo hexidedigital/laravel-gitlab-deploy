@@ -2,13 +2,13 @@
 
 namespace HexideDigital\GitlabDeploy\ProcessExecutors;
 
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use HexideDigital\GitlabDeploy\Loggers\LoggerBag;
 
 abstract class Executor
 {
     public function __construct(
-        protected readonly BasicLogger  $logger,
+        protected readonly LoggerBag $logger,
         protected readonly Replacements $replacements,
     ) {
     }
@@ -17,7 +17,11 @@ abstract class Executor
     {
         $command = $this->prepareCommand($command);
 
-        $this->logger->appendEchoLine("Command: <info>$command</info>");
+        $this->logger->line(
+            <<<HTML
+<span class="text-info">Command:</span> <span class="text-command">$command</span>
+HTML
+        );
 
         $this->execute($command, $callable);
     }

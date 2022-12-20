@@ -10,7 +10,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
 {
-    protected string $name = 'Gitlab variables';
+    protected string $name = '📝 Gitlab variables';
 
     public function __construct(
         private readonly GitlabVariablesCreator $creator,
@@ -24,10 +24,12 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
         $this->printVariables($variableBag);
 
         if (!$this->confirmAction('Update Gitlab variables?')) {
+            $this->skipping('Updating Gitlab variables');
+
             return;
         }
 
-        $this->getLogger()->appendEchoLine('Connecting to Gitlab and creating variables...');
+        $this->getLogger()->line('Connecting to Gitlab and creating variables...');
 
         $this->creator
             ->setProject($this->getState()->getConfigurations()->project)
@@ -54,13 +56,13 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
     private function printVariables(VariableBag $variableBag): void
     {
         foreach ($variableBag->only($this->printAloneKeys()) as $variable) {
-            $this->getLogger()->appendEchoLine($variable->key, 'comment');
-            $this->getLogger()->appendEchoLine($variable->value);
+            $this->getLogger()->line($variable->key, 'comment');
+            $this->getLogger()->line($variable->value);
         }
 
         $rows = [];
         foreach ($variableBag->except($this->printAloneKeys()) as $variable) {
-            $this->getLogger()->writeToFile($variable->key . PHP_EOL . $variable->value . PHP_EOL);
+            $this->getLogger()->getFileLogger()->line($variable->key . PHP_EOL . $variable->value . PHP_EOL);
 
             $rows[] = [$variable->key, $variable->value];
         }
@@ -69,23 +71,31 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
             $this->getCommand()->table(['key', 'value'], $rows);
         }
 
-        $this->getLogger()->appendEchoLine('<comment>tip</comment>: put `SSH_PUB_KEY` to path => <info>Gitlab.project -> Settings -> Repository -> Deploy keys</info>');
+        $this->getLogger()->line(
+            <<<HTML
+<span class="text-info">tip</span>: put `SSH_PUB_KEY` to path => <span class="text-lime-500">Gitlab.project -> Settings -> Repository -> Deploy keys</span>
+HTML
+        );
     }
 
     private function printMessages(): void
     {
         foreach ($this->creator->getMessages() as $message) {
-            $this->getLogger()->appendEchoLine($message, 'comment');
+            $this->getLogger()->line("<span class='italic'>$message</span>", 'comment');
         }
 
         $fails = $this->creator->getFailMassages();
 
         $count = sizeof($fails);
 
-        $this->getLogger()->appendEchoLine('Gitlab variables created with "<info>' . $count . '</info>" fail messages');
+        $this->getLogger()->line(
+            <<<HTML
+Gitlab variables created with "<span class="text-red font-bold">$count</span>" fail messages
+HTML
+        );
 
         foreach ($fails as $failMessage) {
-            $this->getLogger()->appendEchoLine($failMessage, 'error');
+            $this->getLogger()->line("<span class='italic'>$failMessage</span>", 'error');
         }
     }
 }

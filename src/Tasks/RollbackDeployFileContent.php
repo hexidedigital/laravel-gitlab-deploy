@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class RollbackDeployFileContent extends BaseTask implements Task
 {
-    protected string $name = 'Rollback deploy file content';
+    protected string $name = '💾 Rollback deploy file content';
 
     public function execute(Pipedata $pipeData): void
     {

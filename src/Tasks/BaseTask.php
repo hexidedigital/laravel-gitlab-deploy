@@ -7,8 +7,8 @@ namespace HexideDigital\GitlabDeploy\Tasks;
 use HexideDigital\GitlabDeploy\DeployerState;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Configurations;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
-use HexideDigital\GitlabDeploy\Helpers\BasicLogger;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use HexideDigital\GitlabDeploy\Loggers\LoggerBag;
 use HexideDigital\GitlabDeploy\PipeData;
 use HexideDigital\GitlabDeploy\ProcessExecutors\Executor;
 use Illuminate\Console\Command;
@@ -23,7 +23,7 @@ abstract class BaseTask implements Task
 
     protected Configurations $configurations;
     protected Replacements $replacements;
-    protected BasicLogger $logger;
+    protected LoggerBag $logger;
     protected DeployerState $state;
     protected Executor $executor;
     protected Command $command;
@@ -68,6 +68,7 @@ abstract class BaseTask implements Task
         $this->getLogger()->newSection(
             $pipeData->incrementStepNumber(),
             $this->getTaskName(),
+            $pipeData->totalSteps
         );
 
         $this->execute($pipeData);
@@ -108,9 +109,9 @@ abstract class BaseTask implements Task
     }
 
     /**
-     * @return BasicLogger
+     * @return LoggerBag
      */
-    public function getLogger(): BasicLogger
+    public function getLogger(): LoggerBag
     {
         return $this->logger;
     }
@@ -146,7 +147,11 @@ abstract class BaseTask implements Task
 
     public function writeContent(string $path, string $contents): void
     {
-        $this->getLogger()->appendEchoLine("Updating content for file: <comment>$path</comment>");
+        $this->getLogger()->line(
+            <<<HTML
+Updating content for file: <span class="text-orange-500">$path</span>
+HTML
+        );
 
         if ($this->isPrintOnly()) {
             return;
@@ -157,7 +162,11 @@ abstract class BaseTask implements Task
 
     public function getContent(string $path): string
     {
-        $this->getLogger()->appendEchoLine("Reading content from file: <comment>$path</comment>");
+        $this->getLogger()->line(
+            <<<HTML
+Reading content from file: <span class="text-lime-500">$path</span>
+HTML
+        );
 
         if ($this->isPrintOnly()) {
             return '';
@@ -173,7 +182,11 @@ abstract class BaseTask implements Task
      */
     public function copyFile(string $from, mixed $to): void
     {
-        $this->getLogger()->appendEchoLine("Coping files: from [<comment>$from</comment>], to [<comment>$to</comment>]");
+        $this->getLogger()->line(
+            <<<HTML
+Coping files: from [<span class="text-lime-500">$from</span>], to [<span class="text-orange-500">$to</span>]
+HTML
+        );
 
         if ($this->isPrintOnly()) {
             return;
@@ -184,7 +197,11 @@ abstract class BaseTask implements Task
 
     public function removeFile(string $path): void
     {
-        $this->getLogger()->appendEchoLine("Deleting path: <comment>$path</comment>");
+        $this->getLogger()->line(
+            <<<HTML
+Deleting path: <span class="text-red-500">$path</span>
+HTML
+        );
 
         if ($this->isPrintOnly()) {
             return;
@@ -203,7 +220,9 @@ abstract class BaseTask implements Task
             return $default;
         }
 
-        return $this->command->confirm($question, $default);
+        $this->getLogger()->getConsoleLogger()->line("<div class='text-blue-500 mt-1'>$question</div>");
+
+        return $this->command->confirm('', $default);
     }
 
     protected function writeContentWithReplaces(string $path, array $patterns): void
@@ -221,5 +240,25 @@ abstract class BaseTask implements Task
         }
 
         $this->writeContent($path, $contents);
+    }
+
+    protected function canAskPassword(): void
+    {
+        $this->getLogger()->line(
+            $this->getReplacements()->replace(
+                view('gitlab-deploy::console.can-ask-password')->render()
+            )
+        );
+    }
+
+    protected function skipping(string $content = ''): void
+    {
+        $prefix = $content ? ' - ' : '';
+        $content = $prefix . $content;
+        $this->getLogger()->line(
+            <<<HTML
+<span class="text-gray italic">Skipped{$content}.</span>
+HTML
+        );
     }
 }

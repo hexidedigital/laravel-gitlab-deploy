@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\PipeData;
-use Illuminate\Support\Facades\Artisan;
-use Symfony\Component\Console\Output\BufferedOutput;
 
 final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 {
-    protected string $name = 'setup env file for remote server and move to server';
+    protected string $name = '🌳 Setup env file for remote server and move to server';
 
     public function execute(Pipedata $pipeData): void
     {
@@ -46,12 +44,12 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
             ]
             : [];
 
-        $output = new BufferedOutput();
-        Artisan::call('key:generate', ['--show' => true], $output);
-        $appKey = trim($output->fetch());
+        /*fixme - generating app key*/
+        if (!$this->isPrintOnly()) {
+            $this->getCommand()->call('key:generate');
+        }
 
         return array_merge($mail, [
-            '^APP_KEY=.*$' => 'APP_KEY=' . $appKey,
             '^APP_URL=.*$' => $this->getReplacements()->replace('APP_URL={{DEPLOY_DOMAIN}}'),
 
             '^DB_DATABASE=.*$' => $this->getReplacements()->replace('DB_DATABASE={{DB_DATABASE}}'),
@@ -67,14 +65,14 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     private function copyFileToRemote(string $envMain): void
     {
         if (!$this->confirmAction('Copy env file to remote server?', true)) {
+            $this->skipping('Coping file to remote server');
+
             return;
         }
 
-        $this->getLogger()->appendEchoLine('Coping to remote', 'comment');
+        $this->getLogger()->line('<span class="mt-1">Coping file to remote</span>', 'comment');
 
-        $this->getLogger()->appendEchoLine(
-            $this->getReplacements()->replace('can ask a password - enter <comment>{{DEPLOY_PASS}}</comment>')
-        );
+        $this->canAskPassword();
 
         $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
         $this->getExecutor()->runCommand(
@@ -83,7 +81,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         $this->getExecutor()->runCommand(
             "scp {{remoteScpOptions}} \"$envMain\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
             function ($type, $buffer) {
-                $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->getLogger()->line($type . ' > ' . trim($buffer));
             }
         );
     }
@@ -95,7 +93,7 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      */
     private function restoreFiles(string $envBackup, string $envMain): void
     {
-        $this->getLogger()->appendEchoLine('Restore original env file', 'comment');
+        $this->getLogger()->line('<span class="mt-1">Restore original env file</span>', 'comment');
 
         $this->getExecutor()->runCommand("cp $envBackup $envMain");
     }
@@ -107,7 +105,10 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      */
     private function storeOriginalFiles(string $envMain, string $envBackup): void
     {
-        $this->getLogger()->appendEchoLine('Backup original env file and create for host', 'comment');
+        $this->getLogger()->line(
+            '<span class="mt-1">Backup original env file and create for host</span>',
+            'comment'
+        );
 
         $this->getExecutor()->runCommand("cp $envMain $envBackup");
     }
@@ -118,13 +119,15 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
      */
     private function fillEnvFile(string $envMain): void
     {
-        $this->getLogger()->appendEchoLine('Filling env file for host...', 'comment');
+        $this->getLogger()->line('<span class="mt-1">Filling env file for host...</span>', 'comment');
 
         $this->getExecutor()->runCommand("cp {{PROJ_DIR}}/.env.example $envMain");
 
         $envReplaces = $this->getEnvReplaces();
 
-        $this->getLogger()->appendEchoLine(var_export($envReplaces, true));
+        $this->getLogger()->line(
+            view('gitlab-deploy::console.code-fragment', ['content' => var_export($envReplaces, true)])->render()
+        );
 
         $this->writeContentWithReplaces($envMain, $envReplaces);
     }

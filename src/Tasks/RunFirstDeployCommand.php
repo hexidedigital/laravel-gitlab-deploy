@@ -8,7 +8,7 @@ use HexideDigital\GitlabDeploy\PipeData;
 
 final class RunFirstDeployCommand extends BaseTask implements Task
 {
-    protected string $name = 'run deploy from local';
+    protected string $name = '🚀 Run deploy from local';
 
     public function execute(Pipedata $pipeData): void
     {
@@ -18,9 +18,10 @@ final class RunFirstDeployCommand extends BaseTask implements Task
         );
 
         if (!$fileExists) {
+            $this->skipping();
             // option only print disabled
             // and file not copied
-            $this->getLogger()->appendEchoLine('The deployment command was skipped.', 'error');
+            $this->getLogger()->line('The deployment command was skipped.', 'error');
 
             return;
         }
@@ -28,7 +29,7 @@ final class RunFirstDeployCommand extends BaseTask implements Task
         $this->getExecutor()->runCommand(
             'php {{PROJ_DIR}}/vendor/bin/dep deploy',
             function ($type, $buffer) {
-                $this->getLogger()->appendEchoLine($type . ' > ' . trim($buffer));
+                $this->getLogger()->line($type . ' > ' . trim($buffer));
             }
         );
     }
