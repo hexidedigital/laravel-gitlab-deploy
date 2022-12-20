@@ -5,13 +5,22 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.2...1.x)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0 - 🎉...HEAD)
+
+## [v1.0.0 - 🎉](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.2...v1.0.0 - 🎉) - 2022-12-20
+
+### What's Changed
+
+- [1.x] Update install command - add deploy and ssh folder to `.gitignore` file by @Oleksandr-Moik in https://github.com/hexidedigital/laravel-gitlab-deploy/pull/10
+- [1.x] Udate command output and logging by @Oleksandr-Moik in https://github.com/hexidedigital/laravel-gitlab-deploy/pull/9
+
+**Full Changelog**: https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.2...v1.0.0
 
 ## [v1.0.0-RC.2](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.1...v1.0.0-RC.2) - 2022-12-18
 
 ### Changed
 
-- Namespace for console commands ([852c5843](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/30ff198809e01740442950dad22d60f804906687)) 
+- Namespace for console commands ([852c5843](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/30ff198809e01740442950dad22d60f804906687))
 - Scripts in `composer.json` file ([8b90320e](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/8b90320ee2a53736f06b6b82367c5aef5415536b))
 - Export ignore files ([f2b66463](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/f2b66463a613471e31f30681d023a7cfaf8fabcc))
 - Change method to write log in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/7)
