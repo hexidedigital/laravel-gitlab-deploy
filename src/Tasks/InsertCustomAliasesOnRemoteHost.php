@@ -17,6 +17,8 @@ final class InsertCustomAliasesOnRemoteHost extends BaseTask implements Task
         $filePath = __DIR__ . '/../../examples/.bash_aliases';
 
         if (!$shouldPutAliases || $this->isPrintOnly()) {
+            $this->skipping();
+
             $content = $this->getContent($filePath);
 
             $bashAliases = $this->getReplacements()->replace($content);

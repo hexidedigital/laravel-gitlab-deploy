@@ -65,6 +65,8 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
     private function copyFileToRemote(string $envMain): void
     {
         if (!$this->confirmAction('Copy env file to remote server?', true)) {
+            $this->skipping('Coping file to remote server');
+
             return;
         }
 

@@ -250,4 +250,15 @@ HTML
             )
         );
     }
+
+    protected function skipping(string $content = ''): void
+    {
+        $prefix = $content ? ' - ' : '';
+        $content = $prefix . $content;
+        $this->getLogger()->appendEchoLine(
+            <<<HTML
+<span class="text-gray italic">Skipped{$content}.</span>
+HTML
+        );
+    }
 }

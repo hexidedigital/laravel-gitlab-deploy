@@ -24,6 +24,8 @@ final class CreateProjectVariablesOnGitlab extends BaseTask implements Task
         $this->printVariables($variableBag);
 
         if (!$this->confirmAction('Update Gitlab variables?')) {
+            $this->skipping('Updating Gitlab variables');
+
             return;
         }
 
