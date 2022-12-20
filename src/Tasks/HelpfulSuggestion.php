@@ -57,7 +57,7 @@ EOF;
     private function getTemplateForConsole(): string
     {
         return $this->bladeCompiler->render(
-        /** @lang Blade */
+            /** @lang Blade */
             <<<BLADE
 <div class="mb-2">
     <div class="">
