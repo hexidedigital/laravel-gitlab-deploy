@@ -100,8 +100,8 @@ class PrepareDeployCommand extends Command
     protected function createLoggers(): void
     {
         $this->logger = new LoggerBag();
-        $this->logger->addLogger(new FileLogger(config('gitlab-deploy.store-log-folder')));
-        $this->logger->addLogger(new ConsoleLogger());
+        $this->logger->setFileLogger(new FileLogger(config('gitlab-deploy.store-log-folder')));
+        $this->logger->setConsoleLogger(new ConsoleLogger());
 
         $this->logger->init();
     }

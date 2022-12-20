@@ -51,7 +51,7 @@ final class FileLogger implements Logger
 
     protected function createFile(): void
     {
-        File::ensureDirectoryExists($this->fileResourceName);
+        File::ensureDirectoryExists(File::dirname($this->fileResourceName));
 
         File::put($this->fileResourceName, '');
     }
