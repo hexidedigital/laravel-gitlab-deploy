@@ -1,13 +1,12 @@
 {
     "name": "hexide-digital/gitlab-deploy",
     "description": "Prepare your project to deploy",
+    "license": "MIT",
     "keywords": [
         "hexide-digital",
         "laravel",
         "gitlabdeploy"
     ],
-    "homepage": "https://github.com/hexidedigital/laravel-gitlab-deploy",
-    "license": "MIT",
     "authors": [
         {
             "name": "Oleksandr-Moik",
@@ -15,6 +14,7 @@
             "role": "Developer"
         }
     ],
+    "homepage": "https://github.com/hexidedigital/laravel-gitlab-deploy",
     "require": {
         "php": "^8.1",
         "deployer/deployer": "^7.0",
@@ -41,6 +41,8 @@
         "phpstan/phpstan-phpunit": "^1.3.10",
         "phpunit/phpunit": "^9.6.5 || ^10.0"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "HexideDigital\\GitlabDeploy\\": "src"
@@ -51,34 +53,32 @@
             "HexideDigital\\GitlabDeploy\\Tests\\": "tests"
         }
     },
-    "scripts": {
-        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
-        "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "lint": "vendor/bin/pint src tests"
-    },
     "config": {
-        "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true,
             "php-http/discovery": true
-        }
+        },
+        "sort-packages": true
     },
     "extra": {
-        "laravel": {
-            "providers": [
-                "HexideDigital\\GitlabDeploy\\GitlabDeployServiceProvider"
-            ],
-            "aliases": {
-                "GitlabDeploy": "HexideDigital\\GitlabDeploy\\Facades\\GitlabDeploy"
-            }
-        },
         "branch-alias": {
             "dev-master": "1.x-dev"
+        },
+        "laravel": {
+            "aliases": {
+                "GitlabDeploy": "HexideDigital\\GitlabDeploy\\Facades\\GitlabDeploy"
+            },
+            "providers": [
+                "HexideDigital\\GitlabDeploy\\GitlabDeployServiceProvider"
+            ]
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "analyse": "vendor/bin/phpstan analyse",
+        "lint": "vendor/bin/pint src tests",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage"
+    }
 }
