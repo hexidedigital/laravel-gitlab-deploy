@@ -154,4 +154,3 @@ test('do nothing when in project missing .gitignore file', function () {
 
     assertFalse(File::isFile(base_path('.gitignore')));
 });
-
