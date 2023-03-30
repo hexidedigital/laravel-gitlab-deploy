@@ -19,15 +19,17 @@ Remote server must use GNU/Linux.
 You can install this package via composer using:
 
 ```shell
-composer require --dev hexide-digital/gitlab-deploy:1.x-dev
+composer require --dev hexide-digital/gitlab-deploy
 ```
+
+And if you are using composer version 2.4 and above, run the [`bump`](https://php.watch/articles/composer-bump) command
 
 or manually add line to `composer.json`
 
 ```json
 {
     "require-dev": {
-        "hexide-digital/gitlab-deploy": "1.x-dev"
+        "hexide-digital/gitlab-deploy": "^1.0"
     }
 }
 ```
