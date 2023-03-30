@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace HexideDigital\GitlabDeploy\Console\Commands;
 
+use Closure;
 use File;
 use HexideDigital\GitlabDeploy\GitlabDeployServiceProvider;
 use Illuminate\Console\Command;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Str;
 
 class GitlabDeployInstallCommand extends Command
@@ -101,10 +103,14 @@ class GitlabDeployInstallCommand extends Command
 
         $this->info('Updating: .gitignore file');
 
-        $content = File::get($gitignoreFile);
-
-        $this->appendIgnore($content, $this->getSshDir());
-        $this->appendIgnore($content, $this->getWorkingDir());
+        $content = app(Pipeline::class)
+            ->send(File::get($gitignoreFile))
+            ->through([
+                fn (string $content, Closure $next) => $next($this->appendIgnore($content, $this->getSshDir())),
+                fn (string $content, Closure $next) => $next($this->appendIgnore($content, "/.ssh")),
+                fn (string $content, Closure $next) => $next($this->appendIgnore($content, $this->getWorkingDir())),
+            ])
+            ->thenReturn();
 
         if ($content === File::get($gitignoreFile)) {
             $this->info('No need to update.');
@@ -127,9 +133,8 @@ class GitlabDeployInstallCommand extends Command
     protected function getSshDir(): string
     {
         return Str::of(config('gitlab-deploy.ssh.folder'))
-            ->replace('{{STAGE}}', '')
             ->replace(base_path(), '')
-            ->start('/')
+            ->dirname()
             ->value();
     }
 
@@ -137,6 +142,7 @@ class GitlabDeployInstallCommand extends Command
     {
         return Str::of(config('gitlab-deploy.config-file'))
             ->replace(base_path(), '')
+            ->dirname()
             ->value();
     }
 }
