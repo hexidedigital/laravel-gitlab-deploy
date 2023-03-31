@@ -5,21 +5,30 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.1.0 - support laravel 10...HEAD)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.2.0...HEAD)
 
-## [v1.1.0 - support laravel 10](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.1.0...v1.1.0 - support laravel 10) - 2023-03-19
+## [v1.2.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.1.0...v1.2.0) - 2023-03-31
 
-- Add support for laravel 10 [f466ee](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/f466eeb24badc84a2e475c697742f3983874492f)
+## Changed
+
+- Update CHANGELOG in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/14)
+- Update workflow for tests in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/15)
+- normalize composer json in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/18)
+- Update preview link in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/17) (by @andrey-helldar)
+
+### Fixed
+
+- Fix editing gitignore file for install command in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/20)
 
 ## [v1.1.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0...v1.0.0) - 2023-03-19
 
 ### Changed
 
-- Add support for Laravel 10
+- Add support for Laravel 10 [f466ee](https://github.com/hexidedigital/laravel-gitlab-deploy/commit/f466eeb24badc84a2e475c697742f3983874492f)
 
 ## [v1.0.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.0.0-RC.2...v1.0.0) - 2022-12-20
 
-### What's Changed
+### Changed
 
 - [1.x] Update install command - add deploy and ssh folder to `.gitignore` file by @Oleksandr-Moik in https://github.com/hexidedigital/laravel-gitlab-deploy/pull/10
 - [1.x] Update command output and logging by @Oleksandr-Moik in https://github.com/hexidedigital/laravel-gitlab-deploy/pull/9
