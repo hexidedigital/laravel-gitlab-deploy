@@ -135,6 +135,7 @@ class GitlabDeployInstallCommand extends Command
         return Str::of(config('gitlab-deploy.ssh.folder'))
             ->replace(base_path(), '')
             ->dirname()
+            ->replace(DIRECTORY_SEPARATOR, '/')
             ->value();
     }
 
@@ -143,6 +144,7 @@ class GitlabDeployInstallCommand extends Command
         return Str::of(config('gitlab-deploy.config-file'))
             ->replace(base_path(), '')
             ->dirname()
+            ->replace(DIRECTORY_SEPARATOR, '/')
             ->value();
     }
 }
