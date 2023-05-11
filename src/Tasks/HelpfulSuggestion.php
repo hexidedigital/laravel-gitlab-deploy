@@ -82,7 +82,7 @@ EOF;
                 <div class="text-green-500">crontab -e</div>
             </div>
             <div class="italic">and write: </div>
-            <div class="text-green-500">* * * * * cd @{{DEPLOY_BASE_DIR}}/current && @{{BIN_PHP}}artisan schedule:run >> /dev/null 2>&1</div>
+            <div class="text-green-500">* * * * * cd @{{DEPLOY_BASE_DIR}}/current && @{{BIN_PHP}} artisan schedule:run >> /dev/null 2>&1</div>
         </div>
     </div>
 
