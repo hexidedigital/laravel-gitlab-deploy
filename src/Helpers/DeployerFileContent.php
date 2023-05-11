@@ -23,9 +23,9 @@ final class DeployerFileContent
         dump(\File::dirname($this->path));
 
         dump(\File::files(base_path()));
-//        dump(\File::put('temp11223344.ttxx', ''));
+        //        dump(\File::put('temp11223344.ttxx', ''));
 
-//        dd($this->path, \File::get($this->path), \File::get(base_path('deploy.php')));
+        //        dd($this->path, \File::get($this->path), \File::get(base_path('deploy.php')));
 
         $content = \File::get($this->path);
 
