@@ -175,12 +175,7 @@ HTML
         return File::get($path) ?: '';
     }
 
-    /**
-     * @param string $from
-     * @param mixed $to
-     * @return void
-     */
-    public function copyFile(string $from, mixed $to): void
+    public function copyFile(string $from, string $to): void
     {
         $this->getLogger()->line(
             <<<HTML
