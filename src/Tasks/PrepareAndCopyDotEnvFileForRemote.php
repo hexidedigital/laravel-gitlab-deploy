@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace HexideDigital\GitlabDeploy\Tasks;
 
 use HexideDigital\GitlabDeploy\PipeData;
+use Illuminate\Encryption\Encrypter;
+use Illuminate\Foundation\Console\KeyGenerateCommand;
 
 final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 {
@@ -44,12 +46,8 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
             ]
             : [];
 
-        /*fixme - generating app key*/
-        if (!$this->isPrintOnly()) {
-            $this->getCommand()->call('key:generate');
-        }
-
         return array_merge($mail, [
+            '^APP_KEY=.*$' => 'APP_KEY=' . $this->generateRandomKey(),
             '^APP_URL=.*$' => $this->getReplacements()->replace('APP_URL={{DEPLOY_DOMAIN}}'),
 
             '^DB_DATABASE=.*$' => $this->getReplacements()->replace('DB_DATABASE={{DB_DATABASE}}'),
@@ -130,5 +128,16 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
         );
 
         $this->writeContentWithReplaces($envMain, $envReplaces);
+    }
+
+    /**
+     * Generate a random key for the application.
+     *
+     * @return string
+     * @see KeyGenerateCommand::generateRandomKey()
+     */
+    private function generateRandomKey(): string
+    {
+        return 'base64:' . base64_encode(Encrypter::generateKey(config('app.cipher')));
     }
 }
