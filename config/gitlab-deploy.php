@@ -13,12 +13,13 @@ return [
     'config-file' => base_path('.deploy/deploy-prepare.yml'),
 
     'ssh' => [
-        // split by directory
-        'folder' => base_path('.ssh/{{STAGE}}'),
         'key_name' => 'id_rsa',
-        // or put in same with different names
-        // 'folder' => base_path('.ssh'),
-        // 'key_name' => '{{STAGE}}_id_rsa',
+        // store ssh keys in a project folder (don't forget to add to gitignore)
+        'folder' => base_path('.ssh'),
+        // use an ssh key of your machine
+        // 'folder' => '~/.ssh',
+        // split by directory
+        // 'folder' => base_path('.ssh/{{STAGE}}'),
     ],
 
     'tasks' => [
