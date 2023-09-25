@@ -157,6 +157,7 @@ HTML
             return;
         }
 
+        File::ensureDirectoryExists(File::dirname($path));
         File::put($path, $contents);
     }
 
