@@ -15,7 +15,8 @@ class GitlabDeployInstallCommand extends Command
 {
     protected $hidden = true;
 
-    protected $name = 'gitlab-deploy:install';
+    protected $name = 'deploy:install';
+
     protected $description = 'Install the package';
 
     protected string $packageName = 'gitlab-deploy';

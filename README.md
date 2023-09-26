@@ -50,7 +50,7 @@ Examples of files to be copied can be viewed in
 After installing, you maybe want to publish files for deployment and sample files, right? Just do this:
 
 ```shell
-php artisan gitlab-deploy:install
+php artisan deploy:install
 ```
 
 # Usage
