@@ -5,7 +5,30 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.2.0...HEAD)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.3.0...HEAD)
+
+## [v1.3.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.2.1...v1.3.0) - 2023-10-09
+
+### Added
+
+- Add `.gitlab-ci.yml` file
+
+### Changed
+
+- Update command namespace for installation from `gitlab-deploy:install` to `deploy:install`
+- Update processing and generating env files
+
+### Fixed
+
+- Fix generating app key for host env file
+- Fix generating `.bash_aliases` file and keep initial server content when moving to remote server
+- Remove unused `aliases` option for `deploy:gitlab` command
+
+## [v1.2.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.2.0...v1.2.1) - 2023-05-11
+
+### Fixed
+
+- Fix space in a crontab command suggestion in (https://github.com/hexidedigital/laravel-gitlab-deploy/pull/14)
 
 ## [v1.2.0](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.1.0...v1.2.0) - 2023-03-31
 
