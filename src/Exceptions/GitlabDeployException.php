@@ -4,7 +4,10 @@ namespace HexideDigital\GitlabDeploy\Exceptions;
 
 use Exception;
 
-class GitlabDeployException extends Exception
+/**
+ * @internal
+ */
+final class GitlabDeployException extends Exception
 {
     public static function hasEmptyStageOptions(string $stageName, array $emptyOptions): GitlabDeployException
     {
@@ -19,6 +22,13 @@ class GitlabDeployException extends Exception
     {
         return new GitlabDeployException(
             'To process deploy prepare you must specify Gitlab credentials - ' . implode(', ', $values)
+        );
+    }
+
+    public static function validationErrors(array $keys): GitlabDeployException
+    {
+        return new GitlabDeployException(
+            'Validation errors: ' . implode(', ', $keys)
         );
     }
 }
