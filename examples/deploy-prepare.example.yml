@@ -1,7 +1,7 @@
 # schema https://raw.githubusercontent.com/hexidedigital/laravel-gitlab-deploy/develop/schema/deploy-prepare-v1.json
 
 # How to work with the file, read here
-# https://github.com/hexidedigital/laravel-gitlab-deploy#prepare
+# https://github.com/hexidedigital/laravel-gitlab-deploy#configurations-and-prepare-access
 
 version: 1
 
@@ -11,9 +11,8 @@ git-lab:
     # Read where to get this token - https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
     token: "XXXXXXXXXX"
 
-    # Read about the possible options https://github.com/hexidedigital/laravel-gitlab-deploy#project-full-name-or-id
-    project-id: "NAMESPACE/PROJECT_NAME"
-    # project-id: "000000"
+    # Read where to get this id - https://github.com/hexidedigital/laravel-gitlab-deploy#project-id
+    project-id: "000000"
 
     domain: https://gitlab.hexide-digital.com
 
