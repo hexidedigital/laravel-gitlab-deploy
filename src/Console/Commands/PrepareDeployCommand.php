@@ -83,12 +83,6 @@ class PrepareDeployCommand extends Command
     {
         return [
             new InputOption(
-                'aliases',
-                null,
-                InputOption::VALUE_NONE,
-                'Append custom aliases for artisan and php to ~/.bashrc'
-            ),
-            new InputOption(
                 'only-print',
                 null,
                 InputOption::VALUE_NONE,
