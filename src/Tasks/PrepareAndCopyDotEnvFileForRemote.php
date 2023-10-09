@@ -12,27 +12,96 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
 {
     protected string $name = '🌳 Setup env file for remote server and move to server';
 
+    private string $envMainPath;
+    private string $localEnvBackup;
+
     public function execute(Pipedata $pipeData): void
     {
-        $envMain = $this->getReplacements()->replace('{{PROJ_DIR}}/.env');
-        $envBackup = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.backup');
+        $this->envMainPath = $this->getReplacements()->replace('{{PROJ_DIR}}/.env');
+        $this->localEnvBackup = config('gitlab-deploy.working-dir') . '/' . date('YmdHis') . '.env';
 
-        $this->storeOriginalFiles($envMain, $envBackup);
+        $this->makeBackupForLocalEnvFile();
 
-        $this->fillEnvFile($envMain);
+        try {
+            $this->fillVariablesToFileForHost();
 
-        $this->copyFileToRemote($envMain);
+            $this->copyFileToRemoteHost();
 
-        $this->getExecutor()->runCommand("cp $envMain {{PROJ_DIR}}/.env.host");
-
-        $this->restoreFiles($envBackup, $envMain);
-
-        $this->removeFile($envBackup);
+            $this->saveGeneratedHostFile();
+        } finally {
+            $this->restoreLocalEnvFile();
+        }
     }
 
-    /**
-     * @return array<string, string>
-     */
+    private function makeBackupForLocalEnvFile(): void
+    {
+        $this->getLogger()->line(
+            '<span class="mt-1">Backup original env file</span>',
+            'comment'
+        );
+
+        $this->copyFile($this->envMainPath, $this->localEnvBackup);
+        $this->getLogger()->line("cp $this->envMainPath $this->localEnvBackup");
+    }
+
+    private function fillVariablesToFileForHost(): void
+    {
+        $this->getLogger()->line('<span class="mt-1">Filling env file for host...</span>', 'comment');
+
+        // make clean copy from example file
+        $envExample = $this->getReplacements()->replace('{{PROJ_DIR}}/.env.example');
+        $this->copyFile($envExample, $this->envMainPath);
+        $this->getLogger()->line("cp $envExample $this->envMainPath");
+
+        $envReplaces = $this->getEnvReplaces();
+
+        $this->getLogger()->line(
+            view('gitlab-deploy::console.code-fragment', ['content' => var_export($envReplaces, true)])->render()
+        );
+
+        $this->writeContentWithReplaces($this->envMainPath, $envReplaces);
+    }
+
+    private function copyFileToRemoteHost(): void
+    {
+        if (!$this->confirmAction('Copy env file to remote server?', true)) {
+            $this->skipping('Coping file to remote server');
+
+            return;
+        }
+
+        $this->getLogger()->line('<span class="mt-1">Coping file to remote</span>', 'comment');
+
+        $this->canAskPassword();
+
+        $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
+        $this->getExecutor()->runCommand(
+            "ssh {{remoteSshCredentials}} 'test -d $sharedDir || mkdir -p $sharedDir'"
+        );
+        $this->getExecutor()->runCommand(
+            "scp {{remoteScpOptions}} \"$this->envMainPath\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
+            function ($type, $buffer) {
+                $this->getLogger()->line($type . ' > ' . trim($buffer));
+            }
+        );
+    }
+
+    private function saveGeneratedHostFile(): void
+    {
+        $envHost = config('gitlab-deploy.working-dir') . "/env.host";
+
+        $this->copyFile($this->envMainPath, $envHost);
+        $this->getLogger()->line("cp $this->envMainPath $envHost");
+    }
+
+    private function restoreLocalEnvFile(): void
+    {
+        $this->getLogger()->line('<span class="mt-1">Restore original env file</span>', 'comment');
+
+        $this->copyFile($this->localEnvBackup, $this->envMainPath);
+        $this->getLogger()->line("cp $this->localEnvBackup $this->envMainPath");
+    }
+
     private function getEnvReplaces(): array
     {
         $mail = $this->getState()->getStage()->hasMailOptions()
@@ -54,80 +123,6 @@ final class PrepareAndCopyDotEnvFileForRemote extends BaseTask implements Task
             '^DB_USERNAME=.*$' => $this->getReplacements()->replace('DB_USERNAME={{DB_USERNAME}}'),
             '^DB_PASSWORD=.*$' => $this->getReplacements()->replace('DB_PASSWORD={{DB_PASSWORD}}'),
         ]);
-    }
-
-    /**
-     * @param string $envMain
-     * @return void
-     */
-    private function copyFileToRemote(string $envMain): void
-    {
-        if (!$this->confirmAction('Copy env file to remote server?', true)) {
-            $this->skipping('Coping file to remote server');
-
-            return;
-        }
-
-        $this->getLogger()->line('<span class="mt-1">Coping file to remote</span>', 'comment');
-
-        $this->canAskPassword();
-
-        $sharedDir = '{{DEPLOY_BASE_DIR}}/shared';
-        $this->getExecutor()->runCommand(
-            "ssh {{remoteSshCredentials}} 'test -d $sharedDir || mkdir -p $sharedDir'"
-        );
-        $this->getExecutor()->runCommand(
-            "scp {{remoteScpOptions}} \"$envMain\" \"{{DEPLOY_USER}}@{{DEPLOY_SERVER}}\":\"$sharedDir/\"",
-            function ($type, $buffer) {
-                $this->getLogger()->line($type . ' > ' . trim($buffer));
-            }
-        );
-    }
-
-    /**
-     * @param string $envBackup
-     * @param string $envMain
-     * @return void
-     */
-    private function restoreFiles(string $envBackup, string $envMain): void
-    {
-        $this->getLogger()->line('<span class="mt-1">Restore original env file</span>', 'comment');
-
-        $this->getExecutor()->runCommand("cp $envBackup $envMain");
-    }
-
-    /**
-     * @param string $envMain
-     * @param string $envBackup
-     * @return void
-     */
-    private function storeOriginalFiles(string $envMain, string $envBackup): void
-    {
-        $this->getLogger()->line(
-            '<span class="mt-1">Backup original env file and create for host</span>',
-            'comment'
-        );
-
-        $this->getExecutor()->runCommand("cp $envMain $envBackup");
-    }
-
-    /**
-     * @param string $envMain
-     * @return void
-     */
-    private function fillEnvFile(string $envMain): void
-    {
-        $this->getLogger()->line('<span class="mt-1">Filling env file for host...</span>', 'comment');
-
-        $this->getExecutor()->runCommand("cp {{PROJ_DIR}}/.env.example $envMain");
-
-        $envReplaces = $this->getEnvReplaces();
-
-        $this->getLogger()->line(
-            view('gitlab-deploy::console.code-fragment', ['content' => var_export($envReplaces, true)])->render()
-        );
-
-        $this->writeContentWithReplaces($envMain, $envReplaces);
     }
 
     /**
