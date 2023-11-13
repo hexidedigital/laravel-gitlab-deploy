@@ -10,7 +10,7 @@ final class GitlabProject
 {
     /** @throws GitlabDeployException */
     public function __construct(
-        public readonly string $id,
+        public readonly string|int $id,
         public readonly string $token,
         public readonly string $url,
     ) {

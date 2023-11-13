@@ -148,8 +148,6 @@ It also can be copied with button on the right side.
 
 ![project-id.png](media/project-id.png)
 
-> For using project ID, you must wrap number in file to quotes like `"XXXXXXXXXX"` to mark value as string.
-
 ## Can I hire you guys?
 
 Yes! Say hi: [hello@hexide-digital.com](mailto:hello@hexide-digital.com)

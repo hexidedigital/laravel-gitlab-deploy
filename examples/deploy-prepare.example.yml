@@ -12,7 +12,8 @@ git-lab:
     token: "XXXXXXXXXX"
 
     # Read where to get this id - https://github.com/hexidedigital/laravel-gitlab-deploy#project-id
-    project-id: "000000"
+    project-id: 000000
+    # project-id: "namespace/project_name"
 
     domain: https://gitlab.hexide-digital.com
 
