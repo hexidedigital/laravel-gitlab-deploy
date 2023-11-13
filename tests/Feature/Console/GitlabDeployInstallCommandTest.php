@@ -2,13 +2,6 @@
 
 use function PHPUnit\Framework\{assertEquals, assertFalse, assertNotEquals, assertTrue};
 
-function safeUnlink(string $path): void
-{
-    if (File::isFile($path)) {
-        unlink($path);
-    }
-}
-
 beforeEach(function () {
     safeUnlink(config_path('gitlab-deploy.php'));
 });
@@ -21,7 +14,7 @@ test('the install command copies the configuration', function () {
     // make sure we're starting from a clean state
     assertFalse(File::isFile(config_path('gitlab-deploy.php')));
 
-    $this->artisan('gitlab-deploy:install')
+    $this->artisan('deploy:install')
         ->assertSuccessful();
 
     assertTrue(File::isFile(config_path('gitlab-deploy.php')));
@@ -31,7 +24,7 @@ test('when a config file is present users can choose to not overwrite it', funct
     File::put(config_path('gitlab-deploy.php'), 'initial content');
     assertTrue(File::isFile(config_path('gitlab-deploy.php')));
 
-    $command = $this->artisan('gitlab-deploy:install')
+    $command = $this->artisan('deploy:install')
         ->expectsQuestion(
             question: 'Config file already exists. Do you want to overwrite it?',
             answer: false
@@ -51,7 +44,7 @@ test('when a config file is present users can choose to overwrite it', function 
     File::put(config_path('gitlab-deploy.php'), 'initial content');
     assertTrue(File::isFile(config_path('gitlab-deploy.php')));
 
-    $command = $this->artisan('gitlab-deploy:install')
+    $command = $this->artisan('deploy:install')
         ->expectsQuestion(
             question: 'Config file already exists. Do you want to overwrite it?',
             answer: true
@@ -80,7 +73,7 @@ test('the install command copies sample files', function (string $sampleFile) {
 
     assertFalse(File::isFile($sampleFile));
 
-    $this->artisan('gitlab-deploy:install', ['-q' => true, '-n' => true])
+    $this->artisan('deploy:install', ['-q' => true, '-n' => true])
         ->execute();
 
     assertTrue(File::isFile($sampleFile));
@@ -98,7 +91,7 @@ test('adds ssh and work folders to root .gitignore file', function () {
         'gitlab-deploy.ssh.folder' => base_path('.ssh/{{STAGE}}'),
     ]);
 
-    $command = $this->artisan('gitlab-deploy:install')
+    $command = $this->artisan('deploy:install')
         ->assertSuccessful();
 
     $command->execute();
@@ -123,7 +116,7 @@ test('do not edit when ssh and work folders already in root .gitignore file', fu
         'gitlab-deploy.ssh.folder' => base_path('.ssh/{{STAGE}}'),
     ]);
 
-    $command = $this->artisan('gitlab-deploy:install')
+    $command = $this->artisan('deploy:install')
         ->assertSuccessful();
 
     $command->execute();
@@ -145,7 +138,7 @@ test('do nothing when in project missing .gitignore file', function () {
     safeUnlink(base_path('.gitignore'));
     assertFalse(File::isFile(base_path('.gitignore')));
 
-    $command = $this->artisan('gitlab-deploy:install')
+    $command = $this->artisan('deploy:install')
         ->assertSuccessful();
 
     $command->execute();
