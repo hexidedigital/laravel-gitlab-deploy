@@ -19,12 +19,8 @@ Remote server must use GNU/Linux.
 You can install this package via composer using:
 
 ```shell
-composer require --dev hexide-digital/gitlab-deploy:^1.3 -W
+composer require --dev hexide-digital/gitlab-deploy:^1.3
 ```
-
-> We specify the option `-W` for composer to downgrade `psr/http-message` package from v2 to v1
-> for the latest Laravel projects
-> (see more in this [issue](https://github.com/GrahamCampbell/Laravel-GitLab/issues/44))
 
 And if you are using composer version 2.4 and above,
 we recommend run the [`bump`](https://php.watch/articles/composer-bump) command
