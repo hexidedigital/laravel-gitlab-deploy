@@ -4,26 +4,34 @@
 
 This package was created to optimize and improve a company's CI/CD in a Gitlab environment.
 
-# Requirements
+## Requirements
 
-This package requires **PHP 8.1** and **Laravel 9.0** or higher.
+This package version requires [PHP](https://www.php.net/) 8.1 and supports [Laravel](https://laravel.com/) 9-10.
 
 Available SSH agents on local machine and remote server.
 
 Remote server must use GNU/Linux.
 
-# Installation
+### Dependencies
 
-## Add dependency
+This package uses GitLab API to create CI/CD variables, powered by package [`graham-campbell/gitlab`](https://github.com/GrahamCampbell/Laravel-GitLab).
 
-You can install this package via composer using:
+For deployment uses [`deployer/deployer`](https://deployer.org/).
+
+To render beautiful console output uses [`nunomaduro/termwind`](https://github.com/nunomaduro/termwind).
+
+## Installation
+
+### Add dependency
+
+You can install this package using [Composer](https://getcomposer.org/):
 
 ```shell
 composer require --dev hexide-digital/gitlab-deploy:^1.3
 ```
 
 And if you are using composer version 2.4 and above,
-we recommend run the [`bump`](https://php.watch/articles/composer-bump) command
+we recommend run the [`bump`](https://php.watch/articles/composer-bump) command to lock latest version:
 
 ```shell
 composer bump "hexide-digital/gitlab-deploy"
@@ -31,9 +39,9 @@ composer bump "hexide-digital/gitlab-deploy"
 
 After installation, this package will automatically register its service provider.
 
-# Usage
+## Usage
 
-## Install and publish files
+### Install and publish files
 
 To publish files for deployment and sample files run command bellow:
 
@@ -44,7 +52,7 @@ php artisan deploy:install
 Examples of files to be copied are
 located in [this folder](https://github.com/hexidedigital/laravel-gitlab-deploy/tree/master/examples).
 
-## Configurations and prepare access
+### Configurations and prepare access
 
 Open [`.deploy/deploy-prepare.yml`](https://github.com/hexidedigital/laravel-gitlab-deploy/blob/master/examples/deploy-prepare.example.yml)
 and fill all needed options.
@@ -64,9 +72,9 @@ But for every stage are available next options:
 - access to the database
 - access to the mail host (but can be omitted)
 
-## Running configuration command
+### Running configuration command
 
-### Basic launch
+#### Basic launch
 
 You can begin configuring your project deployment for specific **stage name** (i.e. for `dev` branch) by running:
 
@@ -76,22 +84,22 @@ php artisan deploy:gitlab dev
 
 > Normally, the stage name must be the same as git branch name.
 
-#### After command executing
+##### After command executing
 
 If all tasks completely executed, to enable auto-deployment go to
 `Settings` -> `CI/CD` -> `Variables` and change value for `CI_ENABLED` to `1`.
 After that, when you edit branch with configured deployment, Gitlab will run CI/CD Pipelines automatically.
 
-### Only-print launch
+#### Only-print launch
 
 If you want to manually execute commands or just prepare to future deployment,
 set a `--only-print` option when calling command.
 All commands and examples will be written to log files located in `.deploy/logs` folder.
 All that remains is to copy and execute commands from the file.
 
-# Tips for Gitlab
+## Tips for Gitlab
 
-## Gitlab API access token
+### Gitlab API access token
 
 In order for variables and other deployment options to be created, you need to grant access to the repository settings.
 This package uses the **Gitlab API** method using **Access Tokens**.
@@ -133,7 +141,7 @@ Fill next options like bellow:
 
 Then click `Create project access token` to see the token, copy it and set in deploy config file.
 
-## Project ID
+### Project ID
 
 Open the main page of the repository and on top you can see repository info and project id.
 It also can be copied with button on the right side.
@@ -142,12 +150,12 @@ It also can be copied with button on the right side.
 
 > For using project ID, you must wrap number in file to quotes like `"XXXXXXXXXX"` to mark value as string.
 
-# Can I hire you guys?
+## Can I hire you guys?
 
 Yes! Say hi: [hello@hexide-digital.com](mailto:hello@hexide-digital.com)
 We will be happy to work with you! Other [work we’ve done](https://hexide-digital.com)
 
-## Follow us
+### Follow us
 
 Follow us on [LinkedIn](https://www.linkedin.com/company/hexide-digital)
 or [Facebook](https://www.facebook.com/hexide.digital)
