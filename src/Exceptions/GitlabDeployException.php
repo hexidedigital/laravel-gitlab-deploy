@@ -21,4 +21,12 @@ class GitlabDeployException extends Exception
             'To process deploy prepare you must specify Gitlab credentials - ' . implode(', ', $values)
         );
     }
+
+    public static function unsupportedConfigurationVersion(string $actual): GitlabDeployException
+    {
+        return new GitlabDeployException(
+            "Unsupported configuration version [$actual]. " .
+            "Please update your configuration file to the latest version",
+        );
+    }
 }

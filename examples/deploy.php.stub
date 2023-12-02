@@ -3,7 +3,7 @@
 /**
  * Keep this version number to manage file versions in projects
  *
- * @version 1.3
+ * @version 1.4
  */
 
 namespace Deployer;
@@ -26,7 +26,7 @@ $DEPLOY_BASE_DIR = getenv('DEPLOY_BASE_DIR');
 $DEPLOY_SERVER = getenv('DEPLOY_SERVER');
 $DEPLOY_USER = getenv('DEPLOY_USER');
 $SSH_PORT = getenv('SSH_PORT');
-/*CI_ENV*/
+/*CI_ENV*/ // - do not remote this comment. Uses for replacement.
 
 
 /* ----------------------------------
@@ -34,7 +34,7 @@ $SSH_PORT = getenv('SSH_PORT');
  */
 
 // TODO: Project name
-set('application', 'AdminLTE');
+set('application', 'ApplicationName');
 // github token
 // TODO: CHANGE OAUTH TOKEN
 set('github_oauth_token', '66efxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0eae');
@@ -119,9 +119,9 @@ before('artisan:migrate', function () {
 
 // Maintenance mode
 
-after('deploy:vendors', 'artisan:down');
+//after('deploy:vendors', 'artisan:down');
 
-after('deploy:unlock', 'artisan:up');
+//after('deploy:unlock', 'artisan:up');
 
 /*
  * Note:

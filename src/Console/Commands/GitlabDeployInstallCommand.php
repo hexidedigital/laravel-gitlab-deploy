@@ -142,9 +142,8 @@ class GitlabDeployInstallCommand extends Command
 
     protected function getWorkingDir(): string
     {
-        return Str::of(config('gitlab-deploy.config-file'))
+        return Str::of(config('gitlab-deploy.working-dir'))
             ->replace(base_path(), '')
-            ->dirname()
             ->replace(DIRECTORY_SEPARATOR, '/')
             ->value();
     }

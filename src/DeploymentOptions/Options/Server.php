@@ -9,8 +9,9 @@ final class Server implements BaseOption
     public string $domain;
     public string $host;
     public string $login;
-    public string $password;
+    public ?string $password;
     public int $sshPort;
+    public string $sshOptions;
 
     public function __construct(array $source)
     {
@@ -19,12 +20,17 @@ final class Server implements BaseOption
         $this->login = data_get($source, 'login');
         $this->password = data_get($source, 'password');
         $this->sshPort = intval(data_get($source, 'ssh-port')) ?: 22;
+
+        $this->sshOptions = collect(data_get($source, 'ssh-options'))
+            ->filter()
+            ->implode(' ');
     }
 
     public function toArray(): array
     {
         return [
             'sshPort' => $this->sshPort,
+            'sshOptions' => $this->sshOptions,
             'domain' => $this->domain,
             'host' => $this->host,
             'login' => $this->login,
@@ -39,6 +45,8 @@ final class Server implements BaseOption
             'HOST' => $this->host,
 
             'SSH_PORT' => $this->sshPort,
+            'SSH_OPTIONS' => $this->sshOptions,
+
             'DEPLOY_DOMAIN' => $this->domain,
             'DEPLOY_SERVER' => $this->host,
             'DEPLOY_USER' => $this->login,
