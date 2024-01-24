@@ -3,71 +3,44 @@
 # How to work with the file, read here
 # https://github.com/hexidedigital/laravel-gitlab-deploy#configurations-and-prepare-access
 
-version: 1.4
+version: 1
 
 # Repository configurations
 git-lab:
   project:
     # Read where to get this token - https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
-    # Auth token for GitLab API
     token: "XXXXXXXXXX"
 
-    # Project ID
     # Read where to get this id - https://github.com/hexidedigital/laravel-gitlab-deploy#project-id
     project-id: 000000
-    #project-id: "namespace/project_name"
+    # project-id: "namespace/project_name"
 
-    # Git remote url for clone
-    git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
-
-    # GitLab Server url for API access
     domain: https://gitlab.hexide-digital.com
 
 
 # Server configurations
 stages:
-  # Server configurations for stage.
-  # Stage name (or branch name)
+  # Stage name to prepare command
   - name: dev
-    # General options for prepare command.
     options:
-      # Server domain or url.
-      domain: https://example.com
-      # Deployment directory on server. Only absolute path. Supports replaces.
+      git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
-      # to detect path - execute `whereis composer`
       bin-composer: /usr/bin/php8.1 /usr/bin/composer
-      # to detect path - execute `whereis php`
       bin-php: /usr/bin/php8.1
 
-    # Configurations for database
-    database:
-      database: application_db
-      username: application_db
-      password: XXXXXXXXXX_db
-
-    # Configurations for server
-    # ssh options
     server:
-      # Remote server ip or domain. Uses as HOST replacement.
+      ssh-port: 22
+      domain: https://example.com
       host: example.com
-      # Remote server user. Uses as USER replacement.
       login: example-user
-      # Password for remote server. Can be omitted if ssh-key is specified.
-      #password: XXXXXXXXXX
-      # Port for ssh connection. Default 22.
-      #ssh-port: 22
-      # Specify ssh key for access to server. Only absolute path. Supports replaces.
-      #ssh-key: "{{PROJ_DIR}}.ssh/id_rsa"
-      # Options for ssh connection. Can be omitted.
-      ssh-options:
-        - "-o IdentitiesOnly=yes"
-        - "-o StrictHostKeyChecking=no"
-        - "-o UserKnownHostsFile=/dev/null"
-        - "-o PasswordAuthentication=no"
+      password: XXXXXXXXXX
 
-    # Configurations for mail server
-    #mail:
-    #  hostname: mail.example.com
-    #  username: noreply@example.com
-    #  password: XXXXXXXXXX_mail
+    database:
+      database: proj_db
+      username: proj_db
+      password: XXXXXXXXXX
+
+    # mail:
+    #   hostname: devs.hexide-digital.com
+    #   username: template@host
+    #   password: mail_pass

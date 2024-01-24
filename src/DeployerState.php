@@ -47,8 +47,7 @@ final class DeployerState
     {
         $parser = app(ParseConfiguration::class);
 
-        $filePath = str(config('gitlab-deploy.working-dir'))->finish('/')->append('deploy-prepare.yml');
-        $fileData = $parser->parseFile((string)$filePath);
+        $fileData = $parser->parseFile(config('gitlab-deploy.config-file'));
 
         $builder = app(ConfigurationBuilder::class);
 

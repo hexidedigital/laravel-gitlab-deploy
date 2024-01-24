@@ -87,7 +87,7 @@ test('adds ssh and work folders to root .gitignore file', function () {
     File::put(base_path('.gitignore'), implode(PHP_EOL, ["/vendor", "/.idea"]));
 
     config([
-        'gitlab-deploy.working-dir' => base_path('.deploy'),
+        'gitlab-deploy.config-file' => base_path('.deploy/deploy-prepare.yml'),
         'gitlab-deploy.ssh.folder' => base_path('.ssh/{{STAGE}}'),
     ]);
 
@@ -112,7 +112,7 @@ test('do not edit when ssh and work folders already in root .gitignore file', fu
     File::put(base_path('.gitignore'), implode(PHP_EOL, ["/vendor", "/.idea", "/.ssh", "/.deploy"]));
 
     config([
-        'gitlab-deploy.working-dir' => base_path('.deploy'),
+        'gitlab-deploy.config-file' => base_path('.deploy/deploy-prepare.yml'),
         'gitlab-deploy.ssh.folder' => base_path('.ssh/{{STAGE}}'),
     ]);
 

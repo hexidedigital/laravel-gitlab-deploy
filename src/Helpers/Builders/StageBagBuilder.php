@@ -11,7 +11,6 @@ use HexideDigital\GitlabDeploy\DeploymentOptions\Options\Server;
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\DeploymentOptions\StageBag;
 use HexideDigital\GitlabDeploy\Exceptions\GitlabDeployException;
-use HexideDigital\GitlabDeploy\Gitlab\GitlabProject;
 use HexideDigital\GitlabDeploy\Helpers\OptionValidator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -19,12 +18,11 @@ use Illuminate\Support\Collection;
 final class StageBagBuilder
 {
     /**
-     * @param GitlabProject $project
      * @param array $stages
      * @return StageBag
      * @throws GitlabDeployException
      */
-    public function build(GitlabProject $project, array $stages): StageBag
+    public function build(array $stages): StageBag
     {
         if (empty($stages)) {
             throw new GitlabDeployException('No one stages are defined');
@@ -34,15 +32,9 @@ final class StageBagBuilder
 
         foreach ($stages as $stageOptions) {
             $name = $stageOptions['name'];
-
-            /*todo - fix*/
-            $options = Arr::get($stageOptions, 'options', []);
-            $options['git-url'] = $project->gitUrl;
-            $options = new Options($options);
-
+            $options = new Options(Arr::get($stageOptions, 'options', []));
             $server = new Server(Arr::get($stageOptions, 'server', []));
-
-            $database = $this->makeDatabase($stageOptions);
+            $database = new Database(Arr::get($stageOptions, 'database', []));
 
             $this->validate($options, $server, $database, $name);
 
@@ -88,12 +80,5 @@ final class StageBagBuilder
         }
 
         return new Mail($mailOptions);
-    }
-
-    public function makeDatabase(mixed $stageOptions): Database
-    {
-        $database = new Database(Arr::get($stageOptions, 'database', []));
-
-        return $database;
     }
 }
