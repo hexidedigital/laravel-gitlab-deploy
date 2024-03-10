@@ -20,5 +20,4 @@ it('builds', function () {
     $builder = app(ConfigurationBuilder::class);
 
     $configurations = $builder->build($fileData);
-
 });
