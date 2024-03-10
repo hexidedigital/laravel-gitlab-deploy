@@ -3,44 +3,60 @@
 # How to work with the file, read here
 # https://github.com/hexidedigital/laravel-gitlab-deploy#configurations-and-prepare-access
 
-version: 1
+version: 1.4
 
 # Repository configurations
 git-lab:
   project:
     # Read where to get this token - https://github.com/hexidedigital/laravel-gitlab-deploy#gitlab-api-access-token
+    # Auth token for GitLab API
     token: "XXXXXXXXXX"
 
+    # Project ID
     # Read where to get this id - https://github.com/hexidedigital/laravel-gitlab-deploy#project-id
     project-id: 000000
-    # project-id: "namespace/project_name"
+    #project-id: "namespace/project_name"
 
+    # GitLab Server url for API access
     domain: https://gitlab.hexide-digital.com
 
 
 # Server configurations
 stages:
-  # Stage name to prepare command
+  # Server configurations for stage.
+  # Stage name (or branch name)
   - name: dev
+    # General options for prepare command.
     options:
+      # Git remote url for clone
       git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
+      # Deployment directory on server. Only absolute path. Supports replaces.
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
+      # to detect path - execute `whereis composer`
       bin-composer: /usr/bin/php8.1 /usr/bin/composer
+      # to detect path - execute `whereis php`
       bin-php: /usr/bin/php8.1
 
+    # Configurations for server
+    # ssh options
     server:
-      ssh-port: 22
-      domain: https://example.com
+      # Remote server ip or domain. Uses as HOST replacement.
       host: example.com
+      # Remote server user. Uses as USER replacement.
       login: example-user
+      # Password for remote server. Can be omitted if ssh-key is specified.
       password: XXXXXXXXXX
+      # Port for ssh connection. Default 22.
+      ssh-port: 22
 
+    # Configurations for database
     database:
-      database: proj_db
-      username: proj_db
-      password: XXXXXXXXXX
+      database: application_db
+      username: application_db
+      password: XXXXXXXXXX_db
 
-    # mail:
-    #   hostname: devs.hexide-digital.com
-    #   username: template@host
-    #   password: mail_pass
+    # Configurations for mail server
+    #mail:
+    #  hostname: mail.example.com
+    #  username: noreply@example.com
+    #  password: XXXXXXXXXX_mail
