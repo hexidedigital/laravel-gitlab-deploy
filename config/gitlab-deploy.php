@@ -34,8 +34,6 @@ return [
     |
     */
     'working-dir' => base_path('.deploy'),
-    'store-log-folder' => base_path('.deploy/logs'),
-    'config-file' => base_path('.deploy/deploy-prepare.yml'),
 
     'ssh' => [
         'key_name' => 'id_rsa',
