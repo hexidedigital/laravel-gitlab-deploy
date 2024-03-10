@@ -14,4 +14,6 @@ interface BaseOption extends Arrayable
     public function __construct(array $source);
 
     public function toReplacesArray(): array;
+
+    public function allowEmptyValueForArrayKeys(): array;
 }

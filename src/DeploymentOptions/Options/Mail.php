@@ -34,4 +34,9 @@ final class Mail implements BaseOption
             'MAIL_PASSWORD' => $this->password,
         ];
     }
+
+    public function allowEmptyValueForArrayKeys(): array
+    {
+        return [];
+    }
 }

@@ -10,8 +10,9 @@ final class OptionValidator
 {
     public static function onyOfKeyIsEmpty(BaseOption $option): bool
     {
-        return collect($option)
+        return collect($option->toArray())
             ->reject()
+            ->except($option->allowEmptyValueForArrayKeys())
             ->isNotEmpty();
     }
 }

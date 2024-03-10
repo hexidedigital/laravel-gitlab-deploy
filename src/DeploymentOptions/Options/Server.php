@@ -9,7 +9,7 @@ final class Server implements BaseOption
     public string $domain;
     public string $host;
     public string $login;
-    public string $password;
+    public ?string $password;
     public int $sshPort;
 
     public function __construct(array $source)
@@ -43,6 +43,13 @@ final class Server implements BaseOption
             'DEPLOY_SERVER' => $this->host,
             'DEPLOY_USER' => $this->login,
             'DEPLOY_PASS' => $this->password,
+        ];
+    }
+
+    public function allowEmptyValueForArrayKeys(): array
+    {
+        return [
+            'password',
         ];
     }
 }

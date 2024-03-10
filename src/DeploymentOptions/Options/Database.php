@@ -34,4 +34,9 @@ final class Database implements BaseOption
             'DB_PASSWORD' => $this->password,
         ];
     }
+
+    public function allowEmptyValueForArrayKeys(): array
+    {
+        return [];
+    }
 }

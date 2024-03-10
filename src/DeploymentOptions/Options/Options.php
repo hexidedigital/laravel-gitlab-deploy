@@ -38,4 +38,9 @@ final class Options implements BaseOption
             'BIN_COMPOSER' => $this->binComposer,
         ];
     }
+
+    public function allowEmptyValueForArrayKeys(): array
+    {
+        return [];
+    }
 }
