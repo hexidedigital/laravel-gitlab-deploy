@@ -13,6 +13,7 @@ final class GitlabProject
         public readonly string|int $id,
         public readonly string $token,
         public readonly string $url,
+        public readonly string $gitUrl,
     ) {
         if (empty($this->token)) {
             throw new GitlabDeployException('Provide api token for Gitlab project');

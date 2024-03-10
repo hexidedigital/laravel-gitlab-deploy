@@ -25,8 +25,16 @@ final class ConfigurationBuilder
     {
         $version = floatval(Arr::get($array, 'version'));
 
+        // Support only 1.4 and higher
+        if (version_compare((string)$version, '1.4', '<')) {
+            throw new GitlabDeployException('Unsupported configuration version. Please');
+        }
+
         $gitlab = $this->gitlabProjectBuilder->build(Arr::get($array, 'git-lab', []));
-        $stageBag = $this->stageBagBuilder->build(Arr::get($array, 'stages', []));
+        $stageBag = $this->stageBagBuilder->build(
+            $gitlab['project'],
+            Arr::get($array, 'stages', [])
+        );
 
         return new Configurations(
             $version,

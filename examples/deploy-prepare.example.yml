@@ -17,6 +17,9 @@ git-lab:
     project-id: 000000
     #project-id: "namespace/project_name"
 
+    # Git remote url for clone
+    git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
+
     # GitLab Server url for API access
     domain: https://gitlab.hexide-digital.com
 
@@ -28,8 +31,8 @@ stages:
   - name: dev
     # General options for prepare command.
     options:
-      # Git remote url for clone
-      git-url: git@gitlab.hexide-digital.com:NAMESPACE/PROJECT_NAME.git
+      # Server domain or url.
+      domain: https://example.com
       # Deployment directory on server. Only absolute path. Supports replaces.
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
       # to detect path - execute `whereis composer`
@@ -45,9 +48,17 @@ stages:
       # Remote server user. Uses as USER replacement.
       login: example-user
       # Password for remote server. Can be omitted if ssh-key is specified.
-      password: XXXXXXXXXX
+      #password: XXXXXXXXXX
       # Port for ssh connection. Default 22.
-      ssh-port: 22
+      #ssh-port: 22
+      # Specify ssh key for access to server. Only absolute path. Supports replaces.
+      #ssh-key: "{{PROJ_DIR}}.ssh/id_rsa"
+      # Options for ssh connection. Can be omitted.
+      ssh-options:
+        - "-o IdentitiesOnly=yes"
+        - "-o StrictHostKeyChecking=no"
+        - "-o UserKnownHostsFile=/dev/null"
+        - "-o PasswordAuthentication=no"
 
     # Configurations for database
     database:

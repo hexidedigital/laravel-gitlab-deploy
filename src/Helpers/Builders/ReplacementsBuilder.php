@@ -6,6 +6,7 @@ namespace HexideDigital\GitlabDeploy\Helpers\Builders;
 
 use HexideDigital\GitlabDeploy\DeploymentOptions\Stage;
 use HexideDigital\GitlabDeploy\Helpers\Replacements;
+use Illuminate\Support\Str;
 
 final class ReplacementsBuilder
 {
@@ -34,6 +35,7 @@ final class ReplacementsBuilder
         | - USER
         | - HOST
         | - SSH_PORT
+        | - SSH_OPTIONS
         | - DEPLOY_DOMAIN
         | - DEPLOY_SERVER
         | - DEPLOY_USER
@@ -95,8 +97,12 @@ PHP,
             'IDENTITY_FILE' => $filePath,
             'IDENTITY_FILE_PUB' => "$filePath.pub",
 
-            'remoteSshCredentials' => '-i "{{IDENTITY_FILE}}" -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"',
-            'remoteScpOptions' => '-i "{{IDENTITY_FILE}}" -P {{SSH_PORT}}',
+            'remoteSshCredentials' => Str::squish(
+                '-i "{{IDENTITY_FILE}}" {{SSH_OPTIONS}} -p {{SSH_PORT}} "{{DEPLOY_USER}}@{{DEPLOY_SERVER}}"'
+            ),
+            'remoteScpOptions' => Str::squish(
+                '-i "{{IDENTITY_FILE}}" {{SSH_OPTIONS}} -P {{SSH_PORT}}'
+            ),
         ]);
 
         $this->replacements->merge($data);

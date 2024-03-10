@@ -20,14 +20,15 @@ final class GitlabProjectBuilder
      */
     public function build(array $gitlab): array
     {
-        $project = $gitlab['project'];
+        $project = $gitlab['project'] ?? [];
 
         $this->validate($project);
 
         $project = new GitlabProject(
-            id: $project['project-id'],
-            token: $project['token'],
-            url: $project['domain'],
+            id: data_get($project, 'project-id'),
+            token: data_get($project, 'token'),
+            url: data_get($project, 'domain'),
+            gitUrl: data_get($project, 'git-url'),
         );
 
         return [
@@ -36,11 +37,9 @@ final class GitlabProjectBuilder
     }
 
     /**
-     * @param array|null $project
-     * @return void
      * @throws GitlabDeployException
      */
-    public function validate(?array $project): void
+    public function validate(array $project): void
     {
         /*todo - validate before create*/
         /** @var Collection<string, bool> $listOfEmptyOptions */
