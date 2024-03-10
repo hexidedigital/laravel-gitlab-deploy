@@ -5,7 +5,28 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.3.1...HEAD)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.2...HEAD)
+
+## [v1.4.2](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.1...v1.4.2) - 2024-03-10
+
+### Changed
+
+- Updated comments and doc-blocks in stub files and in configurations
+- Removed `store-log-folder` and `config-file` options from configurations - now only uses `working-dir` option
+
+### Fixed
+
+- Allow empty password for server (in some cases we not need it)
+
+## [v1.4.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.3.1...v1.4.1) - 2024-01-24
+
+### Changed
+
+- Add support for **symfony 7** components - uses in latest versions of **Laravel** with **php ^8.2**
+
+### Fixed
+
+- Accept _project_id_ as _string_ and _numeric_ value
 
 ## [v1.3.1](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.3.0...v1.3.1) - 2023-11-13
 
