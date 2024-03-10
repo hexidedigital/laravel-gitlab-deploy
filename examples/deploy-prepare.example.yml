@@ -12,8 +12,8 @@ git-lab:
     # Auth token for GitLab API
     token: "XXXXXXXXXX"
 
-    # Project ID
     # Read where to get this id - https://github.com/hexidedigital/laravel-gitlab-deploy#project-id
+    # Project ID
     project-id: 000000
     #project-id: "namespace/project_name"
 
