@@ -4,10 +4,35 @@ use HexideDigital\GitlabDeploy\Tasks;
 
 return [
 
-    'gitlab-server' => env('GITLAB_HOST', 'gitlab.hexide-digital.com,188.34.141.230'),
+    /*
+    |--------------------------------------------------------------------------
+    | GitLab server
+    |--------------------------------------------------------------------------
+    |
+    | Uses for `ssh-keyscan` command to fetch public keys
+    | and put to known hosts file on remote server
+    |
+    */
+    'gitlab-server' => env('GITLAB_HOST', 'gitlab.hexide-digital.com'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deployer file
+    |--------------------------------------------------------------------------
+    |
+    | Path to deployer file
+    |
+    */
     'deployer-php' => base_path('deploy.php'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Working directory
+    |--------------------------------------------------------------------------
+    |
+    | Uses for store logs, env and other files across execution
+    |
+    */
     'working-dir' => base_path('.deploy'),
     'store-log-folder' => base_path('.deploy/logs'),
     'config-file' => base_path('.deploy/deploy-prepare.yml'),
@@ -22,6 +47,16 @@ return [
         // 'folder' => base_path('.ssh/{{STAGE}}'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deploy prepare tasks
+    |--------------------------------------------------------------------------
+    |
+    | List of tasks to execute on deploy prepare command.
+    | You can edit this list as you want.
+    | To add new task extend from `HexideDigital\GitlabDeploy\Tasks\BaseTask`
+    |
+    */
     'tasks' => [
         Tasks\GenerateSshKeysOnLocalhost::class,
         Tasks\CopySshKeysOnRemoteHost::class,
