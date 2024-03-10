@@ -1,0 +1,8 @@
+# See all configurations options
+# https://packages.tools/getting-started/configuration.html
+
+providers:
+  - HexideDigital\GitlabDeploy\GitlabDeployServiceProvider
+
+workbench:
+  install: false

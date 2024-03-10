@@ -2,25 +2,10 @@
 
 namespace HexideDigital\GitlabDeploy\Tests;
 
-use HexideDigital\GitlabDeploy\GitlabDeployServiceProvider;
-use Orchestra\Testbench\TestCase as Orchestra;
+use Orchestra\Testbench\Concerns\WithWorkbench;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
-class TestCase extends Orchestra
+class TestCase extends OrchestraTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
-
-    protected function getPackageProviders($app)
-    {
-        return [
-            GitlabDeployServiceProvider::class,
-        ];
-    }
-
-    public function getEnvironmentSetUp($app)
-    {
-        // config()->set('database.default', 'testing');
-    }
+    use WithWorkbench;
 }

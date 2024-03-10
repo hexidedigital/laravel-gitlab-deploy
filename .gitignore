@@ -5,8 +5,8 @@ composer.lock
 coverage
 docs
 phpunit.xml
+/.phpunit.cache
 phpstan.neon
-testbench.yaml
 vendor
 node_modules
 .DS_Store
