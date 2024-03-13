@@ -40,6 +40,8 @@ stages:
     # Configurations for server
     # ssh options
     server:
+      # Public url to the server. Uses in for env file as APP_URL variable
+      domain: https://example.com
       # Remote server ip or domain. Uses as HOST replacement.
       host: example.com
       # Remote server user. Uses as USER replacement.
