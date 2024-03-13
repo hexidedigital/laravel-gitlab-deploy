@@ -5,7 +5,13 @@ All notable changes to `GitlabDeploy` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.2...HEAD)
+## [Unreleased](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.3...HEAD)
+
+## [v1.4.3](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.2...v1.4.3) - 2024-03-13
+
+### Fixed
+
+- Return deleted options `domain` for server configuration 
 
 ## [v1.4.2](https://github.com/hexidedigital/laravel-gitlab-deploy/compare/v1.4.1...v1.4.2) - 2024-03-10
 
