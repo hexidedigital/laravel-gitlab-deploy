@@ -1,4 +1,7 @@
+# See more about templates, their usage and configuration at:
+# https://gitlab.hexide-digital.com/packages/gitlab-templates#laravel-templates
+
 include:
   - project: 'packages/gitlab-templates'
     ref: master
-    file: 'templates/laravel.2.1.gitlab-ci.yml'
+    file: 'templates/laravel.3.0.gitlab-ci.yml'
