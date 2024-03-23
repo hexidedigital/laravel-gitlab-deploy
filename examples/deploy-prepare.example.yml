@@ -33,9 +33,9 @@ stages:
       # Deployment directory on server. Only absolute path. Supports replaces.
       base-dir-pattern: "/home/{{USER}}/web/{{HOST}}/public_html"
       # to detect path - execute `whereis composer`
-      bin-composer: /usr/bin/php8.1 /usr/bin/composer
+      bin-composer: /usr/bin/php8.2 /usr/bin/composer
       # to detect path - execute `whereis php`
-      bin-php: /usr/bin/php8.1
+      bin-php: /usr/bin/php8.2
 
     # Configurations for server
     # ssh options
