@@ -26,7 +26,7 @@ abstract class BaseTask implements Task
     protected LoggerBag $logger;
     protected DeployerState $state;
     protected Executor $executor;
-    protected Command $command;
+    protected ?Command $command = null;
 
     public function processPipeData(PipeData $pipeData): void
     {

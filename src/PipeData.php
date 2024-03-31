@@ -16,7 +16,7 @@ class PipeData
         public readonly DeployerState $state,
         public readonly LoggerBag $logger,
         public readonly Executor $executor,
-        public readonly Command $command,
+        public readonly ?Command $command,
         public readonly int $totalSteps,
     ) {
     }
