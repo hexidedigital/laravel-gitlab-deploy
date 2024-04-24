@@ -6,7 +6,7 @@ This package was created to optimize and improve a company's CI/CD in a Gitlab e
 
 ## Requirements
 
-This package version requires [PHP](https://www.php.net/) 8.1 and supports [Laravel](https://laravel.com/) 9-10.
+This package version requires [PHP](https://www.php.net/) 8.1 and supports [Laravel](https://laravel.com/) 9-11.
 
 Available SSH agents on local machine and remote server.
 
