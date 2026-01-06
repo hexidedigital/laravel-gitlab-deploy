@@ -1,6 +1,6 @@
 # Gitlab Deployer for Laravel
 
-![Hexide digital Gitlab Deployer for Laravel](https://preview.dragon-code.pro/Hexide-digital/Gitlab-Deployer-for-Laravel.svg?background=0b0b69&mode=dark)
+![Hexide digital Gitlab Deployer for Laravel](https://banners.beyondco.de/Gitlab%20Deployer%20for%20Laravel.png?theme=dark&packageManager=composer+require&packageName=--dev+hexide-digital%2Fgitlab-deploy&pattern=architect&style=style_1&description=by+Hexide+Digital&md=1&showWatermark=1&fontSize=100px&images=truck)
 
 This package was created to optimize and improve a company's CI/CD in a Gitlab environment.
 
